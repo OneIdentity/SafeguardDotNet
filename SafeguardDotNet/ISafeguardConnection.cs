@@ -27,5 +27,8 @@ namespace OneIdentity.SafeguardDotNet
 
         JToken InvokeMethod(Service service, Method method, string relativeUrl,
             JToken body, IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders);
+
+        string InvokeMethod(Service service, Method method, string relativeUrl,
+            string body, IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders);
     }
 }

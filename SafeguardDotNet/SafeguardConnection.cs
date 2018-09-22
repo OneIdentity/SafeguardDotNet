@@ -46,8 +46,23 @@ namespace OneIdentity.SafeguardDotNet
             _authenticationMechanism.RefreshAccessToken();
         }
 
-        public JToken InvokeMethod(Service service, Method method, string relativeUrl, JToken body, IDictionary<string, string> parameters,
-            IDictionary<string, string> additionalHeaders)
+        public JToken InvokeMethod(Service service, Method method, string relativeUrl, JToken body,
+            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
+        {
+            var content = InvokeMethod(service, method, relativeUrl, body.ToString(), parameters, additionalHeaders);
+            try
+            {
+                return JToken.Parse(content);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
+            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
         {
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
                 .AddHeader("Accept", "application/json");
@@ -59,21 +74,14 @@ namespace OneIdentity.SafeguardDotNet
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)
-                {
                     request.AddHeader(header.Key, header.Value);
-                }
             }
             if (method == Method.Post || method == Method.Put)
-            {
-                //request.AddHeader("Content-type", "application/json");
-                request.AddParameter("application/json", body.ToString(), ParameterType.RequestBody);
-            }
+                request.AddParameter("application/json", body, ParameterType.RequestBody);
             if (parameters != null)
             {
                 foreach (var param in parameters)
-                {
                     request.AddParameter(param.Key, param.Value, ParameterType.QueryString);
-                }
             }
 
             var client = GetClientForService(service);
@@ -84,7 +92,7 @@ namespace OneIdentity.SafeguardDotNet
             if (!response.IsSuccessful)
                 throw new Exception("Error calling Safeguard Web API, Error: " +
                                     $"{response.StatusCode} {response.Content}");
-            return JToken.Parse(response.Content);
+            return response.Content;
         }
 
         private RestClient GetClientForService(Service service)

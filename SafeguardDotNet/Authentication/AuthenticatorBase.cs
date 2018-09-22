@@ -70,7 +70,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             if (!response.IsSuccessful)
                 return 0;
             var remainingStr = response.Headers.ToList().FirstOrDefault(x => x.Name == "X-TokenLifetimeRemaining")?.Value.ToString();
-            if (remainingStr == null || int.TryParse(remainingStr, out var remaining))
+            if (remainingStr == null || !int.TryParse(remainingStr, out var remaining))
                 return 10; // Random magic value... the access token was good, but for some reason it didn't return the remaining lifetime
             return remaining;
         }

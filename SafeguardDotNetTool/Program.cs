@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Security;
 using CommandLine;
-using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet;
 using Serilog;
 
@@ -46,7 +45,7 @@ namespace SafeguardDotNetTool
             try
             {
                 var config = new LoggerConfiguration();
-                config.WriteTo.ColoredConsole();
+                config.WriteTo.ColoredConsole(outputTemplate: "{Message:lj}{NewLine}{Exception}");
 
                 if (opts.Verbose)
                     config.MinimumLevel.Debug();
@@ -77,20 +76,9 @@ namespace SafeguardDotNetTool
                     throw new Exception("Must specify Username, CertificateFile, or Thumbprint");
                 }
 
-                JToken body = null;
-                if (opts.Body != null)
-                {
-                    try
-                    {
-                        body = JToken.Parse(opts.Body);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
-                    }
-                }
-                var responseBody = connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, body, null, null);
+                Log.Information($"Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
+
+                var responseBody = connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body, null, null);
                 Log.Information(responseBody.ToString());
             }
             catch (Exception ex)
