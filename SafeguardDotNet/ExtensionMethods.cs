@@ -4,7 +4,7 @@ using System.Security;
 
 namespace OneIdentity.SafeguardDotNet
 {
-    internal static class ExtensionMethods
+    public static class ExtensionMethods
     {
         public static SecureString ToSecureString(this string thisString)
         {

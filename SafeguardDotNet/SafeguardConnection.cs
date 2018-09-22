@@ -46,7 +46,7 @@ namespace OneIdentity.SafeguardDotNet
             _authenticationMechanism.RefreshAccessToken();
         }
 
-        public JObject InvokeMethod(Service service, Method method, string relativeUrl, IDictionary<string, string> parameters, JObject body,
+        public JToken InvokeMethod(Service service, Method method, string relativeUrl, JToken body, IDictionary<string, string> parameters,
             IDictionary<string, string> additionalHeaders)
         {
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
@@ -56,19 +56,26 @@ namespace OneIdentity.SafeguardDotNet
                 // I'm not sure there is anything you can do about it.
                 request.AddHeader("Authorization",
                     $"Bearer {new NetworkCredential(string.Empty, _authenticationMechanism.GetAccessToken()).Password}");
-            foreach (var header in additionalHeaders)
+            if (additionalHeaders != null)
             {
-                request.AddHeader(header.Key, header.Value);
+                foreach (var header in additionalHeaders)
+                {
+                    request.AddHeader(header.Key, header.Value);
+                }
             }
             if (method == Method.Post || method == Method.Put)
             {
-                request.AddHeader("Content-type", "application/json");
-                request.AddBody(body);
+                //request.AddHeader("Content-type", "application/json");
+                request.AddParameter("application/json", body.ToString(), ParameterType.RequestBody);
             }
-            foreach (var param in parameters)
+            if (parameters != null)
             {
-                request.AddParameter(param.Key, param.Value, ParameterType.QueryString);
+                foreach (var param in parameters)
+                {
+                    request.AddParameter(param.Key, param.Value, ParameterType.QueryString);
+                }
             }
+
             var client = GetClientForService(service);
             var response = client.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
@@ -77,7 +84,7 @@ namespace OneIdentity.SafeguardDotNet
             if (!response.IsSuccessful)
                 throw new Exception("Error calling Safeguard Web API, Error: " +
                                     $"{response.StatusCode} {response.Content}");
-            return JObject.Parse(response.Content);
+            return JToken.Parse(response.Content);
         }
 
         private RestClient GetClientForService(Service service)

@@ -25,7 +25,7 @@ namespace OneIdentity.SafeguardDotNet
 
         void RefreshAccessToken();
 
-        JObject InvokeMethod(Service service, Method method, string relativeUrl,
-            IDictionary<string, string> parameters, JObject body, IDictionary<string, string> additionalHeaders);
+        JToken InvokeMethod(Service service, Method method, string relativeUrl,
+            JToken body, IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders);
     }
 }
