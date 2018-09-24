@@ -42,12 +42,12 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             RstsClient.ClientCertificates = new X509Certificate2Collection() { userCert };
             var response = RstsClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
-                                    response.ErrorMessage);
+                throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new Exception("Error using client_credentials grant_type with " +
-                                    $"{(string.IsNullOrEmpty(_certificatePath) ? $"thumbprint={_certificateThumbprint}" : $"file={_certificatePath}")}" +
-                                    $", Error: {response.StatusCode} {response.Content}");
+                throw new SafeguardDotNetException("Error using client_credentials grant_type with " +
+                                                   $"{(string.IsNullOrEmpty(_certificatePath) ? $"thumbprint={_certificateThumbprint}" : $"file={_certificatePath}")}" +
+                                                   $", Error: {response.StatusCode} {response.Content}", response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
         }

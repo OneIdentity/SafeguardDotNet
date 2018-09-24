@@ -53,11 +53,11 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     response = RstsClient.Execute(request);
                 }
                 if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new Exception($"Unable to connect to RSTS to find identity provider scopes, Error: " +
-                                        response.ErrorMessage);
+                    throw new SafeguardDotNetException("Unable to connect to RSTS to find identity provider scopes, Error: " +
+                                                       response.ErrorMessage);
                 if (!response.IsSuccessful)
-                    throw new Exception("Error requesting identity provider scopes from RSTS, Error: " +
-                                        $"{response.StatusCode} {response.Content}");
+                    throw new SafeguardDotNetException("Error requesting identity provider scopes from RSTS, Error: " +
+                                                       $"{response.StatusCode} {response.Content}", response.Content);
                 var jObject = JObject.Parse(response.Content);
                 var jProviders = (JArray)jObject["Providers"];
                 var knownScopes = jProviders.Select(s => s["Id"]).Values<string>().ToArray();
@@ -70,12 +70,12 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     if (_providerScope != null)
                         _providerScope = $"rsts:sts:primaryproviderid:{scope}";
                     else
-                        throw new Exception($"Unable to find scope matching '{_provider}' in [{string.Join(",", knownScopes)}]");
+                        throw new SafeguardDotNetException($"Unable to find scope matching '{_provider}' in [{string.Join(",", knownScopes)}]");
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Unable to connect to determine identity provider", ex);
+                throw new SafeguardDotNetException("Unable to connect to determine identity provider", ex);
             }
         }
 
@@ -97,11 +97,11 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 });
             var response = RstsClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
-                                    response.ErrorMessage);
+                throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new Exception($"Error using password grant_type with scope {_providerScope}, Error: " +
-                                    $"{response.StatusCode} {response.Content}");
+                throw new SafeguardDotNetException($"Error using password grant_type with scope {_providerScope}, Error: " +
+                                                   $"{response.StatusCode} {response.Content}", response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
         }

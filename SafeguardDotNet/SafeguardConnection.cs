@@ -53,10 +53,9 @@ namespace OneIdentity.SafeguardDotNet
             {
                 return JToken.Parse(content);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(e);
-                throw;
+                throw new SafeguardDotNetException("Unable to parse Safeguard API response as JSON", ex);
             }
         }
 
@@ -86,11 +85,11 @@ namespace OneIdentity.SafeguardDotNet
             var client = GetClientForService(service);
             var response = client.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to web service {client.BaseUrl}, Error: " +
-                                    response.ErrorMessage);
+                throw new SafeguardDotNetException($"Unable to connect to web service {client.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new Exception("Error calling Safeguard Web API, Error: " +
-                                    $"{response.StatusCode} {response.Content}");
+                throw new SafeguardDotNetException("Error calling Safeguard Web API, Error: " +
+                                                   $"{response.StatusCode} {response.Content}", response.Content);
             return response.Content;
         }
 
@@ -105,9 +104,10 @@ namespace OneIdentity.SafeguardDotNet
                 case Service.Notification:
                     return _notificationClient;
                 case Service.A2A:
-                    throw new Exception("You must call the A2A service using the A2A specific method, Error: Unsupported operation");
+                    throw new SafeguardDotNetException(
+                        "You must call the A2A service using the A2A specific method, Error: Unsupported operation");
                 default:
-                    throw new Exception("Unknown or unsupported service specified");
+                    throw new SafeguardDotNetException("Unknown or unsupported service specified");
             }
         }
     }

@@ -13,7 +13,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected override SecureString GetRstsTokenInternal()
         {
-            throw new Exception("Original authentication was with access token unable to refresh, Error: Unsupported operation");
+            throw new SafeguardDotNetException("Original authentication was with access token unable to refresh, Error: Unsupported operation");
         }
     }
 }

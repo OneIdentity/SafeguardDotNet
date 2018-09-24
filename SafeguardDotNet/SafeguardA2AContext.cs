@@ -45,11 +45,11 @@ namespace OneIdentity.SafeguardDotNet
                 .AddHeader("Authorization", $"A2A {apiKey}");
             var response = _a2AClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
-                                    response.ErrorMessage);
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new Exception("Error calling Safeguard Web API, Error: " +
-                                    $"{response.StatusCode} {response.Content}");
+                throw new SafeguardDotNetException("Error calling Safeguard Web API, Error: " +
+                                                   $"{response.StatusCode} {response.Content}", response.Content);
             var json = JToken.Parse(response.Content);
             return json.Root.ToString().ToSecureString();
         }

@@ -55,7 +55,8 @@ namespace OneIdentity.SafeguardDotNet
                 case Method.Delete:
                     return RestSharp.Method.DELETE;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null);
+                    throw new SafeguardDotNetException("Unknown Safeguard REST method",
+                        new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
             }
         }
     }

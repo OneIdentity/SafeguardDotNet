@@ -64,7 +64,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 .AddHeader("X-TokenLifetimeRemaining", "");
             var response = CoreClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
+                throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
                                     response.ErrorMessage);
             if (!response.IsSuccessful)
                 return 0;
@@ -86,11 +86,11 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     .AddJsonBody(new { StsAccessToken = rStsToken.ToInsecureString() });
                 var response = CoreClient.Execute(request);
                 if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new Exception($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
-                                        response.ErrorMessage);
+                    throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
+                                                       response.ErrorMessage);
                 if (!response.IsSuccessful)
-                    throw new Exception("Error exchanging RSTS token for Safeguard Web API token, Error: " +
-                                        $"{response.StatusCode} {response.Content}");
+                    throw new SafeguardDotNetException("Error exchanging RSTS token for Safeguard Web API token, Error: " +
+                                                       $"{response.StatusCode} {response.Content}", response.Content);
                 var jObject = JObject.Parse(response.Content);
                 AccessToken = jObject.GetValue("UserToken").ToString().ToSecureString();
             }
