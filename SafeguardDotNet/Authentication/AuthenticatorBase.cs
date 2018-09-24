@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Net;
 using System.Security;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -61,7 +60,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 .AddHeader("Accept", "application/json")
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
-                .AddHeader("Authorization", $"Bearer {new NetworkCredential(string.Empty, AccessToken).Password}")
+                .AddHeader("Authorization", $"Bearer {AccessToken.ToInsecureString()}")
                 .AddHeader("X-TokenLifetimeRemaining", "");
             var response = CoreClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
@@ -84,7 +83,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     .AddHeader("Content-type", "application/json")
                     // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                     // I'm not sure there is anything you can do about it.
-                    .AddJsonBody(new { StsAccessToken = new NetworkCredential(string.Empty, rStsToken).Password });
+                    .AddJsonBody(new { StsAccessToken = rStsToken.ToInsecureString() });
                 var response = CoreClient.Execute(request);
                 if (response.ResponseStatus != ResponseStatus.Completed)
                     throw new Exception($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +

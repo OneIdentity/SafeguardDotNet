@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet.Authentication;
 using RestSharp;
@@ -70,7 +69,7 @@ namespace OneIdentity.SafeguardDotNet
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
                 request.AddHeader("Authorization",
-                    $"Bearer {new NetworkCredential(string.Empty, _authenticationMechanism.GetAccessToken()).Password}");
+                    $"Bearer {_authenticationMechanism.GetAccessToken().ToInsecureString()}");
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)

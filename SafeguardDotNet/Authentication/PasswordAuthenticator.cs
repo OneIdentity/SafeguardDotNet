@@ -92,7 +92,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     username = _username,
                     // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                     // I'm not sure there is anything you can do about it.
-                    password = new NetworkCredential(string.Empty, _password).Password,
+                    password = _password.ToInsecureString(),
                     scope = _providerScope
                 });
             var response = RstsClient.Execute(request);

@@ -17,6 +17,7 @@ namespace OneIdentity.SafeguardDotNet
             int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
         {
             // Don't try to refresh access token on the acceess token connect method because it cannot be refreshed
+            // So, don't use GetConnection() function above
             return new SafeguardConnection(new AccessTokenAuthenticator(networkAddress, accessToken, apiVersion, ignoreSsl));
         }
 
@@ -39,6 +40,36 @@ namespace OneIdentity.SafeguardDotNet
         {
             return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
                 apiVersion, ignoreSsl));
+        }
+
+        public static class A2A
+        {
+            public static IA2AContext GetContext(string networkAddress, string certificateThumbprint,
+                int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new A2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl);
+            }
+
+            public static IA2AContext GetContext(string networkAddress, string certificatePath,
+                SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new A2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl);
+            }
+
+            public static SecureString RetrievePassword(string networkAddress, string certificateThumbprint,
+                string apiKey, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return GetContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl)
+                    .RetrievePassword(apiKey);
+            }
+
+            public static SecureString RetrievePassword(string networkAddress, string certificatePath,
+                SecureString certificatePassword, string apiKey, int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
+            {
+                return GetContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl)
+                    .RetrievePassword(apiKey);
+            }
         }
     }
 }
