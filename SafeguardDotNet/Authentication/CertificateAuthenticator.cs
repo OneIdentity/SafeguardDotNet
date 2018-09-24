@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -12,7 +11,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
     {
         private readonly string _certificateThumbprint;
         private readonly string _certificatePath;
-        private SecureString _certificatePassword;
+        private readonly SecureString _certificatePassword;
 
         public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
             bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
@@ -40,15 +39,37 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             X509Certificate2 userCert;
             if (!string.IsNullOrEmpty(_certificateThumbprint))
             {
-                var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-                store.Open(OpenFlags.ReadOnly);
-                userCert = store.Certificates.OfType<X509Certificate2>()
-                    .FirstOrDefault(x => x.Thumbprint == _certificateThumbprint);
-                store.Close();
+                using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                {
+                    store.Open(OpenFlags.ReadOnly);
+                    userCert = store.Certificates.OfType<X509Certificate2>()
+                        .FirstOrDefault(x => x.Thumbprint == _certificateThumbprint);
+                }
+                if (userCert == null)
+                {
+                    using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+                    {
+
+
+                        userCert = store.Certificates.OfType<X509Certificate2>()
+                            .FirstOrDefault(x => x.Thumbprint == _certificateThumbprint);
+                        if (userCert == null)
+                            throw new Exception("Unable to find certificate matching " +
+                                                $"thumbprint={_certificateThumbprint} in Computer or User store");
+                    }
+                }
             }
             else
             {
-                userCert = new X509Certificate2(_certificatePath, _certificatePassword);
+                try
+                {
+                    userCert = new X509Certificate2(_certificatePath, _certificatePassword);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
             RstsClient.ClientCertificates = new X509Certificate2Collection() { userCert };
             var response = RstsClient.Execute(request);
