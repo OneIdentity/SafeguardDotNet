@@ -36,41 +36,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     grant_type = "client_credentials",
                     scope = "rsts:sts:primaryproviderid:certificate"
                 });
-            X509Certificate2 userCert;
-            if (!string.IsNullOrEmpty(_certificateThumbprint))
-            {
-                using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
-                {
-                    store.Open(OpenFlags.ReadOnly);
-                    userCert = store.Certificates.OfType<X509Certificate2>()
-                        .FirstOrDefault(x => x.Thumbprint == _certificateThumbprint);
-                }
-                if (userCert == null)
-                {
-                    using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
-                    {
-
-
-                        userCert = store.Certificates.OfType<X509Certificate2>()
-                            .FirstOrDefault(x => x.Thumbprint == _certificateThumbprint);
-                        if (userCert == null)
-                            throw new Exception("Unable to find certificate matching " +
-                                                $"thumbprint={_certificateThumbprint} in Computer or User store");
-                    }
-                }
-            }
-            else
-            {
-                try
-                {
-                    userCert = new X509Certificate2(_certificatePath, _certificatePassword);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
-            }
+            var userCert = !string.IsNullOrEmpty(_certificateThumbprint)
+                ? CertificateUtilities.GetClientCertificateFromStore(_certificateThumbprint)
+                : CertificateUtilities.GetClientCertificateFromFile(_certificatePath, _certificatePassword);
             RstsClient.ClientCertificates = new X509Certificate2Collection() { userCert };
             var response = RstsClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
