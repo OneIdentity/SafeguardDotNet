@@ -3,32 +3,22 @@ using Newtonsoft.Json.Linq;
 
 namespace OneIdentity.SafeguardDotNet
 {
-    public enum Service
-    {
-        Core,
-        Appliance,
-        Notification,
-        A2A
-    };
-
-    public enum Method
-    {
-        Post,
-        Get,
-        Put,
-        Delete
-    }
-
     public interface ISafeguardConnection
     {
         int GetAccessTokenLifetimeRemaining();
 
         void RefreshAccessToken();
 
-        JToken InvokeMethod(Service service, Method method, string relativeUrl,
-            JToken body, IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders);
-
         string InvokeMethod(Service service, Method method, string relativeUrl,
-            string body, IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders);
+            string body = null, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null);
+
+        JToken InvokeMethodParsed(Service service, Method method, string relativeUrl,
+            JToken body = null, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null);
+
+        FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
+            string body = null, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null);
     }
 }

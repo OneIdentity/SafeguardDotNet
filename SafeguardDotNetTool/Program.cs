@@ -78,7 +78,7 @@ namespace SafeguardDotNetTool
 
                 Log.Information($"Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
 
-                var responseBody = connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body, null, null);
+                var responseBody = connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body);
                 Log.Information(responseBody);
             }
             catch (Exception ex)

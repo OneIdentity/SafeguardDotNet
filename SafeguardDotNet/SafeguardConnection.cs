@@ -45,13 +45,19 @@ namespace OneIdentity.SafeguardDotNet
             _authenticationMechanism.RefreshAccessToken();
         }
 
-        public JToken InvokeMethod(Service service, Method method, string relativeUrl, JToken body,
+        public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
             IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
         {
-            var content = InvokeMethod(service, method, relativeUrl, body.ToString(), parameters, additionalHeaders);
+            return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
+        }
+
+        public JToken InvokeMethodParsed(Service service, Method method, string relativeUrl, JToken body,
+            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
+        {
+            var content = InvokeMethod(service, method, relativeUrl, body?.ToString(), parameters, additionalHeaders);
             try
             {
-                return JToken.Parse(content);
+                return string.IsNullOrEmpty(content) ? null : JToken.Parse(content);
             }
             catch (Exception ex)
             {
@@ -59,8 +65,9 @@ namespace OneIdentity.SafeguardDotNet
             }
         }
 
-        public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
-            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
+        public FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
+            string body = null, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null)
         {
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
                 .AddHeader("Accept", "application/json");
@@ -90,7 +97,18 @@ namespace OneIdentity.SafeguardDotNet
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException("Error calling Safeguard Web API, Error: " +
                                                    $"{response.StatusCode} {response.Content}", response.Content);
-            return response.Content;
+            var fullResponse = new FullResponse
+            {
+                StatusCode = response.StatusCode,
+                Headers = new Dictionary<string, string>(),
+                Body = response.Content
+            };
+            if (response.Headers != null)
+            {
+                foreach (var header in response.Headers)
+                    fullResponse.Headers.Add(header.Name, header.Value?.ToString());
+            }
+            return fullResponse;
         }
 
         private RestClient GetClientForService(Service service)

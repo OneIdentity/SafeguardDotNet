@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Security;
+﻿using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using RestSharp;
