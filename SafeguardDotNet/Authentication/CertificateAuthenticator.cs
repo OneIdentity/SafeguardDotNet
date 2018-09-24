@@ -38,7 +38,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     scope = "rsts:sts:primaryproviderid:certificate"
                 });
             X509Certificate2 userCert;
-            if (string.IsNullOrEmpty(_certificateThumbprint))
+            if (!string.IsNullOrEmpty(_certificateThumbprint))
             {
                 var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.ReadOnly);
@@ -48,8 +48,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             }
             else
             {
-                // TODO: Support certificate password here.
-                userCert = new X509Certificate2(File.ReadAllBytes(_certificatePath));
+                userCert = new X509Certificate2(_certificatePath, _certificatePassword);
             }
             RstsClient.ClientCertificates = new X509Certificate2Collection() { userCert };
             var response = RstsClient.Execute(request);
