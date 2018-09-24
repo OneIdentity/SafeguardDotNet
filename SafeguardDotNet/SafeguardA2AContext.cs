@@ -47,7 +47,7 @@ namespace OneIdentity.SafeguardDotNet
                 throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error calling Safeguard Web API, Error: " +
+                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
                                                    $"{response.StatusCode} {response.Content}", response.Content);
             var json = JToken.Parse(response.Content);
             return json.Root.ToString().ToSecureString();

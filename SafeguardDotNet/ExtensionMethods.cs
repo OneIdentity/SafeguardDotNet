@@ -5,8 +5,16 @@ using System.Security;
 
 namespace OneIdentity.SafeguardDotNet
 {
+    /// <summary>
+    /// A few extension methods that are useful when calling SafeguardDotNet methods.
+    /// </summary>
     public static class ExtensionMethods
     {
+        /// <summary>
+        /// Convenience method for easily converting standard strings to secure strings.
+        /// </summary>
+        /// <param name="thisString"></param>
+        /// <returns>A secure string for storage in long-lived memory.</returns>
         public static SecureString ToSecureString(this string thisString)
         {
             // I realize this may defeat the purpose of using SecureStrings in the first place,
@@ -19,6 +27,11 @@ namespace OneIdentity.SafeguardDotNet
             return result;
         }
 
+        /// <summary>
+        /// Convenience method for easily converting secure strings to standard strings.
+        /// </summary>
+        /// <param name="thisSecureString"></param>
+        /// <returns>A standard string that can be passed more easily to other methods.</returns>
         public static string ToInsecureString(this SecureString thisSecureString)
         {
             // I realize this may defeat the purpose of using SecureStrings in the first place,
