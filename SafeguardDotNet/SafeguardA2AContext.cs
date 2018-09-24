@@ -6,11 +6,11 @@ using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet
 {
-    internal class A2AContext : IA2AContext
+    internal class SafeguardA2AContext : ISafeguardA2AContext
     {
         private readonly RestClient _a2AClient;
 
-        private A2AContext(string networkAddress, string certificateThumbprint, string certificatePath,
+        private SafeguardA2AContext(string networkAddress, string certificateThumbprint, string certificatePath,
             SecureString certificatePassword, int apiVersion, bool ignoreSsl)
         {
             var safeguardA2AUrl = $"https://{networkAddress}/service/a2a/v{apiVersion}";
@@ -25,12 +25,12 @@ namespace OneIdentity.SafeguardDotNet
             _a2AClient.ClientCertificates = new X509Certificate2Collection() { userCert };
         }
 
-        public A2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 
+        public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 
             this(networkAddress, certificateThumbprint, null, null, apiVersion, ignoreSsl)
         {
         }
 
-        public A2AContext(string networkAddress, string certificatePath, SecureString certificatePassword,
+        public SafeguardA2AContext(string networkAddress, string certificatePath, SecureString certificatePassword,
             int apiVersion, bool ignoreSsl) :
             this(networkAddress, null, certificatePath, certificatePassword,
                 apiVersion, ignoreSsl)
@@ -42,7 +42,7 @@ namespace OneIdentity.SafeguardDotNet
             var request = new RestRequest("Credentials", RestSharp.Method.GET)
                 .AddParameter("type", "Password", ParameterType.QueryString)
                 .AddHeader("Accept", "application/json")
-                .AddHeader("Authorization", $"Bearer A2A {apiKey}");
+                .AddHeader("Authorization", $"A2A {apiKey}");
             var response = _a2AClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
                 throw new Exception($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
@@ -50,8 +50,8 @@ namespace OneIdentity.SafeguardDotNet
             if (!response.IsSuccessful)
                 throw new Exception("Error calling Safeguard Web API, Error: " +
                                     $"{response.StatusCode} {response.Content}");
-            var jsonObject = JObject.Parse(response.Content);
-            return "".ToSecureString();
+            var json = JToken.Parse(response.Content);
+            return json.Root.ToString().ToSecureString();
         }
     }
 }

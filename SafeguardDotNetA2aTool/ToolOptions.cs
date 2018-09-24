@@ -1,7 +1,6 @@
 ﻿using CommandLine;
-using OneIdentity.SafeguardDotNet;
 
-namespace SafeguardDotNetTool
+namespace SafeguardDotNetA2aTool
 {
     internal class ToolOptions
     {
@@ -25,14 +24,6 @@ namespace SafeguardDotNetTool
             HelpText = "Version of the Safeguard API to use")]
         public int ApiVersion { get; set; }
 
-        [Option('i', "IdentityProvider", Required = false, Default = null, SetName = "PasswordSet",
-            HelpText = "Safeguard identity provider to use for rSTS")]
-        public string IdentityProvider { get; set; }
-
-        [Option('u', "Username", Required = true, SetName = "PasswordSet",
-            HelpText = "Safeguard username to use to authenticate")]
-        public string Username { get; set; }
-
         [Option('t', "Thumbprint", Required = true, SetName = "CertificateThumbprint",
             HelpText = "Thumbprint for client certificate in user certificate store")]
         public string Thumbprint { get; set; }
@@ -41,20 +32,8 @@ namespace SafeguardDotNetTool
             HelpText = "File path for client certificate")]
         public string CertificateFile { get; set; }
 
-        [Option('s', "Service", Required = true,
-            HelpText = "Safeguard service to use")]
-        public Service Service { get; set; }
-
-        [Option('m', "Method", Required = true,
-            HelpText = "HTTP Method to use")]
-        public Method Method { get; set; }
-
-        [Option('U', "RelativeUrl", Required = true,
-            HelpText = "HTTP Method to use")]
-        public string RelativeUrl { get; set; }
-
-        [Option('b', "Body", Required = false, Default = null,
-            HelpText = "JSON body as string")]
-        public string Body { get; set; }
+        [Option('A', "ApiKey", Required = true, Default = null,
+            HelpText = "ApiKey for call Safeguard A2A")]
+        public string ApiKey { get; set; }
     }
 }

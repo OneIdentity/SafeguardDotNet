@@ -2,7 +2,7 @@
 
 namespace OneIdentity.SafeguardDotNet
 {
-    public interface IA2AContext
+    public interface ISafeguardA2AContext
     {
         SecureString RetrievePassword(string apiKey);
     }

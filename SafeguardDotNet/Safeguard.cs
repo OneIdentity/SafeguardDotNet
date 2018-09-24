@@ -44,16 +44,16 @@ namespace OneIdentity.SafeguardDotNet
 
         public static class A2A
         {
-            public static IA2AContext GetContext(string networkAddress, string certificateThumbprint,
+            public static ISafeguardA2AContext GetContext(string networkAddress, string certificateThumbprint,
                 int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
             {
-                return new A2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl);
+                return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl);
             }
 
-            public static IA2AContext GetContext(string networkAddress, string certificatePath,
+            public static ISafeguardA2AContext GetContext(string networkAddress, string certificatePath,
                 SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
             {
-                return new A2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl);
+                return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl);
             }
 
             public static SecureString RetrievePassword(string networkAddress, string certificateThumbprint,
