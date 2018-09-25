@@ -40,7 +40,7 @@ namespace OneIdentity.SafeguardDotNet
         {
         }
 
-        public SecureString RetrievePassword(string apiKey)
+        public SecureString RetrievePassword(SecureString apiKey)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");
@@ -48,7 +48,7 @@ namespace OneIdentity.SafeguardDotNet
             var request = new RestRequest("Credentials", RestSharp.Method.GET)
                 .AddParameter("type", "Password", ParameterType.QueryString)
                 .AddHeader("Accept", "application/json")
-                .AddHeader("Authorization", $"A2A {apiKey}");
+                .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
             var response = _a2AClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
                 throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +

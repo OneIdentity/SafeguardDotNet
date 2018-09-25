@@ -70,7 +70,7 @@ namespace SafeguardDotNetA2aTool
                     throw new Exception("Must specify CertificateFile or Thumbprint");
                 }
 
-                var responseBody = context.RetrievePassword(opts.ApiKey);
+                var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString());
                 Log.Information(responseBody.ToInsecureString());
             }
             catch (Exception ex)

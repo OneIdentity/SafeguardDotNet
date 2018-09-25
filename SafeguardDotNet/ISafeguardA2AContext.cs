@@ -14,7 +14,7 @@ namespace OneIdentity.SafeguardDotNet
         /// </summary>
         /// <param name="apiKey">API key corresponding to the configured account.</param>
         /// <returns>The password.</returns>
-        SecureString RetrievePassword(string apiKey);
+        SecureString RetrievePassword(SecureString apiKey);
 
         /// <summary>
         /// Gets an A2A event listener. The handler passed in will be registered for the AssetAccountPasswordUpdated
