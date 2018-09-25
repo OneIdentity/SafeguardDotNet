@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Security;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -7,6 +8,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 {
     internal abstract class AuthenticatorBase : IAuthenticationMechanism
     {
+        private bool _disposed;
+
         protected SecureString AccessToken;
 
         protected readonly string SafeguardRstsUrl;
@@ -48,11 +51,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public SecureString GetAccessToken()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("AuthenticatorBase");
             return AccessToken;
         }
 
         public int GetAccessTokenLifetimeRemaining()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("AuthenticatorBase");
             if (!HasAccessToken())
                 return 0;
             var request = new RestRequest("LoginMessage", RestSharp.Method.GET)
@@ -75,6 +82,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public void RefreshAccessToken()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("AuthenticatorBase");
             using (var rStsToken = GetRstsTokenInternal())
             {
                 var request = new RestRequest("Token/LoginResponse", RestSharp.Method.POST)
@@ -88,7 +97,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
                                                        response.ErrorMessage);
                 if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException("Error exchanging RSTS token for Safeguard Web API token, Error: " +
+                    throw new SafeguardDotNetException("Error exchanging RSTS token for Safeguard API access token, Error: " +
                                                        $"{response.StatusCode} {response.Content}", response.Content);
                 var jObject = JObject.Parse(response.Content);
                 AccessToken = jObject.GetValue("UserToken").ToString().ToSecureString();
@@ -96,5 +105,25 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         }
 
         protected abstract SecureString GetRstsTokenInternal();
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+                return;
+            try
+            {
+                AccessToken?.Dispose();
+            }
+            finally
+            {
+                _disposed = true;
+            }
+        }
     }
 }

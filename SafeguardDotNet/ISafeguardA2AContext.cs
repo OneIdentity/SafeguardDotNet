@@ -1,4 +1,5 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -6,7 +7,7 @@ namespace OneIdentity.SafeguardDotNet
     /// This is a reusable interface for calling Safeguard A2A without having to continually
     /// pass the client certificate authentication information.
     /// </summary>
-    public interface ISafeguardA2AContext
+    public interface ISafeguardA2AContext : IDisposable
     {
         /// <summary>
         /// Retrieves a password using Safeguard A2A.

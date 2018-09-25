@@ -10,6 +10,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 {
     internal class PasswordAuthenticator : AuthenticatorBase
     {
+        private bool _disposed;
+
         private readonly string _provider;
         private string _providerScope;
         private readonly string _username;
@@ -81,6 +83,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected override SecureString GetRstsTokenInternal()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("PasswordAuthenticator");
             if (_providerScope == null)
                 ResolveProviderToScope();
             var request = new RestRequest("oauth2/token", RestSharp.Method.POST)
@@ -104,6 +108,21 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                                                    $"{response.StatusCode} {response.Content}", response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+                return;
+            base.Dispose(true);
+            try
+            {
+                _password?.Dispose();
+            }
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 }

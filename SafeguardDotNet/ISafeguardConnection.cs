@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
 namespace OneIdentity.SafeguardDotNet
@@ -7,7 +8,7 @@ namespace OneIdentity.SafeguardDotNet
     /// This is the reusable connection interface that can be used to call Safeguard API after
     /// connecting using the API access token obtained during authentication.
     /// </summary>
-    public interface ISafeguardConnection
+    public interface ISafeguardConnection : IDisposable
     {
         /// <summary>
         /// Number of minutes remaining in the lifetime of the API access token.

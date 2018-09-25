@@ -8,6 +8,8 @@ namespace OneIdentity.SafeguardDotNet
 {
     internal class SafeguardConnection : ISafeguardConnection
     {
+        private bool _disposed;
+
         private readonly IAuthenticationMechanism _authenticationMechanism;
 
         private readonly RestClient _coreClient;
@@ -37,23 +39,31 @@ namespace OneIdentity.SafeguardDotNet
 
         public int GetAccessTokenLifetimeRemaining()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
             return _authenticationMechanism.GetAccessTokenLifetimeRemaining();
         }
 
         public void RefreshAccessToken()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
             _authenticationMechanism.RefreshAccessToken();
         }
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
             IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
         }
 
         public JToken InvokeMethodParsed(Service service, Method method, string relativeUrl, JToken body,
             IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
             var content = InvokeMethod(service, method, relativeUrl, body?.ToString(), parameters, additionalHeaders);
             try
             {
@@ -69,6 +79,8 @@ namespace OneIdentity.SafeguardDotNet
             string body = null, IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null)
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
                 .AddHeader("Accept", "application/json");
             if (service != Service.Notification)
@@ -126,6 +138,26 @@ namespace OneIdentity.SafeguardDotNet
                         "You must call the A2A service using the A2A specific method, Error: Unsupported operation");
                 default:
                     throw new SafeguardDotNetException("Unknown or unsupported service specified");
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+                return;
+            try
+            {
+                _authenticationMechanism?.Dispose();
+            }
+            finally
+            {
+                _disposed = true;
             }
         }
     }

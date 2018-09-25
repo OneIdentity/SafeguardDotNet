@@ -76,7 +76,7 @@ namespace SafeguardDotNetTool
                     throw new Exception("Must specify Username, CertificateFile, or Thumbprint");
                 }
 
-                Log.Information($"Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
+                Log.Information($"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
 
                 var responseBody = connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body);
                 Log.Information(responseBody);

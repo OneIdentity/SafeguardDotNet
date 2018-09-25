@@ -1,4 +1,5 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -7,6 +8,9 @@ namespace OneIdentity.SafeguardDotNet
 {
     internal class SafeguardA2AContext : ISafeguardA2AContext
     {
+        private bool _disposed;
+
+        private readonly X509Certificate2 _clientCertificate;
         private readonly RestClient _a2AClient;
 
         private SafeguardA2AContext(string networkAddress, string certificateThumbprint, string certificatePath,
@@ -18,10 +22,10 @@ namespace OneIdentity.SafeguardDotNet
             if (ignoreSsl)
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
 
-            var userCert = !string.IsNullOrEmpty(certificateThumbprint)
+            _clientCertificate = !string.IsNullOrEmpty(certificateThumbprint)
                 ? CertificateUtilities.GetClientCertificateFromStore(certificateThumbprint)
                 : CertificateUtilities.GetClientCertificateFromFile(certificatePath, certificatePassword);
-            _a2AClient.ClientCertificates = new X509Certificate2Collection() { userCert };
+            _a2AClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate };
         }
 
         public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 
@@ -38,6 +42,9 @@ namespace OneIdentity.SafeguardDotNet
 
         public SecureString RetrievePassword(string apiKey)
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+
             var request = new RestRequest("Credentials", RestSharp.Method.GET)
                 .AddParameter("type", "Password", ParameterType.QueryString)
                 .AddHeader("Accept", "application/json")
@@ -55,9 +62,33 @@ namespace OneIdentity.SafeguardDotNet
 
         public ISafeguardEventListener GetEventListener(SafeguardEventHandler handler)
         {
-            var eventHandler = new SafeguardEventListener();
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+
+            // TODO: get this right
+            var eventHandler = new SafeguardEventListener("", null);
             eventHandler.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             return eventHandler;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+                return;
+            try
+            {
+                _clientCertificate?.Dispose();
+            }
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 }

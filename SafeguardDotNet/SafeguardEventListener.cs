@@ -7,55 +7,73 @@ namespace OneIdentity.SafeguardDotNet
 {
     internal class SafeguardEventListener : ISafeguardEventListener
     {
-        bool _disposed;
+        private bool _disposed;
 
-        string _eventUrl;
-        SecureString _apiToken;
-        X509Certificate2 _certificate;
+        private string _eventUrl;
+        private readonly SecureString _apiToken;
+        private readonly SecureString _apiKey;
+        private readonly X509Certificate2 _clientCertificate;
 
         HubConnection _signalrConnection;
 
-        public SafeguardEventListener(string baseUrl, SecureString apiToken)
+        private SafeguardEventListener(string eventUrl)
         {
-            _apiToken = apiToken;
-
+            _eventUrl = eventUrl;
         }
 
-        public SafeguardEventListener(string baseUrl, X509Certificate2 certificate)
+        public SafeguardEventListener(string eventUrl, SecureString apiToken) : this(eventUrl)
         {
-            _certificate = certificate;
+            _apiToken = apiToken.Copy();
         }
 
-        public void Dispose()
+        public SafeguardEventListener(string eventUrl, X509Certificate2 clientCertificate, SecureString apiKey) : this(eventUrl)
         {
-            if (!_disposed)
-            {
-                _apiToken?.Dispose();
-                try
-                {
-                    _signalrConnection?.Dispose();
-                }
-                finally
-                {
-                    _signalrConnection = null;
-                }
-                _disposed = true;
-            }
+            _clientCertificate = clientCertificate;
+            _apiKey = apiKey.Copy();
         }
 
         public void RegisterEventHandler(string eventName, SafeguardEventHandler handler)
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardEventListener");
             throw new NotImplementedException();
         }
 
         public void Start()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardEventListener");
             throw new NotImplementedException();
         }
 
         public void Stop()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardEventListener");
             throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+                return;
+            try
+            {
+                _signalrConnection?.Dispose();
+                _apiToken?.Dispose();
+                _clientCertificate?.Dispose();
+                _apiKey?.Dispose();
+            }
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 }

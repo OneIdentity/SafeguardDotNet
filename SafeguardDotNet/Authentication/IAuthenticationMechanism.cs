@@ -1,8 +1,9 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
-    internal interface IAuthenticationMechanism
+    internal interface IAuthenticationMechanism : IDisposable
     {
         string NetworkAddress { get; }
 

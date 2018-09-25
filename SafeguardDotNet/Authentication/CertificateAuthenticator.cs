@@ -1,4 +1,5 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -7,6 +8,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 {
     internal class CertificateAuthenticator : AuthenticatorBase
     {
+        private bool _disposed;
+
         private readonly string _certificateThumbprint;
         private readonly string _certificatePath;
         private readonly SecureString _certificatePassword;
@@ -21,11 +24,14 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
         {
             _certificatePath = certificatePath;
-            _certificatePassword = certificatePassword;
+            _certificatePassword = certificatePassword.Copy();
         }
 
         protected override SecureString GetRstsTokenInternal()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("CertificateAuthenticator");
+
             var request = new RestRequest("oauth2/token", RestSharp.Method.POST)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")
@@ -48,6 +54,21 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                                                    $", Error: {response.StatusCode} {response.Content}", response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+                return;
+            base.Dispose(true);
+            try
+            {
+                _certificatePassword?.Dispose();
+            }
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 }
