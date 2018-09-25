@@ -25,7 +25,7 @@ namespace OneIdentity.SafeguardDotNet
         private readonly X509Certificate2 _clientCertificate;
 
         private HubConnection _signalrConnection;
-        private IHubProxy _signalrHubProxy;
+        public IHubProxy SignalrHubProxy { get; private set; }
         private CancellationTokenSource _signalrCancel;
 
         private readonly DelegateRegistry _delegateStringRegistry =
@@ -159,6 +159,7 @@ namespace OneIdentity.SafeguardDotNet
                     _signalrCancel?.Cancel();
                 _signalrCancel?.Dispose();
                 _signalrConnection?.Dispose();
+                SignalrHubProxy = null;
             }
             finally
             {
@@ -196,7 +197,7 @@ namespace OneIdentity.SafeguardDotNet
                 _signalrConnection.Headers.Add("Authorization", $"A2A {_apiKey.ToInsecureString()}");
                 _signalrConnection.AddClientCertificate(_clientCertificate);
             }
-            _signalrHubProxy = _signalrConnection.CreateHubProxy(NotificationHub);
+            SignalrHubProxy = _signalrConnection.CreateHubProxy(NotificationHub);
 
             _signalrCancel = new CancellationTokenSource();
             Task.Run(() =>
