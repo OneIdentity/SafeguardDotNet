@@ -85,6 +85,11 @@ namespace SafeguardDotNetEventTool
                     Log.Information($"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
                     using (var listener = connection.GetEventListener())
                     {
+                        listener.RegisterEventHandler(opts.Event, (string name, string body) =>
+                        {
+                            Log.Information("Received Event: {EventName}", name);
+                            Log.Information("Details: {EventBody}", body);
+                        });
                         listener.Start();
                         Log.Information("Press any key to shut down the event listener...");
                         Console.ReadKey();
