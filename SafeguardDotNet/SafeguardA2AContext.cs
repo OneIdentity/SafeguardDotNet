@@ -25,7 +25,7 @@ namespace OneIdentity.SafeguardDotNet
 
             if (ignoreSsl)
             {
-                _ignoreSsl = ignoreSsl;
+                _ignoreSsl = true;
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
             _clientCertificate = !string.IsNullOrEmpty(certificateThumbprint)
