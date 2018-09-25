@@ -52,5 +52,12 @@ namespace OneIdentity.SafeguardDotNet
             var json = JToken.Parse(response.Content);
             return json.Root.ToString().ToSecureString();
         }
+
+        public ISafeguardEventListener GetEventListener(SafeguardEventHandler handler)
+        {
+            var eventHandler = new SafeguardEventListener();
+            eventHandler.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            return eventHandler;
+        }
     }
 }

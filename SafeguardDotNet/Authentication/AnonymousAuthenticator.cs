@@ -11,7 +11,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected override SecureString GetRstsTokenInternal()
         {
-            throw new SafeguardDotNetException("Anonymous cannot be used to get an API access token, Error: Unsupported operation");
+            throw new SafeguardDotNetException("Anonymous connection cannot be used to get an API access token, Error: Unsupported operation");
         }
     }
 }
