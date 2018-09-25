@@ -74,11 +74,14 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     var name = jEvent["Name"];
                     var body = jEvent["Data"];
-                    events.Add((name.ToString(), body));
+                    // Work around for bug in A2A events in Safeguard 2.2 and 2.3
+                    if (name != null && int.TryParse(name.ToString(), out _))
+                        name = body["EventName"];
+                    events.Add((name?.ToString(), body));
                 }
                 return events.ToArray();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Log.Warning("Unable to parse event object {EventObject}", eventObject);
                 return null;
@@ -92,6 +95,12 @@ namespace OneIdentity.SafeguardDotNet
                 return;
             foreach (var eventInfo in events)
             {
+                if (eventInfo.Item1 == null)
+                {
+                    Log.Warning("Found null event with body {EventBody}", eventInfo.Item2);
+                    continue;
+                }
+
                 if (!_delegateStringRegistry.ContainsKey(eventInfo.Item1) && !_delegateParsedRegistry.ContainsKey(eventInfo.Item1))
                 {
                     Log.Information("No handlers registered for event {Event}", eventInfo.Item1);
@@ -194,11 +203,6 @@ namespace OneIdentity.SafeguardDotNet
             {
                 try
                 {
-                    var a = _signalrHubProxy.On<JToken>("AssetAccountPasswordUpdated", (token =>
-                    {
-                        Log.Information(token.ToString());
-                    }));
-                    // TODO: Remove debugging below and connect real event handlers
                     _signalrConnection.Received += HandleEvent;
                     _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : new DefaultHttpClient())
                         .Wait();

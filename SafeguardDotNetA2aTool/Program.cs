@@ -40,6 +40,26 @@ namespace SafeguardDotNetA2aTool
             return readFromStdin ? Console.ReadLine().ToSecureString() : PromptForSecret("Password");
         }
 
+        private static ISafeguardA2AContext CreateA2AContext(ToolOptions opts)
+        {
+            ISafeguardA2AContext context;
+            if (!string.IsNullOrEmpty(opts.CertificateFile))
+            {
+                var password = HandlePassword(opts.ReadPassword);
+                context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
+                    opts.Insecure);
+            }
+            else if (!string.IsNullOrEmpty(opts.Thumbprint))
+            {
+                context = Safeguard.A2A.GetContext(opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
+            }
+            else
+            {
+                throw new Exception("Must specify CertificateFile or Thumbprint");
+            }
+            return context;
+        }
+
         private static void Execute(ToolOptions opts)
         {
             try
@@ -54,24 +74,11 @@ namespace SafeguardDotNetA2aTool
 
                 Log.Logger = config.CreateLogger();
 
-                ISafeguardA2AContext context;
-                if (!string.IsNullOrEmpty(opts.CertificateFile))
+                using (var context = CreateA2AContext(opts))
                 {
-                    var password = HandlePassword(opts.ReadPassword);
-                    context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
-                        opts.Insecure);
+                    var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString());
+                    Log.Information(responseBody.ToInsecureString());
                 }
-                else if (!string.IsNullOrEmpty(opts.Thumbprint))
-                {
-                    context = Safeguard.A2A.GetContext(opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
-                }
-                else
-                {
-                    throw new Exception("Must specify CertificateFile or Thumbprint");
-                }
-
-                var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString());
-                Log.Information(responseBody.ToInsecureString());
             }
             catch (Exception ex)
             {

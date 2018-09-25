@@ -66,6 +66,27 @@ namespace SafeguardDotNetEventTool
             return connection;
         }
 
+        private static ISafeguardA2AContext CreateA2AContext(ToolOptions opts)
+        {
+            ISafeguardA2AContext context;
+            if (!string.IsNullOrEmpty(opts.CertificateFile))
+            {
+                var password = HandlePassword(opts.ReadPassword);
+                context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
+                    opts.Insecure);
+            }
+            else if (!string.IsNullOrEmpty(opts.Thumbprint))
+            {
+                context = Safeguard.A2A.GetContext(opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
+            }
+            else
+            {
+                throw new Exception("Must specify CertificateFile or Thumbprint");
+            }
+            return context;
+        }
+
+
         private static void Execute(ToolOptions opts)
         {
             try
@@ -80,20 +101,40 @@ namespace SafeguardDotNetEventTool
 
                 Log.Logger = config.CreateLogger();
 
-                using (var connection = CreateConnection(opts))
+                if (string.IsNullOrEmpty(opts.ApiKey))
                 {
-                    Log.Information($"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
-                    using (var listener = connection.GetEventListener())
+                    using (var connection = CreateConnection(opts))
                     {
-                        listener.RegisterEventHandler(opts.Event, (string name, string body) =>
+                        Log.Information(
+                            $"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
+                        using (var listener = connection.GetEventListener())
                         {
-                            Log.Information("Received Event: {EventName}", name);
-                            Log.Information("Details: {EventBody}", body);
-                        });
-                        listener.Start();
-                        Log.Information("Press any key to shut down the event listener...");
-                        Console.ReadKey();
-                        listener.Stop();
+                            listener.RegisterEventHandler(opts.Event, (string name, string body) =>
+                            {
+                                Log.Information("Received Event: {EventName}", name);
+                                Log.Information("Details: {EventBody}", body);
+                            });
+                            listener.Start();
+                            Log.Information("Press any key to shut down the event listener...");
+                            Console.ReadKey();
+                            listener.Stop();
+                        }
+                    }
+                }
+                else
+                {
+                    using (var context = CreateA2AContext(opts))
+                    {
+                        using (var listener = context.GetEventListener(opts.ApiKey.ToSecureString(), ((string name, string body) =>
+                        {
+                            Log.Information("Received A2A Event: {EventBody}", body);
+                        })))
+                        {
+                            listener.Start();
+                            Log.Information("Press any key to shut down the event listener...");
+                            Console.ReadKey();
+                            listener.Stop();
+                        }
                     }
                 }
             }
