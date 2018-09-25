@@ -27,7 +27,7 @@ namespace OneIdentity.SafeguardDotNet
         public static ISafeguardConnection Connect(string networkAddress, SecureString accessToken,
             int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
         {
-            // Don't try to refresh access token on the acceess token connect method because it cannot be refreshed
+            // Don't try to refresh access token on the access token connect method because it cannot be refreshed
             // So, don't use GetConnection() function above
             return new SafeguardConnection(new AccessTokenAuthenticator(networkAddress, accessToken, apiVersion, ignoreSsl));
         }
@@ -80,7 +80,21 @@ namespace OneIdentity.SafeguardDotNet
             return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
                 apiVersion, ignoreSsl));
         }
-        
+
+        /// <summary>
+        /// Connect to Safeguard API anonymously.
+        /// </summary>
+        /// <returns>The connect.</returns>
+        /// <param name="networkAddress">Network address.</param>
+        /// <param name="apiVersion">API version.</param>
+        /// <param name="ignoreSsl">If set to <c>true</c> ignore ssl.</param>
+        public static ISafeguardConnection Connect(string networkAddress, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        {
+            // Don't try to refresh access token on the anonymous connect method because it cannot be refreshed
+            // So, don't use GetConnection() function above
+            return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, ignoreSsl));
+        }
+
         /// <summary>
         /// This static class provides access to Safeguard A2A functionality.
         /// </summary>
@@ -114,42 +128,6 @@ namespace OneIdentity.SafeguardDotNet
                 SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
             {
                 return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl);
-            }
-
-            /// <summary>
-            /// Convenience method for calling Safeguard A2A without establishing a context using a certificate from
-            /// the certificate store.  Use PowerShell to list certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
-            /// </summary>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
-            /// <param name="apiKey">API key identifying the password to release.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>Requested password</returns>
-            public static SecureString RetrievePassword(string networkAddress, string certificateThumbprint,
-                string apiKey, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
-            {
-                return GetContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl)
-                    .RetrievePassword(apiKey);
-            }
-
-            /// <summary>
-            /// Convenience method for calling Safeguard A2A without establishing a context using a certificate stored
-            /// in a file.
-            /// </summary>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
-            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
-            /// <param name="apiKey">API key identifying the password to release.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>Requested password</returns>
-            public static SecureString RetrievePassword(string networkAddress, string certificatePath,
-                SecureString certificatePassword, string apiKey, int apiVersion = DefaultApiVersion,
-                bool ignoreSsl = false)
-            {
-                return GetContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl)
-                    .RetrievePassword(apiKey);
             }
         }
     }

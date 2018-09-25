@@ -8,6 +8,11 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public interface ISafeguardA2AContext
     {
+        /// <summary>
+        /// Retrieves a password using Safeguard A2A.
+        /// </summary>
+        /// <param name="apiKey">API key corresponding to the configured account.</param>
+        /// <returns>The password.</returns>
         SecureString RetrievePassword(string apiKey);
     }
 }
