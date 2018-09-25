@@ -10,18 +10,24 @@ namespace OneIdentity.SafeguardDotNet
     {
         private bool _disposed;
 
+        private readonly string _networkAddress;
+        private readonly bool _ignoreSsl;
+
         private readonly X509Certificate2 _clientCertificate;
         private readonly RestClient _a2AClient;
 
         private SafeguardA2AContext(string networkAddress, string certificateThumbprint, string certificatePath,
             SecureString certificatePassword, int apiVersion, bool ignoreSsl)
         {
-            var safeguardA2AUrl = $"https://{networkAddress}/service/a2a/v{apiVersion}";
+            _networkAddress = networkAddress;
+            var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{apiVersion}";
             _a2AClient = new RestClient(safeguardA2AUrl);
 
             if (ignoreSsl)
+            {
+                _ignoreSsl = ignoreSsl;
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-
+            }
             _clientCertificate = !string.IsNullOrEmpty(certificateThumbprint)
                 ? CertificateUtilities.GetClientCertificateFromStore(certificateThumbprint)
                 : CertificateUtilities.GetClientCertificateFromFile(certificatePath, certificatePassword);
@@ -60,15 +66,16 @@ namespace OneIdentity.SafeguardDotNet
             return json.Root.ToString().ToSecureString();
         }
 
-        public ISafeguardEventListener GetEventListener(SafeguardEventHandler handler)
+        public ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");
 
             // TODO: get this right
-            var eventHandler = new SafeguardEventListener("", null);
-            eventHandler.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
-            return eventHandler;
+            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
+                apiKey, _ignoreSsl);
+            eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            return eventListener;
         }
 
         public void Dispose()

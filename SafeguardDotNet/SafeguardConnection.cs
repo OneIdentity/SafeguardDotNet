@@ -123,6 +123,14 @@ namespace OneIdentity.SafeguardDotNet
             return fullResponse;
         }
 
+        public ISafeguardEventListener GetEventListener()
+        {
+            var eventListener = new SafeguardEventListener(
+                $"https://{_authenticationMechanism.NetworkAddress}/service/event",
+                _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl);
+            return eventListener;
+        }
+
         private RestClient GetClientForService(Service service)
         {
             switch (service)

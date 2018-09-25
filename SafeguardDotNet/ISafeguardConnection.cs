@@ -68,5 +68,13 @@ namespace OneIdentity.SafeguardDotNet
         FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null);
+
+        /// <summary>
+        /// Gets a Safeguard event listener. You will need to call the RegisterEventHandler()
+        /// method to establish callbacks. Then, you just have to call Start().  Call Stop()
+        /// when you are finished.
+        /// </summary>
+        /// <returns>The event listener.</returns>
+        ISafeguardEventListener GetEventListener();
     }
 }

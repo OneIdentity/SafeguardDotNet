@@ -20,8 +20,9 @@ namespace OneIdentity.SafeguardDotNet
         /// Gets an A2A event listener. The handler passed in will be registered for the AssetAccountPasswordUpdated
         /// event, which is the only one supported in A2A. You just have to call Start().
         /// </summary>
-        /// <param name="handler"></param>
+        /// <param name="apiKey">API key correspondingto the configured account to listen for.</param>
+        /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
         /// <returns>The event listener.</returns>
-        ISafeguardEventListener GetEventListener(SafeguardEventHandler handler);
+        ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler);
     }
 }
