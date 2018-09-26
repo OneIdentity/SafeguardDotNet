@@ -3,6 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>OneIdentity.SafeguardDotNet</RootNamespace>
+    <PackageId>OneIdentity.SafeguardDotNet</PackageId>
+    <Authors>One Identity LLC</Authors>
+    <Copyright>(c) 2018 One Identity LLC. All rights reserved.</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/SafeguardLogo.ico</PackageIconUrl>
+    <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
+    <Version>2.3.0</Version>
+    <Description>One Identity Safeguard Web API C# SDK</Description>
+    <AssemblyVersion>2.3.0.9999</AssemblyVersion>
+    <FileVersion>2.3.0.9999</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
