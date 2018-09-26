@@ -9,7 +9,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/SafeguardLogo.ico</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</PackageIconUrl>
     <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
     <Version>9999.9999.9999</Version>
     <Description>One Identity Safeguard Web API C# SDK</Description>
