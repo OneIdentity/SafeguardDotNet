@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet.Authentication;
 using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -86,7 +88,16 @@ namespace OneIdentity.SafeguardDotNet
             }
 
             var client = GetClientForService(service);
+            Log.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
+                client.BaseUrl + $"/{relativeUrl}");
+            Log.Debug("  Query parameters: {QueryParameters}",
+                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
+                    .TrimEnd('&') ?? "None");
+            Log.Debug("  Additional headers: {AdditionalHeaders}",
+                additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
             var response = client.Execute(request);
+            Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             if (response.ResponseStatus != ResponseStatus.Completed)
                 throw new SafeguardDotNetException($"Unable to connect to web service {client.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
@@ -104,6 +115,12 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in response.Headers)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
+            Log.Debug("Reponse status code: {StatusCode}", fullResponse.StatusCode);
+            Log.Debug("  Response headers: {ResponseHeaders}",
+                fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
+            Log.Debug("  Body size: {ResponseBodySize}",
+                fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
             return fullResponse;
         }
 
