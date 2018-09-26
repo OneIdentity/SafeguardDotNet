@@ -83,13 +83,18 @@ to read the documentation about URLs, parameters, and payloads.
 To access the Swagger UI use a browser to navigate to:
 `https://<address>/service/<service>/swagger`
 
-`<address>` = Safeguard network address
-`<service>` = Safeguard service to use
+- `<address>` = Safeguard network address
+- `<service>` = Safeguard service to use
 
 The Safeguard API is made up of multiple services: core, appliance, notification,
 and a2a.
 
-
+|Service|Description|
+|-|-|
+|core|Most product functionality is found here. All cluster-wide operations: access request workflow, asset management, policy management, etc.|
+|appliance|Appliance specific operations, such as setting IP address, maintenance, backups, support bundles, appliance management|
+|notification|Anonymous, unauthenticated operations. This service is available even when the appliance isn't fully online|
+|a2a|Application integration specific operations. Fetching passwords, making access requests on behalf of users, etc.|
 
 Each of these services provides a separate Swagger endpoint.
 
