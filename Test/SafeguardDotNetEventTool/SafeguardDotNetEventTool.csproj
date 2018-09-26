@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SafeguardDotNet\SafeguardDotNet.csproj" />
+    <ProjectReference Include="..\..\SafeguardDotNet\SafeguardDotNet.csproj" />
   </ItemGroup>
 
 </Project>
