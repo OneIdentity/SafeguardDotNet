@@ -1,5 +1,4 @@
 ﻿using CommandLine;
-using OneIdentity.SafeguardDotNet;
 
 namespace SafeguardDotNetEventTool
 {

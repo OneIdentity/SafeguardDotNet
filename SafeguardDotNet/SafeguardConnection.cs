@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using System.Linq;
 using OneIdentity.SafeguardDotNet.Authentication;
 using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -41,7 +42,9 @@ namespace OneIdentity.SafeguardDotNet
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
-            return _authenticationMechanism.GetAccessTokenLifetimeRemaining();
+            var lifetime = _authenticationMechanism.GetAccessTokenLifetimeRemaining();
+            Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+            return lifetime;
         }
 
         public void RefreshAccessToken()
@@ -49,6 +52,7 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             _authenticationMechanism.RefreshAccessToken();
+            Log.Information("Successfully obtained a new access token");
         }
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
@@ -57,22 +61,6 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
-        }
-
-        public JToken InvokeMethodParsed(Service service, Method method, string relativeUrl, JToken body,
-            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException("SafeguardConnection");
-            var content = InvokeMethod(service, method, relativeUrl, body?.ToString(), parameters, additionalHeaders);
-            try
-            {
-                return string.IsNullOrEmpty(content) ? null : JToken.Parse(content);
-            }
-            catch (Exception ex)
-            {
-                throw new SafeguardDotNetException("Unable to parse Safeguard API response as JSON", ex);
-            }
         }
 
         public FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
@@ -102,7 +90,16 @@ namespace OneIdentity.SafeguardDotNet
             }
 
             var client = GetClientForService(service);
+            Log.Information("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
+                client.BaseUrl + $"/{relativeUrl}");
+            Log.Debug("  Query parameters: {QueryParameters}",
+                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
+                    .TrimEnd('&') ?? "None");
+            Log.Debug("  Additional headers: {AdditionalHeaders}",
+                additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
             var response = client.Execute(request);
+            Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             if (response.ResponseStatus != ResponseStatus.Completed)
                 throw new SafeguardDotNetException($"Unable to connect to web service {client.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
@@ -120,6 +117,12 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in response.Headers)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
+            Log.Information("Reponse status code: {StatusCode}", fullResponse.StatusCode);
+            Log.Debug("  Response headers: {ResponseHeaders}",
+                fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
+            Log.Debug("  Body size: {ResponseBodySize}",
+                fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
             return fullResponse;
         }
 
@@ -128,6 +131,7 @@ namespace OneIdentity.SafeguardDotNet
             var eventListener = new SafeguardEventListener(
                 $"https://{_authenticationMechanism.NetworkAddress}/service/event",
                 _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl);
+            Log.Information("Event listener successfully created for Safeguard connection.");
             return eventListener;
         }
 

@@ -12,7 +12,6 @@ using Serilog;
 namespace OneIdentity.SafeguardDotNet
 {
     using DelegateRegistry = Dictionary<string, List<SafeguardEventHandler>>;
-    using ParsedDelegateRegistry = Dictionary<string, List<SafeguardParsedEventHandler>>;
 
     internal class SafeguardEventListener : ISafeguardEventListener
     {
@@ -28,11 +27,8 @@ namespace OneIdentity.SafeguardDotNet
         public IHubProxy SignalrHubProxy { get; private set; }
         private CancellationTokenSource _signalrCancel;
 
-        private readonly DelegateRegistry _delegateStringRegistry =
+        private readonly DelegateRegistry _delegateRegistry =
             new DelegateRegistry(StringComparer.InvariantCultureIgnoreCase);
-
-        private readonly ParsedDelegateRegistry _delegateParsedRegistry =
-            new ParsedDelegateRegistry(StringComparer.InvariantCultureIgnoreCase);
 
         private const string NotificationHub = "notificationHub";
 
@@ -53,14 +49,6 @@ namespace OneIdentity.SafeguardDotNet
         {
             _clientCertificate = clientCertificate;
             _apiKey = apiKey.Copy();
-        }
-
-        private void UpdateRegistry<T>(string eventName, Dictionary<string, List<T>> registry, T handler, string name)
-        {
-            if (!registry.ContainsKey(eventName))
-                registry[eventName] = new List<T>();
-            registry[eventName].Add(handler);
-            Log.Information("Registered event {Event} with delegate {Delegate}", eventName, name);
         }
 
         private (string, JToken)[] ParseEvents(string eventObject)
@@ -101,15 +89,15 @@ namespace OneIdentity.SafeguardDotNet
                     continue;
                 }
 
-                if (!_delegateStringRegistry.ContainsKey(eventInfo.Item1) && !_delegateParsedRegistry.ContainsKey(eventInfo.Item1))
+                if (!_delegateRegistry.ContainsKey(eventInfo.Item1))
                 {
                     Log.Information("No handlers registered for event {Event}", eventInfo.Item1);
                     return;
                 }
 
-                if (_delegateStringRegistry.ContainsKey(eventInfo.Item1))
+                if (_delegateRegistry.ContainsKey(eventInfo.Item1))
                 {
-                    foreach (var handler in _delegateStringRegistry[eventInfo.Item1])
+                    foreach (var handler in _delegateRegistry[eventInfo.Item1])
                     {
                         Log.Information("Calling {Delegate} for event {Event}", handler.Method.Name, eventInfo.Item1);
                         Log.Debug("Event {Event} has body {EventBody}", eventInfo.Item1, eventInfo.Item2);
@@ -118,26 +106,6 @@ namespace OneIdentity.SafeguardDotNet
                             try
                             {
                                 handler(eventInfo.Item1, eventInfo.Item2.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Error(ex, "An error occured while calling {Delegate}", handler.Method.Name);
-                            }
-                        });
-                    }
-                }
-
-                if (_delegateParsedRegistry.ContainsKey(eventInfo.Item1))
-                {
-                    foreach (var handler in _delegateParsedRegistry[eventInfo.Item1])
-                    {
-                        Log.Information("Calling {Delegate} for event {Event}", handler.Method.Name, eventInfo.Item1);
-                        Log.Debug("Event {Event} has body {EventBody}", eventInfo.Item1, eventInfo.Item2);
-                        Task.Run(() =>
-                        {
-                            try
-                            {
-                                handler(eventInfo.Item1, eventInfo.Item2);
                             }
                             catch (Exception ex)
                             {
@@ -172,14 +140,10 @@ namespace OneIdentity.SafeguardDotNet
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardEventListener");
-            UpdateRegistry(eventName, _delegateStringRegistry, handler, handler.Method.Name);
-        }
-
-        public void RegisterEventHandler(string eventName, SafeguardParsedEventHandler handler)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException("SafeguardEventListener");
-            UpdateRegistry(eventName, _delegateParsedRegistry, handler, handler.Method.Name);
+            if (!_delegateRegistry.ContainsKey(eventName))
+                _delegateRegistry[eventName] = new List<SafeguardEventHandler>();
+            _delegateRegistry[eventName].Add(handler);
+            Log.Information("Registered event {Event} with delegate {Delegate}", eventName, handler.Method.Name);
         }
 
         public void Start()
@@ -210,9 +174,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
                 catch (Exception ex)
                 {
-                    // TODO: proper logging / error handling here
-                    Log.Error(ex, "Failure starting SignalR");
-                    throw;
+                    throw new SafeguardDotNetException("Failure starting SignalR", ex);
                 }
             }, _signalrCancel.Token);
         }
@@ -227,9 +189,7 @@ namespace OneIdentity.SafeguardDotNet
             }
             catch (Exception ex)
             {
-                // TODO: proper logging / error handling here
-                Log.Error(ex, "Failure stopping SignalR");
-                throw;
+                throw new SafeguardDotNetException("Failure stopping SignalR", ex);
             }
             
         }

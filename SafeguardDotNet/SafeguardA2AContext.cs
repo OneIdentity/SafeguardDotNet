@@ -3,6 +3,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -63,31 +64,18 @@ namespace OneIdentity.SafeguardDotNet
                 throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
                                                    $"{response.StatusCode} {response.Content}", response.Content);
             var json = JToken.Parse(response.Content);
+            Log.Information("Successfully retrieved A2A password.");
             return json.Root.ToString().ToSecureString();
-        }
-
-        private ISafeguardEventListener GetEventListenerInternal(SecureString apiKey)
-        {
-            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
-                apiKey, _ignoreSsl);
-            return eventListener;
         }
 
         public ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");
-            var eventListener = GetEventListenerInternal(apiKey);
+            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
+                apiKey, _ignoreSsl);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
-            return eventListener;
-        }
-
-        public ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardParsedEventHandler handler)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException("SafeguardA2AContext");
-            var eventListener = GetEventListenerInternal(apiKey);
-            eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            Log.Information("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
 

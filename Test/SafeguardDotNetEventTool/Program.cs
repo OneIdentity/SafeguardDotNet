@@ -109,7 +109,7 @@ namespace SafeguardDotNetEventTool
                             $"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
                         using (var listener = connection.GetEventListener())
                         {
-                            listener.RegisterEventHandler(opts.Event, (string name, string body) =>
+                            listener.RegisterEventHandler(opts.Event, (name, body) =>
                             {
                                 Log.Information("Received Event: {EventName}", name);
                                 Log.Information("Details: {EventBody}", body);
@@ -125,7 +125,7 @@ namespace SafeguardDotNetEventTool
                 {
                     using (var context = CreateA2AContext(opts))
                     {
-                        using (var listener = context.GetEventListener(opts.ApiKey.ToSecureString(), ((string name, string body) =>
+                        using (var listener = context.GetEventListener(opts.ApiKey.ToSecureString(), ((name, body) =>
                         {
                             Log.Information("Received A2A Event: {EventBody}", body);
                         })))
