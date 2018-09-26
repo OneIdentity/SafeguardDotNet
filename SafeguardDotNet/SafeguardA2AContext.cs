@@ -3,6 +3,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -63,6 +64,7 @@ namespace OneIdentity.SafeguardDotNet
                 throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
                                                    $"{response.StatusCode} {response.Content}", response.Content);
             var json = JToken.Parse(response.Content);
+            Log.Information("Successfully retrieved A2A password.");
             return json.Root.ToString().ToSecureString();
         }
 
@@ -73,6 +75,7 @@ namespace OneIdentity.SafeguardDotNet
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
                 apiKey, _ignoreSsl);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            Log.Information("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
 

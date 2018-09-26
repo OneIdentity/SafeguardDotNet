@@ -174,9 +174,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
                 catch (Exception ex)
                 {
-                    // TODO: proper logging / error handling here
-                    Log.Error(ex, "Failure starting SignalR");
-                    throw;
+                    throw new SafeguardDotNetException("Failure starting SignalR", ex);
                 }
             }, _signalrCancel.Token);
         }
@@ -191,9 +189,7 @@ namespace OneIdentity.SafeguardDotNet
             }
             catch (Exception ex)
             {
-                // TODO: proper logging / error handling here
-                Log.Error(ex, "Failure stopping SignalR");
-                throw;
+                throw new SafeguardDotNetException("Failure stopping SignalR", ex);
             }
             
         }

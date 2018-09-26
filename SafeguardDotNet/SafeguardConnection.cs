@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet.Authentication;
 using RestSharp;
 using Serilog;
@@ -43,7 +42,9 @@ namespace OneIdentity.SafeguardDotNet
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
-            return _authenticationMechanism.GetAccessTokenLifetimeRemaining();
+            var lifetime = _authenticationMechanism.GetAccessTokenLifetimeRemaining();
+            Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+            return lifetime;
         }
 
         public void RefreshAccessToken()
@@ -51,6 +52,7 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             _authenticationMechanism.RefreshAccessToken();
+            Log.Information("Successfully obtained a new access token");
         }
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
@@ -88,7 +90,7 @@ namespace OneIdentity.SafeguardDotNet
             }
 
             var client = GetClientForService(service);
-            Log.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
+            Log.Information("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
                 client.BaseUrl + $"/{relativeUrl}");
             Log.Debug("  Query parameters: {QueryParameters}",
                 parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
@@ -115,7 +117,7 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in response.Headers)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
-            Log.Debug("Reponse status code: {StatusCode}", fullResponse.StatusCode);
+            Log.Information("Reponse status code: {StatusCode}", fullResponse.StatusCode);
             Log.Debug("  Response headers: {ResponseHeaders}",
                 fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
                     .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
@@ -129,6 +131,7 @@ namespace OneIdentity.SafeguardDotNet
             var eventListener = new SafeguardEventListener(
                 $"https://{_authenticationMechanism.NetworkAddress}/service/event",
                 _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl);
+            Log.Information("Event listener successfully created for Safeguard connection.");
             return eventListener;
         }
 
