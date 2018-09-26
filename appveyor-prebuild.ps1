@@ -8,7 +8,7 @@ if (Test-Path .\artifacts)
     Remove-Item .\artifacts -Force -Recurse
 }
 
-Write-Host "Setting version numbers"
+Write-Host "prebuild: Setting version numbers"
 $ProjectFile = (Join-Path $PSScriptRoot "SafeguardDotNet\SafeguardDotNet.csproj")
 $PackageCodeMarker = "9999.9999.9999"
 $AssemblyCodeMarker = "9999.9999.9999.9999"

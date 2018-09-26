@@ -1,0 +1,16 @@
+version: 2.3.0-dev-{build}
+image: Visual Studio 2017
+configuration: Release
+before_build:
+- ps: '& .\appveyor-prebuild.ps1'
+build:
+  publish_nuget: true
+  parallel: true
+  verbosity: normal
+notifications:
+- provider: Email
+  to:
+  - petrsnd@gmail.com
+  on_build_success: false
+  on_build_failure: true
+  on_build_status_changed: true
