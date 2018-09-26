@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/wgd68b7qrwhc7oc3?svg=true)](https://ci.appveyor.com/project/petrsnd/safeguarddotnet)
+
 # SafeguardDotNet
 
 One Identity Safeguard Web API C# SDK
