@@ -66,27 +66,12 @@ namespace OneIdentity.SafeguardDotNet
             return json.Root.ToString().ToSecureString();
         }
 
-        private ISafeguardEventListener GetEventListenerInternal(SecureString apiKey)
-        {
-            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
-                apiKey, _ignoreSsl);
-            return eventListener;
-        }
-
         public ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");
-            var eventListener = GetEventListenerInternal(apiKey);
-            eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
-            return eventListener;
-        }
-
-        public ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardParsedEventHandler handler)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException("SafeguardA2AContext");
-            var eventListener = GetEventListenerInternal(apiKey);
+            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
+                apiKey, _ignoreSsl);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             return eventListener;
         }

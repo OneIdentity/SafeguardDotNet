@@ -59,22 +59,6 @@ namespace OneIdentity.SafeguardDotNet
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
         }
 
-        public JToken InvokeMethodParsed(Service service, Method method, string relativeUrl, JToken body,
-            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException("SafeguardConnection");
-            var content = InvokeMethod(service, method, relativeUrl, body?.ToString(), parameters, additionalHeaders);
-            try
-            {
-                return string.IsNullOrEmpty(content) ? null : JToken.Parse(content);
-            }
-            catch (Exception ex)
-            {
-                throw new SafeguardDotNetException("Unable to parse Safeguard API response as JSON", ex);
-            }
-        }
-
         public FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null)

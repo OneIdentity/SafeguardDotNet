@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -36,22 +35,6 @@ namespace OneIdentity.SafeguardDotNet
         /// <returns>Response body as a string.</returns>
         string InvokeMethod(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null);
-
-        /// <summary>
-        /// Call a Safeguard API method and get a Json.NET parsed response. Some Safeguard API
-        /// methods will return an empty body. If there is a failure a SafeguardDotNetException
-        /// will be thrown.
-        /// </summary>
-        /// <param name="service">Safeguard service to call.</param>
-        /// <param name="method">Safeguard method type to use.</param>
-        /// <param name="relativeUrl">Relative URL of the service to use.</param>
-        /// <param name="body">Request body to pass to the method.</param>
-        /// <param name="parameters">Additional parameters to add to the URL.</param>
-        /// <param name="additionalHeaders">Additional headers to add to the request.</param>
-        /// <returns>Response body parsed as a Json.NET token.</returns>
-        JToken InvokeMethodParsed(Service service, Method method, string relativeUrl,
-            JToken body = null, IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null);
 
         /// <summary>
