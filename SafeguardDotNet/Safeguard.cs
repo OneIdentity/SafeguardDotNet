@@ -1,4 +1,5 @@
 ﻿using System.Security;
+using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Authentication;
 
 namespace OneIdentity.SafeguardDotNet

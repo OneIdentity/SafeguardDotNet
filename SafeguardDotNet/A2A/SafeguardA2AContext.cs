@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 using RestSharp;
 using Serilog;
 
-namespace OneIdentity.SafeguardDotNet
+namespace OneIdentity.SafeguardDotNet.A2A
 {
     internal class SafeguardA2AContext : ISafeguardA2AContext
     {

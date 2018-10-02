@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Security;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
+using OneIdentity.SafeguardDotNet.A2A;
 using Serilog;
 
 namespace SafeguardDotNetA2aTool
 {
-    class Program
+    internal class Program
     {
         private static SecureString PromptForSecret(string name)
         {

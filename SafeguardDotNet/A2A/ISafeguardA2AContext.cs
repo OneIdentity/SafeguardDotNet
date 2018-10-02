@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Security;
 
-namespace OneIdentity.SafeguardDotNet
+namespace OneIdentity.SafeguardDotNet.A2A
 {
     /// <summary>
     /// This is a reusable interface for calling Safeguard A2A without having to continually
