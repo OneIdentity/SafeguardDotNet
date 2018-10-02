@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security;
+using OneIdentity.SafeguardDotNet.Event;
 
 namespace OneIdentity.SafeguardDotNet.A2A
 {

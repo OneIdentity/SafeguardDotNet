@@ -9,7 +9,7 @@ using Microsoft.AspNet.SignalR.Client.Http;
 using Newtonsoft.Json.Linq;
 using Serilog;
 
-namespace OneIdentity.SafeguardDotNet
+namespace OneIdentity.SafeguardDotNet.Event
 {
     using DelegateRegistry = Dictionary<string, List<SafeguardEventHandler>>;
 

@@ -2,6 +2,7 @@
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
+using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
 

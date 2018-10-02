@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OneIdentity.SafeguardDotNet.Authentication;
+using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
 

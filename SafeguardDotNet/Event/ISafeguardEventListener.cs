@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OneIdentity.SafeguardDotNet
+namespace OneIdentity.SafeguardDotNet.Event
 {
     public delegate void SafeguardEventHandler(string eventName, string eventBody);
 
