@@ -40,6 +40,8 @@ namespace OneIdentity.SafeguardDotNet.Event
                 {
                     try
                     {
+                        _eventListener?.Dispose();
+                        Log.Information("Attempting to connect and start internal event listener.");
                         _eventListener = ReconnectEventListener();
                         _eventListener.SetEventHandlerRegistry(_eventHandlerRegistry);
                         _eventListener.Start();
@@ -48,7 +50,8 @@ namespace OneIdentity.SafeguardDotNet.Event
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "Persistent event listener connect error, sleeping for 5 seconds...");
+                        Log.Warning("Internal event listener connection error (see debug for more information), sleeping for 5 seconds...");
+                        Log.Debug(ex, "Internal event listener connection error.");
                         Thread.Sleep(5000);
                     }
                 }

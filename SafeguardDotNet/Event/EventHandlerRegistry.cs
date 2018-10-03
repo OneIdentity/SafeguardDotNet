@@ -88,7 +88,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (!_delegateRegistry.ContainsKey(eventName))
                 _delegateRegistry[eventName] = new List<SafeguardEventHandler>();
             _delegateRegistry[eventName].Add(handler);
-            Log.Information("Registered event {Event} with delegate {Delegate}", eventName, handler.Method.Name);
+            Log.Debug("Registered event {Event} with delegate {Delegate}", eventName, handler.Method.Name);
         }
     }
 }

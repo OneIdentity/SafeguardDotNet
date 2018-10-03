@@ -65,11 +65,10 @@ namespace OneIdentity.SafeguardDotNet.Event
 
         private void HandleDisconnect()
         {
-            if (_isStarted)
-            {
-                Log.Information("SignalR disconnect detected, calling handler...");
-                _disconnectHandler();
-            }
+            if (!_isStarted)
+                return;
+            Log.Warning("SignalR disconnect detected, calling handler...");
+            _disconnectHandler();
         }
 
         private void CleanupConnection()
