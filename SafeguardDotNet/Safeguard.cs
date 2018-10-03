@@ -98,6 +98,64 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         /// <summary>
+        /// This static class provides access to Safeguard Event functionality with persistent event listeners. Persistent
+        /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
+        /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
+        /// </summary>
+        public static class Event
+        {
+            /// <summary>
+            /// Get a persistent event listener using a username and password credentia for authentication.
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="username">User name to use for authentication.</param>
+            /// <param name="password">User password to use for authentication.</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress, string provider,
+                string username, SecureString password, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(
+                    new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion, ignoreSsl)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate from the certificate store for authentication.
+            /// Use PowerShell to list certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificateThumbprint, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(
+                    new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, ignoreSsl)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate stored in a file.
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificatePath, SecureString certificatePassword, int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
+                    certificatePath, certificatePassword, apiVersion, ignoreSsl)));
+            }
+        }
+
+        /// <summary>
         /// This static class provides access to Safeguard A2A functionality.
         /// </summary>
         public static class A2A
@@ -179,64 +237,6 @@ namespace OneIdentity.SafeguardDotNet
                         new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
                             ignoreSsl), apiKey, handler);
                 }
-            }
-        }
-
-        /// <summary>
-        /// This static class provides access to Safeguard Event functionality with persistent event listeners. Persistent
-        /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
-        /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
-        /// </summary>
-        public static class Event
-        {
-            /// <summary>
-            /// Get a persistent event listener using a username and password credentia for authentication.
-            /// </summary>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
-            /// <param name="username">User name to use for authentication.</param>
-            /// <param name="password">User password to use for authentication.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress, string provider,
-                string username, SecureString password, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
-            {
-                return new PersistentSafeguardEventListener(GetConnection(
-                    new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion, ignoreSsl)));
-            }
-
-            /// <summary>
-            /// Get a persistent event listener using a client certificate from the certificate store for authentication.
-            /// Use PowerShell to list certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
-            /// </summary>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificateThumbprint, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
-            {
-                return new PersistentSafeguardEventListener(GetConnection(
-                    new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, ignoreSsl)));
-            }
-
-            /// <summary>
-            /// Get a persistent event listener using a client certificate stored in a file.
-            /// </summary>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
-            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificatePath, SecureString certificatePassword, int apiVersion = DefaultApiVersion,
-                bool ignoreSsl = false)
-            {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificatePath, certificatePassword, apiVersion, ignoreSsl)));
             }
         }
     }
