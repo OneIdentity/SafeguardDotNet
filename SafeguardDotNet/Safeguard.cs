@@ -195,6 +195,7 @@ namespace OneIdentity.SafeguardDotNet
             /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
             /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
             /// </summary>
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             public static class Event
             {
                 /// <summary>
