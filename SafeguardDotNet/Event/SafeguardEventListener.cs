@@ -3,6 +3,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Http;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
@@ -65,7 +66,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         private void HandleDisconnect()
         {
             if (_isStarted)
+            {
+                Log.Information("SignalR disconnect detected, calling handler...");
                 _disconnectHandler();
+            }
         }
 
         private void CleanupConnection()

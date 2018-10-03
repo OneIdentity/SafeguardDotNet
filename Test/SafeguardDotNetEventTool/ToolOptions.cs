@@ -47,5 +47,8 @@ namespace SafeguardDotNetEventTool
         [Option('E', "Event", Required = true, SetName = "PasswordSet",
             HelpText = "Safeguard event to listen for")]
         public string Event { get; set; }
+
+        [Option('P', "Persistent", HelpText = "Use persistent listeners")]
+        public bool Persistent { get; set; }
     }
 }

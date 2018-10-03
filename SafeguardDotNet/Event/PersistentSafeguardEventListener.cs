@@ -1,4 +1,6 @@
-﻿namespace OneIdentity.SafeguardDotNet.Event
+﻿using Serilog;
+
+namespace OneIdentity.SafeguardDotNet.Event
 {
     internal class PersistentSafeguardEventListener : PersistentSafeguardEventListenerBase
     {
@@ -9,6 +11,7 @@
         public PersistentSafeguardEventListener(ISafeguardConnection connection)
         {
             _connection = connection;
+            Log.Information("Persistent event listener successfully created.");
         }
 
         protected override SafeguardEventListener ReconnectEventListener()

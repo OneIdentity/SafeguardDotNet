@@ -48,7 +48,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "Persistent event listener reconnect error, sleeping for 5 seconds...");
+                        Log.Error(ex, "Persistent event listener connect error, sleeping for 5 seconds...");
                         Thread.Sleep(5000);
                     }
                 }
@@ -58,6 +58,8 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _reconnectCancel.Dispose();
                 _reconnectCancel = null;
                 _reconnectTask = null;
+                if (!task.IsFaulted)
+                    Log.Information("Internal event listener successfully connected and started.");
             });
         }
 
@@ -65,6 +67,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         {
             if (_disposed)
                 throw new ObjectDisposedException("PersistentSafeguardEventListener");
+            Log.Information("Internal event listener requested to start.");
             PersistentReconnectAndStart();
         }
 
@@ -72,6 +75,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         {
             if (_disposed)
                 throw new ObjectDisposedException("PersistentSafeguardEventListener");
+            Log.Information("Internal event listener requested to stop.");
             _reconnectCancel?.Cancel();
             _eventListener?.Stop();
         }

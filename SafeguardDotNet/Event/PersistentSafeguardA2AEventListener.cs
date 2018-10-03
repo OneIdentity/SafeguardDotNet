@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security;
 using OneIdentity.SafeguardDotNet.A2A;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
@@ -16,15 +17,16 @@ namespace OneIdentity.SafeguardDotNet.Event
             _a2AContext = a2AContext;
             _apiKey = apiKey.Copy();
             RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            Log.Information("Persistent A2A event listener successfully created.");
         }
 
         protected override SafeguardEventListener ReconnectEventListener()
         {
-            // passing null for handler because it will be overridden in PersistentSafeguardEventListenerBase
-            return (SafeguardEventListener) _a2AContext.GetEventListener(_apiKey, null);
+            // passing in a bogus handler because it will be overridden in PersistentSafeguardEventListenerBase
+            return (SafeguardEventListener) _a2AContext.GetEventListener(_apiKey, (name, body) => { });
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (_disposed || !disposing)
                 return;
