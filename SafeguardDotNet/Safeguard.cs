@@ -1,6 +1,7 @@
 ﻿using System.Security;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Authentication;
+using OneIdentity.SafeguardDotNet.Event;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -15,6 +16,20 @@ namespace OneIdentity.SafeguardDotNet
         {
             authenticationMechanism.RefreshAccessToken();
             return new SafeguardConnection(authenticationMechanism);
+        }
+
+        /// <summary>
+        /// Connect to Safeguard API anonymously.
+        /// </summary>
+        /// <returns>The connect.</returns>
+        /// <param name="networkAddress">Network address.</param>
+        /// <param name="apiVersion">API version.</param>
+        /// <param name="ignoreSsl">If set to <c>true</c> ignore ssl.</param>
+        public static ISafeguardConnection Connect(string networkAddress, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        {
+            // Don't try to refresh access token on the anonymous connect method because it cannot be refreshed
+            // So, don't use GetConnection() function above
+            return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, ignoreSsl));
         }
 
         /// <summary>
@@ -83,20 +98,6 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         /// <summary>
-        /// Connect to Safeguard API anonymously.
-        /// </summary>
-        /// <returns>The connect.</returns>
-        /// <param name="networkAddress">Network address.</param>
-        /// <param name="apiVersion">API version.</param>
-        /// <param name="ignoreSsl">If set to <c>true</c> ignore ssl.</param>
-        public static ISafeguardConnection Connect(string networkAddress, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
-        {
-            // Don't try to refresh access token on the anonymous connect method because it cannot be refreshed
-            // So, don't use GetConnection() function above
-            return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, ignoreSsl));
-        }
-
-        /// <summary>
         /// This static class provides access to Safeguard A2A functionality.
         /// </summary>
         public static class A2A
@@ -129,6 +130,49 @@ namespace OneIdentity.SafeguardDotNet
                 SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
             {
                 return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl);
+            }
+        }
+
+        public static class Event
+        {
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress, string provider,
+                string username, SecureString password, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(
+                    new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion, ignoreSsl)));
+            }
+
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificateThumbprint, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(
+                    new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, ignoreSsl)));
+            }
+
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificatePath, SecureString certificatePassword, int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
+                    certificatePath, certificatePassword, apiVersion, ignoreSsl)));
+            }
+
+            public static ISafeguardEventListener GetPersistentA2AEventListener(SafeguardEventHandler handler,
+                SecureString apiKey, string networkAddress, string certificateThumbprint,
+                int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardA2AEventListener(
+                    new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl), apiKey,
+                        handler);
+            }
+
+            public static ISafeguardEventListener GetPersistentA2AEventListener(SafeguardEventHandler handler,
+                SecureString apiKey, string networkAddress, string certificatePath, SecureString certificatePassword,
+                int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardA2AEventListener(
+                    new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
+                        ignoreSsl), apiKey, handler);
             }
         }
     }

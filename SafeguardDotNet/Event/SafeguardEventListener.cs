@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Http;
-using Newtonsoft.Json.Linq;
-using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
-    using DelegateRegistry = Dictionary<string, List<SafeguardEventHandler>>;
+    internal delegate void DisconnectHandler();
 
     internal class SafeguardEventListener : ISafeguardEventListener
     {
@@ -23,12 +18,12 @@ namespace OneIdentity.SafeguardDotNet.Event
         private readonly SecureString _apiKey;
         private readonly X509Certificate2 _clientCertificate;
 
+        private EventHandlerRegistry _eventHandlerRegistry;
+        private DisconnectHandler _disconnectHandler = () => throw new SafeguardEventListenerDisconnectedException();
+
+        private bool _isStarted;
         private HubConnection _signalrConnection;
         public IHubProxy SignalrHubProxy { get; private set; }
-        private CancellationTokenSource _signalrCancel;
-
-        private readonly DelegateRegistry _delegateRegistry =
-            new DelegateRegistry(StringComparer.InvariantCultureIgnoreCase);
 
         private const string NotificationHub = "notificationHub";
 
@@ -36,6 +31,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         {
             _eventUrl = eventUrl;
             _ignoreSsl = ignoreSsl;
+            _eventHandlerRegistry = new EventHandlerRegistry();
         }
 
         public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl) : 
@@ -51,70 +47,25 @@ namespace OneIdentity.SafeguardDotNet.Event
             _apiKey = apiKey.Copy();
         }
 
-        private (string, JToken)[] ParseEvents(string eventObject)
+        public void SetDisconnectHandler(DisconnectHandler handler)
         {
-            try
-            {
-                var events = new List<(string, JToken)>();
-                var jObject = JObject.Parse(eventObject);
-                var jEvents = jObject["A"];
-                foreach (var jEvent in jEvents)
-                {
-                    var name = jEvent["Name"];
-                    var body = jEvent["Data"];
-                    // Work around for bug in A2A events in Safeguard 2.2 and 2.3
-                    if (name != null && int.TryParse(name.ToString(), out _))
-                        name = body["EventName"];
-                    events.Add((name?.ToString(), body));
-                }
-                return events.ToArray();
-            }
-            catch (Exception)
-            {
-                Log.Warning("Unable to parse event object {EventObject}", eventObject);
-                return null;
-            }
+            _disconnectHandler = handler;
+        }
+
+        public void SetEventHandlerRegistry(EventHandlerRegistry registry)
+        {
+            _eventHandlerRegistry = registry;
         }
 
         private void HandleEvent(string eventObject)
         {
-            var events = ParseEvents(eventObject);
-            if (events == null)
-                return;
-            foreach (var eventInfo in events)
-            {
-                if (eventInfo.Item1 == null)
-                {
-                    Log.Warning("Found null event with body {EventBody}", eventInfo.Item2);
-                    continue;
-                }
+            _eventHandlerRegistry.HandleEvent(eventObject);
+        }
 
-                if (!_delegateRegistry.ContainsKey(eventInfo.Item1))
-                {
-                    Log.Information("No handlers registered for event {Event}", eventInfo.Item1);
-                    return;
-                }
-
-                if (_delegateRegistry.ContainsKey(eventInfo.Item1))
-                {
-                    foreach (var handler in _delegateRegistry[eventInfo.Item1])
-                    {
-                        Log.Information("Calling {Delegate} for event {Event}", handler.Method.Name, eventInfo.Item1);
-                        Log.Debug("Event {Event} has body {EventBody}", eventInfo.Item1, eventInfo.Item2);
-                        Task.Run(() =>
-                        {
-                            try
-                            {
-                                handler(eventInfo.Item1, eventInfo.Item2.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Error(ex, "An error occured while calling {Delegate}", handler.Method.Name);
-                            }
-                        });
-                    }
-                }
-            }
+        private void HandleDisconnect()
+        {
+            if (_isStarted)
+                _disconnectHandler();
         }
 
         private void CleanupConnection()
@@ -122,16 +73,15 @@ namespace OneIdentity.SafeguardDotNet.Event
             try
             {
                 if (_signalrConnection != null)
+                {
                     _signalrConnection.Received -= HandleEvent;
-                if (_signalrCancel != null && !_signalrCancel.IsCancellationRequested)
-                    _signalrCancel?.Cancel();
-                _signalrCancel?.Dispose();
+                    _signalrConnection.Closed -= HandleDisconnect;
+                }
                 _signalrConnection?.Dispose();
                 SignalrHubProxy = null;
             }
             finally
             {
-                _signalrCancel = null;
                 _signalrConnection = null;
             }
         }
@@ -140,10 +90,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardEventListener");
-            if (!_delegateRegistry.ContainsKey(eventName))
-                _delegateRegistry[eventName] = new List<SafeguardEventHandler>();
-            _delegateRegistry[eventName].Add(handler);
-            Log.Information("Registered event {Event} with delegate {Delegate}", eventName, handler.Method.Name);
+            _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
         }
 
         public void Start()
@@ -163,20 +110,18 @@ namespace OneIdentity.SafeguardDotNet.Event
             }
             SignalrHubProxy = _signalrConnection.CreateHubProxy(NotificationHub);
 
-            _signalrCancel = new CancellationTokenSource();
-            Task.Run(() =>
+            try
             {
-                try
-                {
-                    _signalrConnection.Received += HandleEvent;
-                    _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : new DefaultHttpClient())
-                        .Wait();
-                }
-                catch (Exception ex)
-                {
-                    throw new SafeguardDotNetException("Failure starting SignalR", ex);
-                }
-            }, _signalrCancel.Token);
+                _signalrConnection.Received += HandleEvent;
+                _signalrConnection.Closed += HandleDisconnect;
+                _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : new DefaultHttpClient())
+                    .Wait();
+                _isStarted = true;
+            }
+            catch (Exception ex)
+            {
+                throw new SafeguardDotNetException("Failure starting SignalR", ex);
+            }
         }
 
         public void Stop()
@@ -185,13 +130,14 @@ namespace OneIdentity.SafeguardDotNet.Event
                 throw new ObjectDisposedException("SafeguardEventListener");
             try
             {
-                _signalrCancel?.Cancel();
+                _isStarted = false;
+                _signalrConnection?.Stop();
+                CleanupConnection();
             }
             catch (Exception ex)
             {
                 throw new SafeguardDotNetException("Failure stopping SignalR", ex);
             }
-            
         }
 
         public void Dispose()
