@@ -100,12 +100,12 @@ namespace SafeguardDotNetEventTool
                 if (!string.IsNullOrEmpty(opts.CertificateFile))
                 {
                     var password = HandlePassword(opts.ReadPassword);
-                    return Safeguard.Event.GetPersistentA2AEventListener(A2AHandler, opts.ApiKey.ToSecureString(),
+                    return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(), A2AHandler,
                         opts.Appliance, opts.CertificateFile, password, opts.ApiVersion, opts.Insecure);
 
                 }
                 if (!string.IsNullOrEmpty(opts.Thumbprint))
-                    return Safeguard.Event.GetPersistentA2AEventListener(A2AHandler, opts.ApiKey.ToSecureString(),
+                    return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(), A2AHandler,
                         opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
                 throw new Exception("Must specify CertificateFile or Thumbprint");
             }

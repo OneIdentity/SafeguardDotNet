@@ -131,6 +131,55 @@ namespace OneIdentity.SafeguardDotNet
             {
                 return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl);
             }
+
+            /// <summary>
+            /// This static class provides access to Safeguard A2A Event functionality with persistent event listeners. Persistent
+            /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
+            /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
+            /// </summary>
+            public static class Event
+            {
+                /// <summary>
+                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A.
+                /// </summary>
+                /// <param name="apiKey">API key correspondingto the configured account to listen for.</param>
+                /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
+                /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+                /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+                /// <param name="apiVersion">Target API version to use.</param>
+                /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+                /// <returns>New persistent A2A event listener.</returns>
+                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
+                    SafeguardEventHandler handler, string networkAddress, string certificateThumbprint,
+                    int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                {
+                    return new PersistentSafeguardA2AEventListener(
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl), apiKey,
+                            handler);
+                }
+
+                /// <summary>
+                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A.
+                /// </summary>
+                /// <param name="apiKey">API key correspondingto the configured account to listen for.</param>
+                /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
+                /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+                /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+                /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+                /// <param name="apiVersion">Target API version to use.</param>
+                /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+                /// <returns>New persistent A2A event listener.</returns>
+                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
+                    SafeguardEventHandler handler, string networkAddress, string certificatePath,
+                    SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                {
+                    return new PersistentSafeguardA2AEventListener(
+                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
+                            ignoreSsl), apiKey, handler);
+                }
+            }
         }
 
         /// <summary>
@@ -188,47 +237,6 @@ namespace OneIdentity.SafeguardDotNet
             {
                 return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
                     certificatePath, certificatePassword, apiVersion, ignoreSsl)));
-            }
-
-            /// <summary>
-            /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
-            /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A.
-            /// </summary>
-            /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
-            /// <param name="apiKey">API key correspondingto the configured account to listen for.</param>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>New persistent A2A event listener.</returns>
-            public static ISafeguardEventListener GetPersistentA2AEventListener(SafeguardEventHandler handler,
-                SecureString apiKey, string networkAddress, string certificateThumbprint,
-                int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
-            {
-                return new PersistentSafeguardA2AEventListener(
-                    new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl), apiKey,
-                        handler);
-            }
-
-            /// <summary>
-            /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
-            /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A.
-            /// </summary>
-            /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
-            /// <param name="apiKey">API key correspondingto the configured account to listen for.</param>
-            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-            /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
-            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
-            /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-            /// <returns>New persistent A2A event listener.</returns>
-            public static ISafeguardEventListener GetPersistentA2AEventListener(SafeguardEventHandler handler,
-                SecureString apiKey, string networkAddress, string certificatePath, SecureString certificatePassword,
-                int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
-            {
-                return new PersistentSafeguardA2AEventListener(
-                    new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
-                        ignoreSsl), apiKey, handler);
             }
         }
     }
