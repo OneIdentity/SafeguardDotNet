@@ -18,7 +18,7 @@
     <AssemblyName>OneIdentity.SafeguardDotNet</AssemblyName>
     <RepositoryType>git</RepositoryType>
     <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
-    <PackageReleaseNotes>Initial release of SafeguardDotNet
+    <PackageReleaseNotes>One Identity Safeguard Web API .NET SDK
 
 Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Password authentication
