@@ -47,7 +47,7 @@ namespace OneIdentity.SafeguardDotNet
             if (lifetime > 0)
                 Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
             else
-                Log.Information("Unable to get valid access token");
+                Log.Information("Access token invalid or server unavailable");
             return lifetime;
         }
 
