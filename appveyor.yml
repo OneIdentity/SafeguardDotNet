@@ -1,4 +1,4 @@
-version: 2.3.0-release-{build}
+version: 2.3.1-release-{build}
 image: Visual Studio 2017
 configuration: Release
 before_build:
