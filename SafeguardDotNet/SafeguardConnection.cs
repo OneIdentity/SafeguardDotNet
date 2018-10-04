@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OneIdentity.SafeguardDotNet.Authentication;
+using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
 
@@ -43,7 +44,10 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             var lifetime = _authenticationMechanism.GetAccessTokenLifetimeRemaining();
-            Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+            if (lifetime > 0)
+                Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+            else
+                Log.Information("Access token invalid or server unavailable");
             return lifetime;
         }
 
@@ -128,6 +132,8 @@ namespace OneIdentity.SafeguardDotNet
 
         public ISafeguardEventListener GetEventListener()
         {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
             var eventListener = new SafeguardEventListener(
                 $"https://{_authenticationMechanism.NetworkAddress}/service/event",
                 _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl);

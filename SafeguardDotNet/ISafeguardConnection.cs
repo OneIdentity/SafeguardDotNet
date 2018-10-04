@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using OneIdentity.SafeguardDotNet.Event;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -55,7 +56,10 @@ namespace OneIdentity.SafeguardDotNet
         /// <summary>
         /// Gets a Safeguard event listener. You will need to call the RegisterEventHandler()
         /// method to establish callbacks. Then, you just have to call Start().  Call Stop()
-        /// when you are finished.
+        /// when you are finished. The event listener returned by this method will not
+        /// automatically recover from a SignalR timeout which occurs when there is a 30+
+        /// second outage. To get an event listener that supports recovering from longer term
+        /// outages, please use Safeguard.Event to request a persistent event listener.
         /// </summary>
         /// <returns>The event listener.</returns>
         ISafeguardEventListener GetEventListener();

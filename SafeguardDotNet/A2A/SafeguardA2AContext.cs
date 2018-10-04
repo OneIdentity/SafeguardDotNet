@@ -2,10 +2,11 @@
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
+using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
 
-namespace OneIdentity.SafeguardDotNet
+namespace OneIdentity.SafeguardDotNet.A2A
 {
     internal class SafeguardA2AContext : ISafeguardA2AContext
     {
