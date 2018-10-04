@@ -40,11 +40,11 @@ namespace SafeguardDotNetEventTool
             HelpText = "File path for client certificate")]
         public string CertificateFile { get; set; }
 
-        [Option('A', "ApiKey", Required = true, Default = null,
+        [Option('A', "ApiKey", Required = false, Default = null,
             HelpText = "ApiKey for listening to Safeguard A2A")]
         public string ApiKey { get; set; }
 
-        [Option('E', "Event", Required = true, SetName = "PasswordSet",
+        [Option('E', "Event", Required = false,
             HelpText = "Safeguard event to listen for")]
         public string Event { get; set; }
 

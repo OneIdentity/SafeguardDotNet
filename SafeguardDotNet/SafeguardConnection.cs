@@ -44,7 +44,10 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             var lifetime = _authenticationMechanism.GetAccessTokenLifetimeRemaining();
-            Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+            if (lifetime > 0)
+                Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+            else
+                Log.Information("Unable to get valid access token");
             return lifetime;
         }
 
