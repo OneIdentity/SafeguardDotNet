@@ -15,6 +15,16 @@
     <Description>One Identity Safeguard Web API C# SDK</Description>
     <AssemblyVersion>9999.9999.9999.9999</AssemblyVersion>
     <FileVersion>9999.9999.9999.9999</FileVersion>
+    <AssemblyName>OneIdentity.SafeguardDotNet</AssemblyName>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
+    <PackageReleaseNotes>One Identity Safeguard Web API .NET SDK
+
+Provides an easy way to connect to Safeguard and call the Safeguard API.
+- Password authentication
+- Client certificate authentication
+- A2A API support
+- Real-time event notifications</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
