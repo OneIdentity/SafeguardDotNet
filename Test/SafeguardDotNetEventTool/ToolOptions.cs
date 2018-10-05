@@ -48,7 +48,8 @@ namespace SafeguardDotNetEventTool
             HelpText = "Safeguard event to listen for")]
         public string Event { get; set; }
 
-        [Option('P', "Persistent", HelpText = "Use persistent listeners")]
+        [Option('P', "Persistent", Required = false,
+            HelpText = "Use persistent listeners")]
         public bool Persistent { get; set; }
     }
 }
