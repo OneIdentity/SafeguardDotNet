@@ -81,8 +81,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigUtils.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceNowClient.cs" />
     <Compile Include="ServiceNowTicketValidator.cs" />
     <Compile Include="ServiceNowTicketValidatorService.cs" />
   </ItemGroup>

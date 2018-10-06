@@ -13,9 +13,11 @@ namespace ServiceNowTicketValidator
         private readonly string _safeguardClientCertificateThumbprint;
         private readonly int _safeguardApiVersion;
         private readonly bool _safeguardIgnoreSsl;
+
+        private readonly string _serviceNowDnsName;
+        private readonly SecureString _serviceNowClientSecret;
         private readonly string _serviceNowUserName;
         private readonly SecureString _safeguardA2AApiKeyForServiceNowPassword;
-        private readonly string _loggingDirectory;
 
         private SecureString _serviceNowPassword;
         private ISafeguardEventListener _eventListener;
@@ -25,19 +27,22 @@ namespace ServiceNowTicketValidator
         public ServiceNowTicketValidatorService()
         {
             _safeguardAddress =
-                ReadRequiredSettingFromAppConfig("SafeguardAddress", "Safeguard appliance network address");
+                ConfigUtils.ReadRequiredSettingFromAppConfig("SafeguardAddress", "Safeguard appliance network address");
             _safeguardClientCertificateThumbprint =
-                ReadRequiredSettingFromAppConfig("SafeguardClientCertificateThumbprint",
+                ConfigUtils.ReadRequiredSettingFromAppConfig("SafeguardClientCertificateThumbprint",
                     "Safeguard client certificate thumbprint");
             _safeguardApiVersion =
-                int.Parse(ReadRequiredSettingFromAppConfig("SafeguardApiVersion", "Safeguard API version"));
+                int.Parse(ConfigUtils.ReadRequiredSettingFromAppConfig("SafeguardApiVersion", "Safeguard API version"));
             _safeguardIgnoreSsl = bool.Parse(ConfigurationManager.AppSettings["SafeguardIgnoreSsl"]);
-            _serviceNowUserName = ReadRequiredSettingFromAppConfig("ServiceNowUserName", "ServiceNow user name");
-            _safeguardA2AApiKeyForServiceNowPassword = ReadRequiredSettingFromAppConfig(
-                    "SafeguardA2AApiKeyForServiceNowPassword",
-                    "Safeguard A2A API key for retrieving ServiceNow password")
-                .ToSecureString();
-            _loggingDirectory = ReadRequiredSettingFromAppConfig("LoggingDirectory", "logging directory");
+            _serviceNowDnsName =
+                ConfigUtils.ReadRequiredSettingFromAppConfig("ServiceNowDnsName", "ServiceNow server DNS name");
+            _serviceNowClientSecret = ConfigUtils.ReadSettingFromAppConfigIfPresent("ServiceNowClientSecret")
+                ?.ToSecureString();
+            _serviceNowUserName =
+                ConfigUtils.ReadRequiredSettingFromAppConfig("ServiceNowUserName", "ServiceNow user name");
+            _safeguardA2AApiKeyForServiceNowPassword = ConfigUtils
+                .ReadRequiredSettingFromAppConfig("SafeguardA2AApiKeyForServiceNowPassword",
+                    "Safeguard A2A API key for retrieving ServiceNow password").ToSecureString();
         }
 
         private void HandlePendingApprovalNotification(string eventName, string eventBody)
@@ -72,7 +77,9 @@ namespace ServiceNowTicketValidator
             {
                 _serviceNowPassword = a2AContext.RetrievePassword(_safeguardA2AApiKeyForServiceNowPassword);
             }
-            _validator = new ServiceNowTicketValidator(_serviceNowUserName, _serviceNowPassword);
+
+            _validator = new ServiceNowTicketValidator(_serviceNowDnsName, _serviceNowClientSecret, _serviceNowUserName,
+                _serviceNowPassword);
             _eventListener.RegisterEventHandler("AccessRequestPendingApproval", HandlePendingApprovalNotification);
         }
 
@@ -83,25 +90,10 @@ namespace ServiceNowTicketValidator
             _eventListener?.Dispose();
             _connection?.Dispose();
             _serviceNowPassword?.Dispose();
-            _safeguardA2AApiKeyForServiceNowPassword?.Dispose();
             _validator?.Dispose();
-        }
+            _eventListener = null;
+            _connection = null;
 
-        private static string ReadRequiredSettingFromAppConfig(string key, string description)
-        {
-            try
-            {
-                var value = ConfigurationManager.AppSettings[key];
-                if (!string.IsNullOrEmpty(value))
-                    return value;
-                Log.Error($"{key} is required in App.Config");
-                throw new Exception($"Unable to start SlackBotService with empty {description}.");
-            }
-            catch (ConfigurationErrorsException ex)
-            {
-                Log.Error(ex, $"{key} is required in App.Config");
-                throw new Exception($"Unable to start SlackBotService without {description}.", ex);
-            }
         }
     }
 }

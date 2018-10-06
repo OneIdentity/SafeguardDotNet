@@ -5,14 +5,20 @@ namespace ServiceNowTicketValidator
 {
     internal class ServiceNowTicketValidator : IDisposable
     {
-        public ServiceNowTicketValidator(string userName, SecureString password)
+        private readonly ServiceNowClient _client;
+
+        public ServiceNowTicketValidator(string dnsName, SecureString clientSecret, string userName, SecureString password)
         {
-            // TODO:
+            _client = new ServiceNowClient($"https://{dnsName}/", clientSecret, userName, password);
         }
 
         public bool CheckTicket(string ticketNumber)
         {
-            // TODO:
+            var incident = _client.GetIncident(ticketNumber);
+
+
+
+
             return false;
         }
 
@@ -20,7 +26,7 @@ namespace ServiceNowTicketValidator
         {
             if (disposing)
             {
-                // TODO:
+                _client?.Dispose();
             }
         }
 
