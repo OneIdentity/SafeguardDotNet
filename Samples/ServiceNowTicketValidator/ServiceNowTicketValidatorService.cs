@@ -1,9 +1,7 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
 using System.Security;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.Event;
-using Serilog;
 
 namespace ServiceNowTicketValidator
 {
@@ -81,11 +79,13 @@ namespace ServiceNowTicketValidator
             _validator = new ServiceNowTicketValidator(_serviceNowDnsName, _serviceNowClientSecret, _serviceNowUserName,
                 _serviceNowPassword);
             _eventListener.RegisterEventHandler("AccessRequestPendingApproval", HandlePendingApprovalNotification);
+
+            _eventListener.Start();
         }
 
         public void Stop()
         {
-            // TODO: stop listening
+            _eventListener.Stop();
 
             _eventListener?.Dispose();
             _connection?.Dispose();
@@ -93,7 +93,8 @@ namespace ServiceNowTicketValidator
             _validator?.Dispose();
             _eventListener = null;
             _connection = null;
-
+            _serviceNowPassword = null;
+            _validator = null;
         }
     }
 }
