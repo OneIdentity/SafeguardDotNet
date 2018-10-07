@@ -26,6 +26,6 @@ namespace ServiceNowTicketValidator.DTOs
         public string managed_by { get; set; }
         public string checked_out { get; set; }
         public string department { get; set; }
-        public ServiceNowLink assigned_to { get; set; }
+        public string assigned_to { get; set; }
     }
 }
