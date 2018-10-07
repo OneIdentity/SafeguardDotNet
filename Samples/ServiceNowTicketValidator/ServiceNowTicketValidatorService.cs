@@ -66,26 +66,38 @@ namespace ServiceNowTicketValidator
                 }
                 var accessRequestJson =
                     _connection.InvokeMethod(Service.Core, Method.Get, $"AccessRequests/{accessRequestId}");
-                
+                var accessRequest = JsonConvert.DeserializeObject<AccessRequest>(accessRequestJson);
 
-
-                // TODO: check to be sure it has a ticket number (assume ServiceNow / check for INC)
-
-                var ticketNumber = "";
-
-                // TODO: bail early if no ticket number
-
-                // TODO: get relevant info for approve or deny
-
-                
+                // Only ServiceNow and Remedy are supported in Safeguard. We will be adding a generic ticket system
+                // that will allow for arbitrary ticket numbers. Until then, you could overload the comment with
+                // the ticket number. TODO: remove this comment when it becomes obselete
+                var ticketNumber = accessRequest.TicketNumber;
+                if (string.IsNullOrEmpty(ticketNumber))
+                {
+                    Log.Information("Ignoring access request {AccessRequestId} without ticket number", accessRequestId);
+                    return;
+                }
 
                 if (_connection.GetAccessTokenLifetimeRemaining() == 0)
                     _connection.RefreshAccessToken();
 
-                if (_validator.CheckTicket(ticketNumber))
-                    _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Approve");
-                else
-                    _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Deny");
+                switch (_validator.CheckTicket(ticketNumber, accessRequest))
+                {
+                    case ValidationResult.Approve:
+                        Log.Information("Approving access request {AccessRequestId} with ticket number {TicketNumber}",
+                            accessRequestId, ticketNumber);
+                        _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Approve");
+                        break;
+                    case ValidationResult.Deny:
+                        Log.Information("Denying access request {AccessRequestId} with ticket number {TicketNumber}",
+                            accessRequestId, ticketNumber);
+                        _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Deny");
+                        break;
+                    default:
+                        Log.Information("Ignoring access request {AccessRequestId} with ticket number {TicketNumber}",
+                            accessRequestId, ticketNumber);
+                        break;
+                }
             }
             catch (Exception ex)
             {
