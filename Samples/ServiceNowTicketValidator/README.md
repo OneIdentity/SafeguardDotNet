@@ -5,6 +5,8 @@ This is built using the SafeguardDotNet nuget package from nuget.org, not using 
 The current sample makes sure that the configuration item in the ticket matches the asset requested.
 It also makes sure that the requester is the same as the assignee on the ticket.
 
+The sample can be updated to modify the ticket validation logic in order to fit the needs of any organization using ServiceNow.
+
 This sample demonstrates:
 
 - thumbprint-based client certificate authentication from a Windows host (most secure method)
