@@ -84,8 +84,11 @@
     <Compile Include="ConfigUtils.cs" />
     <Compile Include="DTOs\AccessRequest.cs" />
     <Compile Include="DTOs\AccessRequestApprovalPendingEvent.cs" />
-    <Compile Include="DTOs\Incident.cs" />
+    <Compile Include="DTOs\ServiceNowCmdbCi.cs" />
+    <Compile Include="DTOs\ServiceNowIncident.cs" />
+    <Compile Include="DTOs\ServiceNowLink.cs" />
     <Compile Include="DTOs\ServiceNowResult.cs" />
+    <Compile Include="DTOs\ServiceNowSysUser.cs" />
     <Compile Include="DTOs\ServiceNowToken.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

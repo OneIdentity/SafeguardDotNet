@@ -2,8 +2,10 @@
 
 namespace ServiceNowTicketValidator.DTOs
 {
+    // There are more fields available. I trimmed out what I thought was most useful.
+    // Anything could be added back of course.
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    internal class Incident
+    internal class ServiceNowIncident
     {
         public string number { get; set; }
         public string state { get; set; }
@@ -12,5 +14,9 @@ namespace ServiceNowTicketValidator.DTOs
         public string opened_at { get; set; }
         public string resolved_at { get; set; }
         public string closed_at { get; set; }
+        public ServiceNowLink caller_id { get; set; }
+        public ServiceNowLink opened_by { get; set; }
+        public ServiceNowLink assigned_to { get; set; }
+        public ServiceNowLink cmdb_ci { get; set; }
     }
 }

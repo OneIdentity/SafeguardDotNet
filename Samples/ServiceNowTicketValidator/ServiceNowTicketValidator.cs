@@ -35,9 +35,39 @@ namespace ServiceNowTicketValidator
 
             // If you would like to change the validation logic of a ticket this is where you would put your code changes.
             // Just delete the logic that is here and replace it with your own.
+            var assignedUser = _client.GetSystemUser(incident.assigned_to.link);
+            if (assignedUser?.name == null)
+            {
+                Log.Information("Unable to determine the assigned user for {TicketNumber} based on {ServiceNowLink}",
+                    ticketNumber, incident.assigned_to.link);
+                return ValidationResult.Ignore;
+            }
+            var configurationItem = _client.GetConfigurationItem(incident.cmdb_ci.link);
+            if (configurationItem?.name == null)
+            {
+                Log.Information(
+                    "Unable to determine the configuration item for {TicketNumber} based on {ServiceNowLink}",
+                    ticketNumber, incident.assigned_to.link);
+                return ValidationResult.Ignore;
+            }
 
+            if (assignedUser.name != accessRequest.RequesterDisplayName)
+            {
+                Log.Information(
+                    "Access request denied because requester ({Requester}) does not match ticket assignee ({Assignee})",
+                    accessRequest.RequesterDisplayName, assignedUser.name);
+                return ValidationResult.Deny;
+            }
 
-            return ValidationResult.Ignore;
+            if (configurationItem.name != accessRequest.AssetName)
+            {
+                Log.Information(
+                    "Access request denied because request target ({Requester}) does not match ticket configuration item ({Assignee})",
+                    accessRequest.AssetName, configurationItem.name);
+                return ValidationResult.Deny;
+            }
+
+            return ValidationResult.Approve;
         }
 
         protected virtual void Dispose(bool disposing)

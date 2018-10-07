@@ -31,19 +31,29 @@ namespace ServiceNowTicketValidator
             _password = password.Copy();
         }
 
-        public Incident GetIncident(string ticketNumber)
+        private void EnsureRestClient()
+        {
+            if (_restClient == null || _accessToken == null || _accessToken.Expired)
+                _restClient = GetRestClient();
+        }
+
+        private void HandleHeaders(ref RestRequest request)
+        {
+            request.AddHeader("Accept", "application/json");
+            if (!UseBasicAuth)
+                request.AddHeader("Authorization", $"Bearer {_accessToken.access_token}");
+        }
+
+        public ServiceNowIncident GetIncident(string ticketNumber)
         {
             try
             {
-                if (_restClient == null || _accessToken == null || _accessToken.Expired)
-                    _restClient = GetRestClient();
+                EnsureRestClient();
                 var request =
                     new RestRequest($"api/now/table/incident?sysparm_query=number%3D{ticketNumber}&sysparm_limit=1",
                         Method.GET);
-                request.AddHeader("Accept", "application/json");
-                if (!UseBasicAuth)
-                    request.AddHeader("Authorization", $"Bearer {_accessToken.access_token}");
-                var response = _restClient.Execute<ServiceNowResult<Incident>>(request);
+                HandleHeaders(ref request);
+                var response = _restClient.Execute<ServiceNowResult<ServiceNowIncident>>(request);
                 return response?.Data?.result?.FirstOrDefault();
             }
             catch (Exception ex)
@@ -51,6 +61,35 @@ namespace ServiceNowTicketValidator
                 Log.Error(ex, $"Unable to find incident for ticket number {ticketNumber}");
                 return null;
             }
+        }
+
+        private T FollowLink<T>(string linkUrl) where T : class
+        {
+            try
+            {
+                EnsureRestClient();
+                var relativeUrl = new Uri(linkUrl).PathAndQuery;
+                var request = new RestRequest(relativeUrl);
+                HandleHeaders(ref request);
+                var response = _restClient.Execute<ServiceNowResult<T>>(request);
+                return response?.Data?.result?.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Unable to follow link {ServiceNowLink} for type {ObjectType}", linkUrl,
+                    typeof(T).ToString());
+                return null;
+            }
+        }
+
+        public ServiceNowCmdbCi GetConfigurationItem(string linkUrl)
+        {
+            return FollowLink<ServiceNowCmdbCi>(linkUrl);
+        }
+
+        public ServiceNowSysUser GetSystemUser(string linkUrl)
+        {
+            return FollowLink<ServiceNowSysUser>(linkUrl);
         }
 
         private bool UseBasicAuth => _clientSecret == null;
