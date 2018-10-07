@@ -1,7 +1,11 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Security;
+using Newtonsoft.Json;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.Event;
+using Serilog;
+using ServiceNowTicketValidator.DTOs;
 
 namespace ServiceNowTicketValidator
 {
@@ -28,7 +32,7 @@ namespace ServiceNowTicketValidator
                 ConfigUtils.ReadRequiredSettingFromAppConfig("SafeguardAddress", "Safeguard appliance network address");
             _safeguardClientCertificateThumbprint =
                 ConfigUtils.ReadRequiredSettingFromAppConfig("SafeguardClientCertificateThumbprint",
-                    "Safeguard client certificate thumbprint");
+                    "Safeguard client certificate thumbprint").ToUpper();
             _safeguardApiVersion =
                 int.Parse(ConfigUtils.ReadRequiredSettingFromAppConfig("SafeguardApiVersion", "Safeguard API version"));
             _safeguardIgnoreSsl = bool.Parse(ConfigurationManager.AppSettings["SafeguardIgnoreSsl"]);
@@ -45,23 +49,48 @@ namespace ServiceNowTicketValidator
 
         private void HandlePendingApprovalNotification(string eventName, string eventBody)
         {
-            // TODO: check to be sure it has a ticket number (assume ServiceNow / check for INC)
+            if (eventName != "AccessRequestPendingApproval")
+            {
+                Log.Information("Received {EventName} event, ignoring it", eventName);
+                return;
+            }
 
-            var ticketNumber = "";
+            try
+            {
+                var approvalEvent = JsonConvert.DeserializeObject<AccessRequestApprovalPendingEvent>(eventBody);
+                var accessRequestId = approvalEvent.RequestId;
+                if (string.IsNullOrEmpty(accessRequestId))
+                {
+                    Log.Warning("Unable to parse access requestId for event {EventBody}", eventBody);
+                    return;
+                }
+                var accessRequestJson =
+                    _connection.InvokeMethod(Service.Core, Method.Get, $"AccessRequests/{accessRequestId}");
+                
 
-            // TODO: bail early if no ticket number
 
-            // TODO: get relevant info for approve or deny
+                // TODO: check to be sure it has a ticket number (assume ServiceNow / check for INC)
 
-            var accessRequestId = "";
+                var ticketNumber = "";
 
-            if (_connection.GetAccessTokenLifetimeRemaining() == 0)
-                _connection.RefreshAccessToken();
+                // TODO: bail early if no ticket number
 
-            if (_validator.CheckTicket(ticketNumber))
-                _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Approve");
-            else
-                _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Deny");
+                // TODO: get relevant info for approve or deny
+
+                
+
+                if (_connection.GetAccessTokenLifetimeRemaining() == 0)
+                    _connection.RefreshAccessToken();
+
+                if (_validator.CheckTicket(ticketNumber))
+                    _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Approve");
+                else
+                    _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Deny");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Exception occured while handling event {EventName}, data={EventBody}", eventName, eventBody);
+            }
         }
 
         public void Start()

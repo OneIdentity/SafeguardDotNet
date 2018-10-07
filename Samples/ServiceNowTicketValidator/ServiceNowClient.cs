@@ -1,56 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Security;
 using OneIdentity.SafeguardDotNet;
 using RestSharp;
 using RestSharp.Authenticators;
 using Serilog;
-
+using ServiceNowTicketValidator.DTOs;
 using Method = RestSharp.Method;
 
 namespace ServiceNowTicketValidator
 {
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    internal class ServiceNowResult<T> where T : class
-    {
-        public IEnumerable<T> result { get; set; }
-    }
-
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    internal class Incident
-    {
-        public string number { get; set; }
-        public string state { get; set; }
-        public bool Active => active != "false";
-        public string active { get; set; }
-        public string opened_at { get; set; }
-        public string resolved_at { get; set; }
-        public string closed_at { get; set; }
-    }
-
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    internal class ServiceNowToken
-    {
-        private int _expires_in;
-        public string access_token { get; set; }
-        public string refresh_token { get; set; }
-        public string scope { get; set; }
-        public string token_type { get; set; }
-        public int expires_in
-        {
-            get => _expires_in;
-            set
-            {
-                _expires_in = value;
-                ExpiresAt = DateTime.UtcNow.AddSeconds(value);
-            }
-        }
-        public DateTime ExpiresAt { get; set; }
-        public bool Expired => DateTime.UtcNow > ExpiresAt;
-    }
-
     internal class ServiceNowClient : IDisposable
     {
         private const string TokenAuthUriFormat = "{0}/oauth_token.do";
@@ -67,7 +26,7 @@ namespace ServiceNowTicketValidator
             SecureString password)
         {
             _applicationUrl = applicationUrl;
-            _clientSecret = clientSecret.Copy();
+            _clientSecret = clientSecret?.Copy();
             _userName = userName;
             _password = password.Copy();
         }

@@ -14,12 +14,12 @@ namespace ServiceNowTicketValidator
                 if (!string.IsNullOrEmpty(value))
                     return value;
                 Log.Error($"{key} is required in App.Config");
-                throw new Exception($"Unable to start SlackBotService with empty {description}.");
+                throw new Exception($"Unable to start ServiceNowTicketValidator with empty {description}.");
             }
             catch (ConfigurationErrorsException ex)
             {
                 Log.Error(ex, $"{key} is required in App.Config");
-                throw new Exception($"Unable to start SlackBotService without {description}.", ex);
+                throw new Exception($"Unable to start ServiceNowTicketValidator without {description}.", ex);
             }
         }
 
@@ -30,7 +30,7 @@ namespace ServiceNowTicketValidator
                 var value = ConfigurationManager.AppSettings[key];
                 return !string.IsNullOrEmpty(value) ? value : null;
             }
-            catch (ConfigurationErrorsException ex)
+            catch (ConfigurationErrorsException)
             {
                 return null;
             }
