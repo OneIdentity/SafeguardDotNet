@@ -44,7 +44,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         public SafeguardEventListener(string eventUrl, X509Certificate2 clientCertificate, SecureString apiKey,
             bool ignoreSsl) : this(eventUrl, ignoreSsl)
         {
-            _clientCertificate = clientCertificate;
+            _clientCertificate = CertificateUtilities.Copy(clientCertificate);
             _apiKey = apiKey.Copy();
         }
 

@@ -4,6 +4,7 @@ configuration: Release
 before_build:
 - ps: '& .\appveyor-prebuild.ps1'
 build:
+  project: SafeguardDotNet.sln
   publish_nuget: true
   parallel: true
   verbosity: normal

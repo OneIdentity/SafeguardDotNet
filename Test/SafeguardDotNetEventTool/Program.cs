@@ -195,7 +195,7 @@ namespace SafeguardDotNetEventTool
                     using (var listener = CreatePersistentListener(opts))
                         RunListener(listener);
                 }
-                else if (string.IsNullOrEmpty(opts.ApiKey))
+                else if (!string.IsNullOrEmpty(opts.ApiKey))
                 {
                     using (var listener = CreateA2AListener(opts))
                         RunListener(listener);

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2036
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceNowTicketValidator", "ServiceNowTicketValidator.csproj", "{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {48F59535-AC23-41B5-B87E-49049D2506E5}
+	EndGlobalSection
+EndGlobal
