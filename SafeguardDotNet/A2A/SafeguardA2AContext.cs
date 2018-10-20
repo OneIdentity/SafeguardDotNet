@@ -80,6 +80,11 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return eventListener;
         }
 
+        public string BrokerAccessRequest(BrokeredAccessRequest accessRequest)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Dispose()
         {
             Dispose(true);
