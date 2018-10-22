@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
@@ -80,9 +81,31 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return eventListener;
         }
 
-        public string BrokerAccessRequest(BrokeredAccessRequest accessRequest)
+        public string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest)
         {
-            throw new NotImplementedException();
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+
+            if (accessRequest.ForUserId == null && accessRequest.ForUserName == null)
+                throw new SafeguardDotNetException("You must specify a user to create an access request for");
+
+            if (accessRequest.AssetId == null && accessRequest.AssetName == null)
+                throw new SafeguardDotNetException("You must specify an asset to create an access request for");
+
+            var request = new RestRequest("AccessRequests", RestSharp.Method.POST)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
+            var body = JsonConvert.SerializeObject(accessRequest);
+            request.AddParameter("application/json", body, ParameterType.RequestBody);
+            var response = _a2AClient.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
+            if (!response.IsSuccessful)
+                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
+                                                   $"{response.StatusCode} {response.Content}", response.Content);
+            Log.Information("Successfully created A2A access request.");
+            return response.Content;
         }
 
         public void Dispose()

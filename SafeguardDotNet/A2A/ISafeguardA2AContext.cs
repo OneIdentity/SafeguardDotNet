@@ -29,6 +29,12 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// <returns>The event listener.</returns>
         ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler);
 
-        string BrokerAccessRequest(BrokeredAccessRequest accessRequest);
+        /// <summary>
+        /// Creates an access request on behalf of another user using Safeguard A2A.
+        /// </summary>
+        /// <param name="apiKey">API key corresponding to the access request broker.</param>
+        /// <param name="accessRequest">The details of the access request to create.</param>
+        /// <returns>A JSON string representing the new access request.</returns>
+        string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest);
     }
 }
