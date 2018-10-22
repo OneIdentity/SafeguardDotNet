@@ -183,6 +183,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// <summary>
         /// The amount of time the access request should be requested for.
         /// </summary>
+        [JsonConverter(typeof(CustomTimeSpanConverter))]
         public TimeSpan RequestedDuration { get; set; }
 
         public int RequestedDurationDays => RequestedDuration.Days;
