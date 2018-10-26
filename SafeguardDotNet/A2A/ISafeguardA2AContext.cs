@@ -24,9 +24,17 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// second outage. To get an event listener that supports recovering from longer term outages, please use
         /// Safeguard.A2A.Event to request a persistent event listener.
         /// </summary>
-        /// <param name="apiKey">API key correspondingto the configured account to listen for.</param>
+        /// <param name="apiKey">API key corresponding to the configured account to listen for.</param>
         /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
         /// <returns>The event listener.</returns>
         ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler);
+
+        /// <summary>
+        /// Creates an access request on behalf of another user using Safeguard A2A.
+        /// </summary>
+        /// <param name="apiKey">API key corresponding to the access request broker.</param>
+        /// <param name="accessRequest">The details of the access request to create.</param>
+        /// <returns>A JSON string representing the new access request.</returns>
+        string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest);
     }
 }

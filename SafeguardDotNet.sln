@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetTool", "Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetA2aTool", "Test\SafeguardDotNetA2aTool\SafeguardDotNetA2aTool.csproj", "{0852DDE0-8C16-4C29-B49F-8E67A2993078}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetEventTool", "Test\SafeguardDotNetEventTool\SafeguardDotNetEventTool.csproj", "{741143E4-C1AB-450C-8CCA-11225D037548}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetEventTool", "Test\SafeguardDotNetEventTool\SafeguardDotNetEventTool.csproj", "{741143E4-C1AB-450C-8CCA-11225D037548}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetAccessRequestBrokerTool", "Test\SafeguardDotNetAccessRequestBrokerTool\SafeguardDotNetAccessRequestBrokerTool.csproj", "{37DC1680-E01E-4D39-8D5B-E2A0D908EB33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{741143E4-C1AB-450C-8CCA-11225D037548}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{741143E4-C1AB-450C-8CCA-11225D037548}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{741143E4-C1AB-450C-8CCA-11225D037548}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37DC1680-E01E-4D39-8D5B-E2A0D908EB33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37DC1680-E01E-4D39-8D5B-E2A0D908EB33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37DC1680-E01E-4D39-8D5B-E2A0D908EB33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37DC1680-E01E-4D39-8D5B-E2A0D908EB33}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

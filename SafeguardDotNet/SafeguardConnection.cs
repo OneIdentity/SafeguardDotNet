@@ -73,6 +73,9 @@ namespace OneIdentity.SafeguardDotNet
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
+            if (string.IsNullOrEmpty(relativeUrl))
+                throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
                 .AddHeader("Accept", "application/json");
             if (service != Service.Notification)
