@@ -104,7 +104,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// The type of access request to create.
         /// </summary>
         [JsonConverter(typeof(AccessRequestTypeConverter))]
-        public BrokeredAccessRequestType RequestType { get; set; }
+        public BrokeredAccessRequestType AccessType { get; set; }
 
         /// <summary>
         /// The name of the user to create the access request for. If the <see cref="ForUserId"/> property is
@@ -140,15 +140,20 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// </summary>
         public string AccountName { get; set; }
         /// <summary>
+        /// The ID of the account to create the access request for.
+        /// </summary>
+        public int? AccountId { get; set; }
+        /// <summary>
         /// The name of the asset the account is from to create the access request for. If the
-        /// <see cref="AccountId"/> property is set, then this property will be ignored.
+        /// <see cref="AccountAssetId"/> property is set, then this property will be ignored.
         /// </summary>
         [JsonProperty(PropertyName = "AccountSystemName")]
         public string AccountAssetName { get; set; }
         /// <summary>
-        /// The ID of the account to create the access request for.
+        /// The ID of the asset the account is from to create the access request for.
         /// </summary>
-        public int? AccountId { get; set; }
+        [JsonProperty(PropertyName = "AccountSystemId")]
+        public int? AccountAssetId { get; set; }
 
         /// <summary>
         /// Whether or not this is an emergency access request.
@@ -179,15 +184,15 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// before being sent to the server.
         /// </summary>
         [JsonConverter(typeof(UtcDateTimeConverter))]
-        public DateTime RequestedFor { get; set; }
+        public DateTime? RequestedFor { get; set; }
         /// <summary>
         /// The amount of time the access request should be requested for.
         /// </summary>
         [JsonConverter(typeof(CustomTimeSpanConverter))]
-        public TimeSpan RequestedDuration { get; set; }
+        public TimeSpan? RequestedDuration { get; set; }
 
-        public int RequestedDurationDays => RequestedDuration.Days;
-        public int RequestedDurationHours => RequestedDuration.Hours;
-        public int RequestedDurationMinutes => RequestedDuration.Minutes;
+        public int? RequestedDurationDays => RequestedDuration?.Days;
+        public int? RequestedDurationHours => RequestedDuration?.Hours;
+        public int? RequestedDurationMinutes => RequestedDuration?.Minutes;
     }
 }
