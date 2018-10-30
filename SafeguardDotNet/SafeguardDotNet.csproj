@@ -23,7 +23,7 @@
 Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Password authentication
 - Client certificate authentication
-- A2A API support
+- A2A API support, including access request broker
 - Real-time event notifications</PackageReleaseNotes>
   </PropertyGroup>
 
