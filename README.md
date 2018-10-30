@@ -46,7 +46,7 @@ A simple code example for calling the Safeguard API:
 
 ```C#
 SecureString password = GetPasswordSomehow(); // default password is "Admin123"
-var connection = Safeguard.Connect("10.5.32.162", "local", "Admin", password);
+var connection = Safeguard.Connect("safeguard.sample.corp", "local", "Admin", password);
 Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
 ```
 
@@ -56,21 +56,20 @@ personal store.
 
 ```C#
 SecureString certificatePassword = GetPasswordSomehow();
-var connection = Safeguard.Connect("10.5.32.162", "C:\cert.pfx", certificatePassword);
+var connection = Safeguard.Connect("safeguard.sample.corp", "C:\cert.pfx", certificatePassword);
 Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
 ```
 
 ```C#
-SecureString certificatePassword = GetPasswordSomehow();
-var connection = Safeguard.Connect("10.5.32.162", "756766BB590D7FA9CA9E1971A4AE41BB9CEC82F1");
+var connection = Safeguard.Connect("safeguard.sample.corp", "756766BB590D7FA9CA9E1971A4AE41BB9CEC82F1");
 Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
 ```
 
-A final method that is available is using an existing Safeguard API token.
+A final authentication method that is available is using an existing Safeguard API token.
 
 ```C#
 SecureString apiToken = GetTokenSomehow();
-var connection = Safeguard.Connect("10.5.32.162", apiToken);
+var connection = Safeguard.Connect("safeguard.sample.corp", apiToken);
 Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
 ```
 
@@ -104,3 +103,70 @@ Each of these services provides a separate Swagger endpoint.
 
 You may use the `Authorize` button at the top of the screen to get an API token
 to call the Safeguard API directly using Swagger.
+
+To call the a2a service you should begin by using `Safeguard.A2A.GetContext()` rather than
+`Safeguard.Connect()`.
+
+### Examples
+
+Most functionality is in the core service as mentioned above.  The notification service
+provides read-only information for status, etc.
+
+#### Anonymous Call for Safeguard Status
+
+```C#
+var connection = Safeguard.Connect("safeguard.sample.corp");
+Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Status"));
+```
+
+#### Create a New Linux Asset
+
+```C#
+// Assume connection is already made
+var json = connection.InvokeMethod(Service.Core, Method.Post, "Assets", 
+    JsonConvert.SerializeObject(new { 
+        Name = "linux.blue.vas",
+        NetworkAddress = "linux.blue.vas",
+        Description = "A new linux asset",
+        PlatformId = 188, // Ubuntu Other
+        AssetPartitionId = -1
+    }));
+Console.WriteLine(json);
+```
+
+## Using SafeguardDotNet from a New Visual Studio Code Project
+
+First, create a directory with the name you want to give your project and change directory into it.
+
+Run:
+```PowerShell
+PS> dotnet new console
+```
+
+This will create a `console` project.  You can see other project types by running `dotnet new`.
+
+Run:
+```PowerShell
+PS> dotnet add package OneIdentity.SafeguardDotNet
+```
+
+This will add the latest OneIdentity.SafeguardDotNet NuGet package into your project.
+
+Run:
+```PowerShell
+PS> dotnet restore
+```
+
+This will restore NuGet packages into your project so you can get code completion in the editor
+
+Finally, run:
+```PowerShell
+PS> code .
+```
+
+This will open the Visual Studio Code editor so you can begin adding code to your project.
+
+Add the using directive at the top your file to call SafeguardDotNet:
+```C#
+using OneIdentity.SafeguardDotNet;
+```
