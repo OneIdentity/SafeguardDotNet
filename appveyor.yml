@@ -1,4 +1,4 @@
-version: 2.4.0-dev-{build}
+version: 2.4.0-release-{build}
 image: Visual Studio 2017
 configuration: Release
 before_build:
