@@ -116,7 +116,7 @@ provides read-only information for status, etc.
 
 ```C#
 var connection = Safeguard.Connect("safeguard.sample.corp");
-Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Status"));
+Console.WriteLine(connection.InvokeMethod(Service.Notification, Method.Get, "Status"));
 ```
 
 #### Create a New Linux Asset
