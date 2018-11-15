@@ -142,6 +142,20 @@ var json = connection.InvokeMethod(Service.Core, Method.Post, "Assets",
 Console.WriteLine(json);
 ```
 
+#### Create a New User and Set the Password
+
+```C#
+// Assume connection is already made
+var userJson = connection.InvokeMethod(Service.Core, Method.Post, "Users", 
+    JsonConvert.SerializeObject(new {
+        PrimaryAuthenticationProviderId = -1,
+        UserName = "MyNewUser"
+    }));
+var userObj = JsonConvert.DeserializeAnonymousType(userJson, new { Id = 0 });
+connection.InvokeMethod(Service.Core, Method.Put, $"Users/{userObj.Id}/Password",
+    JsonConvert.SerializeObject("MyNewUser123");
+```
+
 ## Using SafeguardDotNet from a New Visual Studio Code Project
 
 First, create a directory with the name you want to give your project and change directory into it.
