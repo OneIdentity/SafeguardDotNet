@@ -76,6 +76,14 @@ Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
 Calling the simple 'Me' endpoint provides information about the currently logged
 on user.
 
+### Visual Studio 2017
+
+[![Visual Studio 2017 video](https://img.youtube.com/vi/kK90UyOeZac/0.jpg)](https://www.youtube.com/watch?v=kK90UyOeZac)
+
+### Visual Studio Code
+
+[![Visual Studio Code video](https://img.youtube.com/vi/gV7iHUun9kA/0.jpg)](https://www.youtube.com/watch?v=gV7iHUun9kA)
+
 ## About the Safeguard API
 
 The Safeguard API is a REST-based Web API. Safeguard API endpoints are called
