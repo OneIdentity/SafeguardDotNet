@@ -188,7 +188,7 @@ PS> code .
 
 This will open the Visual Studio Code editor so you can begin adding code to your project.
 
-Add the using directive at the top your file to call SafeguardDotNet:
+Add the using directive at the top of your file to call SafeguardDotNet:
 ```C#
 using OneIdentity.SafeguardDotNet;
 ```
