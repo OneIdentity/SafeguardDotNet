@@ -78,9 +78,13 @@ on user.
 
 ### Visual Studio 2017
 
+A three minute video demonstrating how to get started calling the Safeguard API from a Visual Studio 2017 project.
+
 [![Visual Studio 2017 video](https://img.youtube.com/vi/kK90UyOeZac/0.jpg)](https://www.youtube.com/watch?v=kK90UyOeZac)
 
 ### Visual Studio Code
+
+A four minute video demonstrating how to get started calling the Safeguard API from a Visual Studio Code project.
 
 [![Visual Studio Code video](https://img.youtube.com/vi/gV7iHUun9kA/0.jpg)](https://www.youtube.com/watch?v=gV7iHUun9kA)
 
@@ -142,6 +146,20 @@ var json = connection.InvokeMethod(Service.Core, Method.Post, "Assets",
 Console.WriteLine(json);
 ```
 
+#### Create a New User and Set the Password
+
+```C#
+// Assume connection is already made
+var userJson = connection.InvokeMethod(Service.Core, Method.Post, "Users", 
+    JsonConvert.SerializeObject(new {
+        PrimaryAuthenticationProviderId = -1,
+        UserName = "MyNewUser"
+    }));
+var userObj = JsonConvert.DeserializeAnonymousType(userJson, new { Id = 0 });
+connection.InvokeMethod(Service.Core, Method.Put, $"Users/{userObj.Id}/Password",
+    JsonConvert.SerializeObject("MyNewUser123");
+```
+
 ## Using SafeguardDotNet from a New Visual Studio Code Project
 
 First, create a directory with the name you want to give your project and change directory into it.
@@ -174,7 +192,7 @@ PS> code .
 
 This will open the Visual Studio Code editor so you can begin adding code to your project.
 
-Add the using directive at the top your file to call SafeguardDotNet:
+Add the using directive at the top of your file to call SafeguardDotNet:
 ```C#
 using OneIdentity.SafeguardDotNet;
 ```
