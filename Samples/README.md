@@ -10,7 +10,7 @@ most secure automated Safeguard API authentication mechanism.
 
 ## Sample Projects
 
-- SampleA2aService
+- [SampleA2aService](SampleA2aService)
 
   This project shows how to use app.config, TopShelf, and Serilog to build simple
   Windows service that can interact with Safeguard.  In this case, the service will
@@ -22,7 +22,7 @@ most secure automated Safeguard API authentication mechanism.
   using either Visual Studio Code or Visual Studio 2017.  It targets .NET Core 2.1
   runtime.
 
-- ServiceNowTicketValidator
+- [ServiceNowTicketValidator](ServiceNowTicketValidator)
 
   By default, the Safeguard ServiceNow integration will only check for the existence
   of a ticket and do rudimentary checks on the state of the ticket.  This sample
