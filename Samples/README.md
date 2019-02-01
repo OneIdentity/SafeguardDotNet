@@ -18,6 +18,10 @@ most secure automated Safeguard API authentication mechanism.
   change.  This sort of service could be used to update a password stored in a
   configuration file for a legacy application.
 
+  This project was initially developed using Visual Studio Code.  It can be modified
+  using either Visual Studio Code or Visual Studio 2017.  It targets .NET Core 2.1
+  runtime.
+
 - ServiceNowTicketValidator
 
   By default, the Safeguard ServiceNow integration will only check for the existence
@@ -27,3 +31,6 @@ most secure automated Safeguard API authentication mechanism.
   references a ticket meeting a custom criteria.  This allows you to do advanced
   ticket validation.  This project also uses TopShelf and Serilog.  Configuration is
   also stored in an app.config.
+
+  This project was initially developed using Visual Studio 2017.  It targets .NET
+  Framework 4.6.2.  It can be modified to suit your needs.
