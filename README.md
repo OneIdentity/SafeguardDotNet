@@ -6,6 +6,14 @@
 
 One Identity Safeguard Web API C# SDK
 
+-----------
+
+<p align="center">
+<i>Check out our <a href="Samples">sample projects</a> to get started with your own custom integration to Safeguard!</i>
+</p>
+
+-----------
+
 ## Introduction
 
 All functionality in Safeguard is available via the Safeguard API. There is
