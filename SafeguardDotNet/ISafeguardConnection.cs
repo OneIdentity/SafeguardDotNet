@@ -11,14 +11,14 @@ namespace OneIdentity.SafeguardDotNet
     public interface ISafeguardConnection : IDisposable
     {
         /// <summary>
-        /// Number of minutes remaining in the lifetime of the API access token.
+        /// Number of minutes remaining in the lifetime of the Safeguard API access token.
         /// </summary>
         /// <returns></returns>
         int GetAccessTokenLifetimeRemaining();
 
         /// <summary>
-        /// Use the underlying credentials used to initial create the connection to request a
-        /// new API access token.
+        /// Request a new Safeguard API access token with the underlying credentials used to
+        /// initially create the connection.
         /// </summary>
         void RefreshAccessToken();
 
@@ -56,12 +56,30 @@ namespace OneIdentity.SafeguardDotNet
         /// <summary>
         /// Gets a Safeguard event listener. You will need to call the RegisterEventHandler()
         /// method to establish callbacks. Then, you just have to call Start().  Call Stop()
-        /// when you are finished. The event listener returned by this method will not
+        /// when you are finished. The event listener returned by this method WILL NOT
         /// automatically recover from a SignalR timeout which occurs when there is a 30+
         /// second outage. To get an event listener that supports recovering from longer term
-        /// outages, please use Safeguard.Event to request a persistent event listener.
+        /// outages, please use GetPersistentEventListener() to request a persistent event
+        /// listener.
         /// </summary>
         /// <returns>The event listener.</returns>
         ISafeguardEventListener GetEventListener();
+
+        /// <summary>
+        /// Gets a persistent Safeguard event listener. You will need to call the
+        /// RegisterEventHandler() method to establish callbacks. Then, you just have to
+        /// call Start().  Call Stop() when you are finished. The event listener returned
+        /// by this method WILL automatically recover from a SignalR timeout which occurs
+        /// when there is a 30+ second outage.
+        /// </summary>
+        /// <returns>The persistent event listener.</returns>
+        ISafeguardEventListener GetPersistentEventListener();
+
+        /// <summary>
+        /// Call Safeguard API to invalidate current access token and clear its value from
+        /// the connection.  In order to continue using the connection you will need to call
+        /// RefreshAccessToken().
+        /// </summary>
+        void LogOut();
     }
 }

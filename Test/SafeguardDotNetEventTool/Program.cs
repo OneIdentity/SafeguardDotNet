@@ -120,7 +120,7 @@ namespace SafeguardDotNetEventTool
         {
             using (var context = CreateA2AContext(opts))
             {
-                return context.GetEventListener(opts.ApiKey.ToSecureString(),
+                return context.GetA2AEventListener(opts.ApiKey.ToSecureString(),
                     (name, body) => { Log.Information("Received A2A Event: {EventBody}", body); });
             }
         }

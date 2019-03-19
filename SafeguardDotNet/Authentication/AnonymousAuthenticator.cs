@@ -16,6 +16,11 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             throw new SafeguardDotNetException("Anonymous connection cannot be used to get an API access token, Error: Unsupported operation");
         }
 
+        public override object Clone()
+        {
+            throw new SafeguardDotNetException("Anonymous authenticators are not cloneable");
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (_disposed || !disposing)

@@ -6,7 +6,7 @@ using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
-    internal abstract class AuthenticatorBase : IAuthenticationMechanism
+    internal abstract class AuthenticatorBase : IAuthenticationMechanism, ICloneable
     {
         private bool _disposed;
 
@@ -47,6 +47,12 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public bool HasAccessToken()
         {
             return AccessToken != null;
+        }
+
+        public void ClearAccessToken()
+        {
+            AccessToken?.Dispose();
+            AccessToken = null;
         }
 
         public SecureString GetAccessToken()
@@ -106,6 +112,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected abstract SecureString GetRstsTokenInternal();
 
+        public abstract object Clone();
+
         public void Dispose()
         {
             Dispose(true);
@@ -118,7 +126,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 return;
             try
             {
-                AccessToken?.Dispose();
+               ClearAccessToken();
             }
             finally
             {

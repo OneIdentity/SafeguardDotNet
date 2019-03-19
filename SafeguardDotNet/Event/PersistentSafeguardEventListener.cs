@@ -11,7 +11,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         public PersistentSafeguardEventListener(ISafeguardConnection connection)
         {
             _connection = connection;
-            Log.Information("Persistent event listener successfully created.");
+            Log.Debug("Persistent event listener successfully created.");
         }
 
         protected override SafeguardEventListener ReconnectEventListener()

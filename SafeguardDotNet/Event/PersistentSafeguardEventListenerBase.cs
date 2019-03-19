@@ -41,7 +41,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                     try
                     {
                         _eventListener?.Dispose();
-                        Log.Information("Attempting to connect and start internal event listener.");
+                        Log.Debug("Attempting to connect and start internal event listener.");
                         _eventListener = ReconnectEventListener();
                         _eventListener.SetEventHandlerRegistry(_eventHandlerRegistry);
                         _eventListener.Start();
@@ -62,7 +62,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _reconnectCancel = null;
                 _reconnectTask = null;
                 if (!task.IsFaulted)
-                    Log.Information("Internal event listener successfully connected and started.");
+                    Log.Debug("Internal event listener successfully connected and started.");
             });
         }
 

@@ -24,7 +24,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             if (string.IsNullOrEmpty(_provider))
                 _providerScope = "rsts:sts:primaryproviderid:local";
             _username = username;
-            _password = password;
+            _password = password.Copy();
         }
 
         private void ResolveProviderToScope()
@@ -108,6 +108,16 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                                                    $"{response.StatusCode} {response.Content}", response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
+        }
+
+        public override object Clone()
+        {
+            var auth =
+                new PasswordAuthenticator(NetworkAddress, _provider, _username, _password, ApiVersion, IgnoreSsl)
+                {
+                    AccessToken = AccessToken.Copy()
+                };
+            return auth;
         }
 
         protected override void Dispose(bool disposing)
