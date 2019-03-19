@@ -154,7 +154,7 @@ namespace OneIdentity.SafeguardDotNet
             if (_authenticationMechanism.GetType() == typeof(PasswordAuthenticator) ||
                 _authenticationMechanism.GetType() == typeof(CertificateAuthenticator))
             {
-                return new PersistentSafeguardEventListener(this.Clone() as ISafeguardConnection);
+                return new PersistentSafeguardEventListener(Clone() as ISafeguardConnection);
             }
             throw new SafeguardDotNetException(
                 $"Unable to create persistent event listener from {_authenticationMechanism.GetType()}");

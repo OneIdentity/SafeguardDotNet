@@ -9,7 +9,7 @@ using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.A2A
 {
-    internal class SafeguardA2AContext : ISafeguardA2AContext
+    internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
     {
         private bool _disposed;
 
@@ -19,11 +19,24 @@ namespace OneIdentity.SafeguardDotNet.A2A
         private readonly X509Certificate2 _clientCertificate;
         private readonly RestClient _a2AClient;
 
+        // only used for cloning
+        private readonly string _certificateThumbprint;
+        private readonly string _certificatePath;
+        private readonly SecureString _certificatePassword;
+        private readonly int _apiVersion;
+
         private SafeguardA2AContext(string networkAddress, string certificateThumbprint, string certificatePath,
             SecureString certificatePassword, int apiVersion, bool ignoreSsl)
         {
             _networkAddress = networkAddress;
-            var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{apiVersion}";
+
+            // set cloning properties
+            _certificateThumbprint = certificateThumbprint;
+            _certificatePath = certificatePath;
+            _certificatePassword = certificatePassword.Copy();
+            _apiVersion = apiVersion;
+
+            var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{_apiVersion}";
             _a2AClient = new RestClient(safeguardA2AUrl);
 
             if (ignoreSsl)
@@ -31,9 +44,9 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 _ignoreSsl = true;
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
-            _clientCertificate = !string.IsNullOrEmpty(certificateThumbprint)
-                ? CertificateUtilities.GetClientCertificateFromStore(certificateThumbprint)
-                : CertificateUtilities.GetClientCertificateFromFile(certificatePath, certificatePassword);
+            _clientCertificate = !string.IsNullOrEmpty(_certificateThumbprint)
+                ? CertificateUtilities.GetClientCertificateFromStore(_certificateThumbprint)
+                : CertificateUtilities.GetClientCertificateFromFile(_certificatePath, _certificatePassword);
             _a2AClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate };
         }
 
@@ -72,7 +85,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return json.Root.ToString().ToSecureString();
         }
 
-        public ISafeguardEventListener GetEventListener(SecureString apiKey, SafeguardEventHandler handler)
+        public ISafeguardEventListener GetA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");
@@ -84,6 +97,16 @@ namespace OneIdentity.SafeguardDotNet.A2A
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
+        }
+
+        public ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+
+            return new PersistentSafeguardA2AEventListener(Clone() as SafeguardA2AContext, apiKey, handler);
         }
 
         public string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest)
@@ -133,6 +156,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
             {
                 _disposed = true;
             }
+        }
+
+        public object Clone()
+        {
+            return !string.IsNullOrEmpty(_certificateThumbprint)
+                ? new SafeguardA2AContext(_networkAddress, _certificateThumbprint, _apiVersion, _ignoreSsl)
+                : new SafeguardA2AContext(_networkAddress, _certificatePath, _certificatePassword, _apiVersion, _ignoreSsl);
         }
     }
 }
