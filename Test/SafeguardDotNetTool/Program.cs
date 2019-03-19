@@ -80,6 +80,8 @@ namespace SafeguardDotNetTool
 
                 var responseBody = connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body);
                 Log.Information(responseBody);
+
+                connection.LogOut();
             }
             catch (Exception ex)
             {

@@ -56,6 +56,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             return jObject.GetValue("access_token").ToString().ToSecureString();
         }
 
+        public override object Clone()
+        {
+            var auth = !string.IsNullOrEmpty(_certificateThumbprint)
+                ? new CertificateAuthenticator(NetworkAddress, _certificateThumbprint, ApiVersion, IgnoreSsl)
+                : new CertificateAuthenticator(NetworkAddress, _certificatePath, _certificatePassword, ApiVersion, IgnoreSsl);
+            auth.AccessToken = AccessToken.Copy();
+            return auth;
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (_disposed || !disposing)

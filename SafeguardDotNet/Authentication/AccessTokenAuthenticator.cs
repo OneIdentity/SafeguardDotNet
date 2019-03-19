@@ -17,6 +17,11 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             throw new SafeguardDotNetException("Original authentication was with access token unable to refresh, Error: Unsupported operation");
         }
 
+        public override object Clone()
+        {
+            throw new SafeguardDotNetException("Access token authenticators are not cloneable");
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (_disposed || !disposing)

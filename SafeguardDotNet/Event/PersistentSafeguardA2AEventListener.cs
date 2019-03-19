@@ -16,7 +16,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             _a2AContext = a2AContext;
             _apiKey = apiKey.Copy();
             RegisterEventHandler("AssetAccountPasswordUpdated", handler);
-            Log.Information("Persistent A2A event listener successfully created.");
+            Log.Debug("Persistent A2A event listener successfully created.");
         }
 
         protected override SafeguardEventListener ReconnectEventListener()

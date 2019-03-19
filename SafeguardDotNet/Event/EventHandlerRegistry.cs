@@ -17,7 +17,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         {
             if (!_delegateRegistry.ContainsKey(eventName))
             {
-                Log.Information("No handlers registered for event {Event}", eventName);
+                Log.Debug("No handlers registered for event {Event}", eventName);
                 return;
             }
 

@@ -3,7 +3,7 @@ using System.Security;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
-    internal interface IAuthenticationMechanism : IDisposable
+    internal interface IAuthenticationMechanism : IDisposable, ICloneable
     {
         string NetworkAddress { get; }
 
@@ -12,6 +12,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         bool IgnoreSsl { get; }
 
         bool HasAccessToken();
+
+        void ClearAccessToken();
 
         SecureString GetAccessToken();
 

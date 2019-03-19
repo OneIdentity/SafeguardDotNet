@@ -8,7 +8,7 @@ using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
 {
-    internal class SafeguardConnection : ISafeguardConnection
+    internal class SafeguardConnection : ISafeguardConnection, ICloneable
     {
         private bool _disposed;
 
@@ -45,9 +45,9 @@ namespace OneIdentity.SafeguardDotNet
                 throw new ObjectDisposedException("SafeguardConnection");
             var lifetime = _authenticationMechanism.GetAccessTokenLifetimeRemaining();
             if (lifetime > 0)
-                Log.Information("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
+                Log.Debug("Access token lifetime remaining (in minutes): {AccessTokenLifetime}", lifetime);
             else
-                Log.Information("Access token invalid or server unavailable");
+                Log.Debug("Access token invalid or server unavailable");
             return lifetime;
         }
 
@@ -56,7 +56,7 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             _authenticationMechanism.RefreshAccessToken();
-            Log.Information("Successfully obtained a new access token");
+            Log.Debug("Successfully obtained a new access token");
         }
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
@@ -78,6 +78,8 @@ namespace OneIdentity.SafeguardDotNet
 
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
                 .AddHeader("Accept", "application/json");
+            if (!_authenticationMechanism.HasAccessToken())
+                throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
             if (service != Service.Notification)
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
@@ -97,7 +99,7 @@ namespace OneIdentity.SafeguardDotNet
             }
 
             var client = GetClientForService(service);
-            Log.Information("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
+            Log.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
                 client.BaseUrl + $"/{relativeUrl}");
             Log.Debug("  Query parameters: {QueryParameters}",
                 parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
@@ -124,7 +126,7 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in response.Headers)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
-            Log.Information("Reponse status code: {StatusCode}", fullResponse.StatusCode);
+            Log.Debug("Reponse status code: {StatusCode}", fullResponse.StatusCode);
             Log.Debug("  Response headers: {ResponseHeaders}",
                 fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
                     .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
@@ -140,8 +142,41 @@ namespace OneIdentity.SafeguardDotNet
             var eventListener = new SafeguardEventListener(
                 $"https://{_authenticationMechanism.NetworkAddress}/service/event",
                 _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl);
-            Log.Information("Event listener successfully created for Safeguard connection.");
+            Log.Debug("Event listener successfully created for Safeguard connection.");
             return eventListener;
+        }
+
+        public ISafeguardEventListener GetPersistentEventListener()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
+
+            if (_authenticationMechanism.GetType() == typeof(PasswordAuthenticator) ||
+                _authenticationMechanism.GetType() == typeof(CertificateAuthenticator))
+            {
+                return new PersistentSafeguardEventListener(this.Clone() as ISafeguardConnection);
+            }
+            throw new SafeguardDotNetException(
+                $"Unable to create persistent event listener from {_authenticationMechanism.GetType()}");
+        }
+
+        public void LogOut()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
+            if (!_authenticationMechanism.HasAccessToken())
+                return;
+            try
+            {
+                InvokeMethodFull(Service.Core, Method.Post, "Token/Logout");
+                Log.Debug("Successfully logged out");
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Exception occurred during logout");
+            }
+            _authenticationMechanism.ClearAccessToken();
+            Log.Debug("Cleared access token");
         }
 
         private RestClient GetClientForService(Service service)
@@ -180,6 +215,11 @@ namespace OneIdentity.SafeguardDotNet
             {
                 _disposed = true;
             }
+        }
+
+        public object Clone()
+        {
+            return new SafeguardConnection(_authenticationMechanism.Clone() as IAuthenticationMechanism);
         }
     }
 }

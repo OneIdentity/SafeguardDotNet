@@ -82,7 +82,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
                 apiKey, _ignoreSsl);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
-            Log.Information("Event listener successfully created for Safeguard A2A context.");
+            Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
 
