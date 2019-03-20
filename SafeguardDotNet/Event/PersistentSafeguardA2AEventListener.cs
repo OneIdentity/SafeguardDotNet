@@ -1,4 +1,5 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
 using OneIdentity.SafeguardDotNet.A2A;
 using Serilog;
 
@@ -14,6 +15,8 @@ namespace OneIdentity.SafeguardDotNet.Event
         public PersistentSafeguardA2AEventListener(ISafeguardA2AContext a2AContext, SecureString apiKey, SafeguardEventHandler handler)
         {
             _a2AContext = a2AContext;
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
             _apiKey = apiKey.Copy();
             RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             Log.Debug("Persistent A2A event listener successfully created.");

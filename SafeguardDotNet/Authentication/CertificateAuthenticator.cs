@@ -24,7 +24,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
         {
             _certificatePath = certificatePath;
-            _certificatePassword = certificatePassword.Copy();
+            _certificatePassword = certificatePassword?.Copy();
         }
 
         protected override SecureString GetRstsTokenInternal()
@@ -61,7 +61,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             var auth = !string.IsNullOrEmpty(_certificateThumbprint)
                 ? new CertificateAuthenticator(NetworkAddress, _certificateThumbprint, ApiVersion, IgnoreSsl)
                 : new CertificateAuthenticator(NetworkAddress, _certificatePath, _certificatePassword, ApiVersion, IgnoreSsl);
-            auth.AccessToken = AccessToken.Copy();
+            auth.AccessToken = AccessToken?.Copy();
             return auth;
         }
 
