@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using OneIdentity.SafeguardDotNet;
 using Serilog;
 using Serilog.Events;
 using Topshelf;
@@ -10,7 +9,7 @@ namespace SampleA2aService
 {
     static class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             if (Environment.UserInteractive)
                 Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.ColoredConsole()
@@ -21,7 +20,7 @@ namespace SampleA2aService
                 if (!Path.IsPathRooted(loggingDirectory))
                     loggingDirectory = Path.Combine(Assembly.GetEntryAssembly().Location, loggingDirectory);
                 Log.Logger = new LoggerConfiguration().WriteTo.RollingFile(
-                        Path.Combine(loggingDirectory, "SampleA2aService-{Date}.log").ToString(),
+                        Path.Combine(loggingDirectory, "SampleA2aService-{Date}.log"),
                         LogEventLevel.Debug)
                     .CreateLogger();
             }

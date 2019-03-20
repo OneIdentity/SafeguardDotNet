@@ -33,7 +33,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             // set cloning properties
             _certificateThumbprint = certificateThumbprint;
             _certificatePath = certificatePath;
-            _certificatePassword = certificatePassword.Copy();
+            _certificatePassword = certificatePassword?.Copy();
             _apiVersion = apiVersion;
 
             var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{_apiVersion}";

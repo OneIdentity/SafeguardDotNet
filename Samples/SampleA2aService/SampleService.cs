@@ -19,17 +19,17 @@ namespace SampleA2aService
         private readonly bool _safeguardIgnoreSsl;
 
         private ISafeguardConnection _connection;
-        private ISafeguardA2AContext _a2aContext;
-        private List<ISafeguardEventListener> _listeners = new List<ISafeguardEventListener>();
+        private ISafeguardA2AContext _a2AContext;
+        private readonly List<ISafeguardEventListener> _listeners = new List<ISafeguardEventListener>();
 
         private class MonitoredPassword
         {
             public SecureString ApiKey {get; set;}
-            public string AssetName {get; set;}
-            public string AccountName {get; set;}
+            public string AssetName { get; set;}
+            public string AccountName { get; set;}
             public override string ToString() => $"{AssetName}/{AccountName}";
         }
-        private List<MonitoredPassword> _monitoredPasswords = new List<MonitoredPassword>();
+        private readonly List<MonitoredPassword> _monitoredPasswords = new List<MonitoredPassword>();
 
         public SampleService()
         {
@@ -43,18 +43,20 @@ namespace SampleA2aService
             _safeguardIgnoreSsl = bool.Parse(ConfigurationManager.AppSettings["SafeguardIgnoreSsl"]);
         }
 
-        private void GetApiKeysFromA2aRegistrations()
+        private void GetApiKeysFromA2ARegistrations()
         {
+            // optionally you can have Safeguard look up all A2A registrations for a given certificate user thumbprint
+            // currently this requires auditor permission, but we will enhance A2A to include read ability without it
             try
             {
-                var a2aJson = _connection.InvokeMethod(Service.Core, Method.Get, "A2ARegistrations", parameters: new Dictionary<string, string> {
+                var a2AJson = _connection.InvokeMethod(Service.Core, Method.Get, "A2ARegistrations", parameters: new Dictionary<string, string> {
                     {"filter", $"CertificateUserThumbprint ieq '{_safeguardClientCertificateThumbprint}'"}
                 });
-                var a2aArray = JArray.Parse(a2aJson) as JArray;
-                foreach(dynamic a2a in a2aArray)
+                var a2AArray = JArray.Parse(a2AJson);
+                foreach(dynamic a2A in a2AArray)
                 {
-                    var credsJson = _connection.InvokeMethod(Service.Core, Method.Get, $"A2ARegistrations/{a2a.Id}/RetrievableAccounts");
-                    var credsArray = JArray.Parse(credsJson) as JArray;
+                    var credsJson = _connection.InvokeMethod(Service.Core, Method.Get, $"A2ARegistrations/{a2A.Id}/RetrievableAccounts");
+                    var credsArray = JArray.Parse(credsJson);
                     foreach (dynamic cred in credsArray)
                         _monitoredPasswords.Add(new MonitoredPassword 
                         {
@@ -85,7 +87,7 @@ namespace SampleA2aService
         private void StartListener(MonitoredPassword monitored)
         {
             Log.Information("Startling listener for {MonitoredPassword}", monitored);
-            var listener = _a2aContext.GetEventListener(monitored.ApiKey, PasswordChangeHandler);
+            var listener = _a2AContext.GetPersistentA2AEventListener(monitored.ApiKey, PasswordChangeHandler);
             listener.Start();
             _listeners.Add(listener);
         }
@@ -95,11 +97,11 @@ namespace SampleA2aService
             // connect to Safeguard
             _connection = Safeguard.Connect(_safeguardAddress, _safeguardClientCertificateThumbprint,
                 _safeguardApiVersion, _safeguardIgnoreSsl);
-            _a2aContext = Safeguard.A2A.GetContext(_safeguardAddress, _safeguardClientCertificateThumbprint,
+            _a2AContext = Safeguard.A2A.GetContext(_safeguardAddress, _safeguardClientCertificateThumbprint,
                 _safeguardApiVersion, _safeguardIgnoreSsl);
 
             // figure out what API keys to monitor
-            GetApiKeysFromA2aRegistrations();
+            GetApiKeysFromA2ARegistrations();
             if (_monitoredPasswords.Count == 0)
                 throw new Exception("No API keys found in A2A registrations.  Nothing to do.");
             Log.Information("Found {MonitoredPasswordCount} API keys to monitor for password changes", _monitoredPasswords.Count);
@@ -118,7 +120,7 @@ namespace SampleA2aService
                 listener?.Dispose();
             }
             _connection?.Dispose();
-            _a2aContext?.Dispose();
+            _a2AContext?.Dispose();
         }
     }
 }

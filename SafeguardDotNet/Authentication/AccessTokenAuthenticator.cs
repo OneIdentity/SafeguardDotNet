@@ -1,4 +1,5 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
@@ -9,6 +10,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public AccessTokenAuthenticator(string networkAddress, SecureString accessToken,
             int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
         {
+            if (accessToken == null)
+                throw new ArgumentException("Parameter may not be null", nameof(accessToken));
             AccessToken = accessToken.Copy();
         }
 

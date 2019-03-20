@@ -38,6 +38,8 @@ namespace OneIdentity.SafeguardDotNet.Event
         public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl) : 
             this(eventUrl, ignoreSsl)
         {
+            if (accessToken == null)
+                throw new ArgumentException("Parameter may not be null", nameof(accessToken));
             _accessToken = accessToken.Copy();
         }
 
@@ -45,6 +47,8 @@ namespace OneIdentity.SafeguardDotNet.Event
             bool ignoreSsl) : this(eventUrl, ignoreSsl)
         {
             _clientCertificate = CertificateUtilities.Copy(clientCertificate);
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
             _apiKey = apiKey.Copy();
         }
 

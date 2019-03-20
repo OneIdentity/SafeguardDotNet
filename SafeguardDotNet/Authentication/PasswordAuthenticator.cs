@@ -24,6 +24,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             if (string.IsNullOrEmpty(_provider))
                 _providerScope = "rsts:sts:primaryproviderid:local";
             _username = username;
+            if (password == null)
+                throw new ArgumentException("Parameter may not be null", nameof(password));
             _password = password.Copy();
         }
 
@@ -115,7 +117,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             var auth =
                 new PasswordAuthenticator(NetworkAddress, _provider, _username, _password, ApiVersion, IgnoreSsl)
                 {
-                    AccessToken = AccessToken.Copy()
+                    AccessToken = AccessToken?.Copy()
                 };
             return auth;
         }
