@@ -12,7 +12,7 @@
     <PackageIconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</PackageIconUrl>
     <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
     <Version>9999.9999.9999</Version>
-    <Description>One Identity Safeguard Web API C# SDK</Description>
+    <Description>One Identity Safeguard Web API .NET SDK</Description>
     <AssemblyVersion>9999.9999.9999.9999</AssemblyVersion>
     <FileVersion>9999.9999.9999.9999</FileVersion>
     <AssemblyName>OneIdentity.SafeguardDotNet</AssemblyName>
@@ -21,10 +21,18 @@
     <PackageReleaseNotes>One Identity Safeguard Web API .NET SDK
 
 Provides an easy way to connect to Safeguard and call the Safeguard API.
-- Password authentication
-- Client certificate authentication
-- A2A API support
-- Real-time event notifications</PackageReleaseNotes>
+- Password and client certificate authentication
+- A2A API support, including access request broker
+- Real-time event notifications
+- Persistent event listeners that reconnect even after an appliance goes offline
+
+Updates:
+- Added ability to log out a SafeguardConnection which invalidates the access token
+- Added convenience methods for creating persistent event listeners
+- API CHANGE:
+  - Renamed a method on ISafeguardA2AContext
+    - GetEventListener() is now GetA2AEventListener()
+  - GetPersistentA2AEventListener() should be preferred</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
