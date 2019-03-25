@@ -5,7 +5,7 @@
     <RootNamespace>OneIdentity.SafeguardDotNet</RootNamespace>
     <PackageId>OneIdentity.SafeguardDotNet</PackageId>
     <Authors>One Identity LLC</Authors>
-    <Copyright>(c) 2018 One Identity LLC. All rights reserved.</Copyright>
+    <Copyright>(c) 2019 One Identity LLC. All rights reserved.</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
@@ -28,6 +28,7 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 
 Updates:
 - Added ability to log out a SafeguardConnection which invalidates the access token
+- Added convenience method for requesting CSV response
 - Added convenience methods for creating persistent event listeners
 - API CHANGE:
   - Renamed a method on ISafeguardA2AContext
