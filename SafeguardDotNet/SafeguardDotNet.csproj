@@ -30,6 +30,7 @@ Updates:
 - Added ability to log out a SafeguardConnection which invalidates the access token
 - Added convenience method for requesting CSV response
 - Added convenience methods for creating persistent event listeners
+- Reduced the log level of certain messages
 - API CHANGE:
   - Renamed a method on ISafeguardA2AContext
     - GetEventListener() is now GetA2AEventListener()
