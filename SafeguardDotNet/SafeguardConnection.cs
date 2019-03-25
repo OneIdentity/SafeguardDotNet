@@ -76,8 +76,7 @@ namespace OneIdentity.SafeguardDotNet
             if (string.IsNullOrEmpty(relativeUrl))
                 throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
 
-            var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod())
-                .AddHeader("Accept", "application/json");
+            var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod());
             if (!_authenticationMechanism.HasAccessToken())
                 throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
             if (service != Service.Notification)
@@ -85,6 +84,8 @@ namespace OneIdentity.SafeguardDotNet
                 // I'm not sure there is anything you can do about it.
                 request.AddHeader("Authorization",
                     $"Bearer {_authenticationMechanism.GetAccessToken().ToInsecureString()}");
+            if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
+                request.AddHeader("Accept", "application/json"); // Assume JSON unless specified
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)
@@ -133,6 +134,18 @@ namespace OneIdentity.SafeguardDotNet
             Log.Debug("  Body size: {ResponseBodySize}",
                 fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
             return fullResponse;
+        }
+
+        public string InvokeMethodCsv(Service service, Method method, string relativeUrl,
+            string body = null, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
+            if (additionalHeaders == null)
+                additionalHeaders = new Dictionary<string, string>();
+            additionalHeaders.Add("Accept", "text/csv");
+            return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
         }
 
         public ISafeguardEventListener GetEventListener()

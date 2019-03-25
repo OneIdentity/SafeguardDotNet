@@ -56,5 +56,9 @@ namespace SafeguardDotNetTool
         [Option('b', "Body", Required = false, Default = null,
             HelpText = "JSON body as string")]
         public string Body { get; set; }
+
+        [Option('C', "Csv", Required = false, Default = null,
+            HelpText = "Request for a response as CSV")]
+        public bool Csv { get; set; }
     }
 }
