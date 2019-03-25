@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OneIdentity.SafeguardDotNet" Version="2.5.0-dev-188" />
+    <PackageReference Include="OneIdentity.SafeguardDotNet" Version="2.6.0" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
