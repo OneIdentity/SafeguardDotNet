@@ -54,6 +54,22 @@ namespace OneIdentity.SafeguardDotNet
             IDictionary<string, string> additionalHeaders = null);
 
         /// <summary>
+        /// Call a Safeguard API method and get any response as a CSV string. Some Safeguard API
+        /// methods will return an empty body. If there is a failure a SafeguardDotNetException
+        /// will be thrown.
+        /// </summary>
+        /// <param name="service">Safeguard service to call.</param>
+        /// <param name="method">Safeguard method type to use.</param>
+        /// <param name="relativeUrl">Relative URL of the service to use.</param>
+        /// <param name="body">Request body to pass to the method.</param>
+        /// <param name="parameters">Additional parameters to add to the URL.</param>
+        /// <param name="additionalHeaders">Additional headers to add to the request.</param>
+        /// <returns>Response body as a CSV string.</returns>
+        string InvokeMethodCsv(Service service, Method method, string relativeUrl,
+            string body = null, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null);
+
+        /// <summary>
         /// Gets a Safeguard event listener. You will need to call the RegisterEventHandler()
         /// method to establish callbacks. Then, you just have to call Start().  Call Stop()
         /// when you are finished. The event listener returned by this method WILL NOT
