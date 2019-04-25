@@ -8,7 +8,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
     internal class RstsWindow
     {
         private const string ClientId = "00000000-0000-0000-0000-000000000000";
-        private const string RedirectUri = "urn%3AInstalledApplication";
+        private const string RedirectUri = "urn:InstalledApplication";
         private readonly string _appliance;
         private readonly Form _form;
         private readonly WebBrowser _browser;
@@ -42,10 +42,13 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             {
                 string url;
                 if (!string.IsNullOrEmpty(primaryProviderId) && !string.IsNullOrEmpty(secondaryProviderId))
-                    url = string.Format("https://{0}/RSTS/Login?response_type=code&client_id={1}&redirect_uri={2}&primaryproviderid={3}&secondaryproviderid={4}",
-                        _appliance, ClientId, RedirectUri, HttpUtility.UrlEncode(primaryProviderId), HttpUtility.UrlEncode(secondaryProviderId));
+                    url = string.Format(
+                        "https://{0}/RSTS/Login?response_type=code&client_id={1}&redirect_uri={2}&primaryproviderid={3}&secondaryproviderid={4}",
+                        _appliance, ClientId, HttpUtility.UrlEncode(RedirectUri),
+                        HttpUtility.UrlEncode(primaryProviderId), HttpUtility.UrlEncode(secondaryProviderId));
                 else
-                    url = string.Format("https://{0}/RSTS/Login?response_type=code&client_id={1}&redirect_uri={2}", _appliance, ClientId, RedirectUri);
+                    url = string.Format("https://{0}/RSTS/Login?response_type=code&client_id={1}&redirect_uri={2}",
+                        _appliance, ClientId, HttpUtility.UrlEncode(RedirectUri));
                 _browser.Stop();
                 _browser.Navigate(url);
                 return _form.ShowDialog() == DialogResult.OK;

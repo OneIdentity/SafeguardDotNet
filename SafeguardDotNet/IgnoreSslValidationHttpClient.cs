@@ -11,7 +11,7 @@ namespace OneIdentity.SafeguardDotNet
             var messageHandler = base.CreateHandler();
             if (!(messageHandler is HttpClientHandler))
             {
-                throw new Exception("Unable to get HttpClientHandler to ignore certificate errors0");
+                throw new Exception("Unable to get HttpClientHandler to ignore certificate errors");
             }
             ((HttpClientHandler)messageHandler).ServerCertificateCustomValidationCallback =
                 (message, cert, chain, errors) => true;
