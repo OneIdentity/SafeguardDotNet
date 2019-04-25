@@ -1,7 +1,7 @@
 ﻿using System.Security;
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.GuiLogin
 {
@@ -94,32 +94,33 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             return JObject.Parse(response.Content);
         }
 
-        public static Task<ISafeguardConnection> Connect(string appliance)
+        public static ISafeguardConnection Connect(string appliance)
         {
-            return Task.Run(() =>
+            Log.Debug("Calling RSTS for primary authentication");
+            var authorizationCode = ShowRstsWindowPrimary(appliance);
+            using (var rstsAccessToken = PostAuthorizationCodeFlow(appliance, authorizationCode))
             {
-                var authorizationCode = ShowRstsWindowPrimary(appliance);
-                using (var rstsAccessToken = PostAuthorizationCodeFlow(appliance, authorizationCode))
+                Log.Debug("Posting RSTS access token to login response service");
+                var responseObject = PostLoginResponse(appliance, rstsAccessToken);
+                var statusValue = responseObject.GetValue("Status").ToString();
+                if (statusValue.Equals("Needs2FA"))
                 {
-                    var responseObject = PostLoginResponse(appliance, rstsAccessToken);
-                    var statusValue = responseObject.GetValue("Status").ToString();
-                    if (statusValue.Equals("Needs2FA"))
+                    Log.Debug("Authentication requires 2FA, continuing with RSTS for secondary authentication");
+                    authorizationCode = ShowRstsWindowSecondary(
+                        responseObject.GetValue("PrimaryProviderId").ToString(),
+                        responseObject.GetValue("SecondaryProviderId").ToString());
+                    using (var secondRstsAccessToken = PostAuthorizationCodeFlow(appliance, authorizationCode))
                     {
-                        authorizationCode = ShowRstsWindowSecondary(
-                            responseObject.GetValue("PrimaryProviderId").ToString(),
-                            responseObject.GetValue("SecondaryProviderId").ToString());
-                        using (var secondRstsAccessToken = PostAuthorizationCodeFlow(appliance, authorizationCode))
-                        {
-                            responseObject = PostLoginResponse(appliance, secondRstsAccessToken);
-                            statusValue = responseObject.GetValue("Status").ToString();
-                        }
+                        Log.Debug("Posting second RSTS access token to login response service");
+                        responseObject = PostLoginResponse(appliance, secondRstsAccessToken);
+                        statusValue = responseObject.GetValue("Status").ToString();
                     }
-                    if (!statusValue.Equals("Success"))
-                        throw new SafeguardDotNetException($"Error response status {statusValue} from login response service");
-                    using (var accessToken = responseObject.GetValue("UserToken").ToString().ToSecureString())
-                        return Safeguard.Connect(appliance, accessToken, DefaultApiVersion, true);
                 }
-            });
+                if (!statusValue.Equals("Success"))
+                    throw new SafeguardDotNetException($"Error response status {statusValue} from login response service");
+                using (var accessToken = responseObject.GetValue("UserToken").ToString().ToSecureString())
+                    return Safeguard.Connect(appliance, accessToken, DefaultApiVersion, true);
+            }
         }
     }
 }

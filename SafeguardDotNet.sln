@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetAccessReques
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNet.GuiLogin", "SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.csproj", "{572BD6A5-7E76-4F0A-97CF-37297B340E4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetGuiTester", "Test\SafeguardDotNetGuiTester\SafeguardDotNetGuiTester.csproj", "{3298668C-7255-45E9-806C-111ED4DFB800}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{572BD6A5-7E76-4F0A-97CF-37297B340E4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{572BD6A5-7E76-4F0A-97CF-37297B340E4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{572BD6A5-7E76-4F0A-97CF-37297B340E4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3298668C-7255-45E9-806C-111ED4DFB800}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3298668C-7255-45E9-806C-111ED4DFB800}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3298668C-7255-45E9-806C-111ED4DFB800}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3298668C-7255-45E9-806C-111ED4DFB800}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
