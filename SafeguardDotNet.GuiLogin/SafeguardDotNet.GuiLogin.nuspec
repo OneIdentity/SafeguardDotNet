@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>9999.9999.9999</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/OneIdentity/SafeguardDotNet</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <copyright>(c) 2019 One Identity LLC. All rights reserved.</copyright>
+    <tags>safeguard credentials vault sdk</tags>
+  </metadata>
+</package>
