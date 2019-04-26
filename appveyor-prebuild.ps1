@@ -34,5 +34,6 @@ $AssemblyVersion = "$(($PackageVersion.Split("-"))[0]).0"
 
 Write-Host "prebuild: Restoring packages"
 & dotnet restore --no-cache
+& nuget restore -Force
 
 Pop-Location
