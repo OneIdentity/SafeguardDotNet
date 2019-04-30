@@ -89,6 +89,7 @@ on user.
 A three minute video demonstrating how to get started calling the Safeguard API from a Visual Studio 2017 project.
 
 [Visual Studio 2017 video](https://www.youtube.com/watch?v=kK90UyOeZac)
+
 [![Visual Studio 2017 video](https://img.youtube.com/vi/kK90UyOeZac/0.jpg)](https://www.youtube.com/watch?v=kK90UyOeZac)
 
 ### Visual Studio Code
@@ -96,6 +97,7 @@ A three minute video demonstrating how to get started calling the Safeguard API 
 A four minute video demonstrating how to get started calling the Safeguard API from a Visual Studio Code project.
 
 [Visual Studio Code video](https://www.youtube.com/watch?v=gV7iHUun9kA)
+
 [![Visual Studio Code video](https://img.youtube.com/vi/gV7iHUun9kA/0.jpg)](https://www.youtube.com/watch?v=gV7iHUun9kA)
 
 ## About the Safeguard API
