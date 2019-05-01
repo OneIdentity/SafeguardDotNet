@@ -1,4 +1,4 @@
-TopShelf service that can be run to SampleA2aService .
+TopShelf service that can be run to demonstrate monitoring for password chagnes via the Application to Application (A2A) functionality in Safeguard.
 
 This is built using the SafeguardDotNet nuget package from nuget.org, not using the source code from the repo.
 
