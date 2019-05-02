@@ -68,4 +68,4 @@ To run as a Windows service:
 
 `SampleA2aService.exe install`
 
-`net start Samplea2aService.exe`
+`net start Samplea2aService`
