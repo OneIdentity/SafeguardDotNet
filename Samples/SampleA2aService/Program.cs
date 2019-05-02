@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using Serilog;
-using Serilog.Events;
-using Topshelf;
+﻿using Topshelf;
 
 namespace SampleA2aService
 {
@@ -11,19 +6,7 @@ namespace SampleA2aService
     {
         static void Main()
         {
-            if (Environment.UserInteractive)
-                Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.ColoredConsole()
-                    .CreateLogger();
-            else
-            {
-                var loggingDirectory = ConfigUtils.ReadRequiredSettingFromAppConfig("LoggingDirectory", "logging directory");
-                if (!Path.IsPathRooted(loggingDirectory))
-                    loggingDirectory = Path.Combine(Assembly.GetEntryAssembly().Location, loggingDirectory);
-                Log.Logger = new LoggerConfiguration().WriteTo.RollingFile(
-                        Path.Combine(loggingDirectory, "SampleA2aService-{Date}.log"),
-                        LogEventLevel.Debug)
-                    .CreateLogger();
-            }
+            ConfigUtils.ConfigureLogging();
 
             HostFactory.Run(hostConfig =>
             {

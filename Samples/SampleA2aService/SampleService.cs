@@ -94,6 +94,8 @@ namespace SampleA2aService
 
         public void Start()
         {
+            ConfigUtils.CheckForDebugHook();
+
             // connect to Safeguard
             _connection = Safeguard.Connect(_safeguardAddress, _safeguardClientCertificateThumbprint,
                 _safeguardApiVersion, _safeguardIgnoreSsl);
