@@ -24,7 +24,19 @@ If you already have a CA cert and SSL client certificate use those. If not,there
 
 Configure the Sample A2A Service
 ================================
-In Visual Studio, right click the SampleA2aService and select Publish. Click the Target Location link and copy the files to the machine where you want to run the service. On the machine where you will run the service:
+1. In Visual Studio, right click the SampleA2aService and select Publish. Click the configure button:
+
+![Publish Settings](help/i1.png)
+
+2. Make configure as shown below. Make sure to select Self-contained for the deployment mode. This will produce an executable that you can run as a service.
+
+![Publish Profile Settings](help/i2.png)
+
+3. Click the publish button then click the target location link to open the folder where the service was published.
+
+4. Copy the files to the machine where you want to run the service. 
+
+On the machine where you will run the service:
 
 1. Make sure that the dotnet core runtime 2.1 or higher is installed. 
 2. Install test.full.pfx to Current User\Personal. The password is test123. Make sure to mark the checkbox for "Mark this key as exportable".
@@ -41,4 +53,4 @@ In Visual Studio, right click the SampleA2aService and select Publish. Click the
     </appSettings>
 </configuration>
 ```
-4. Start the service from the command line: `dotnet SampleA2aService.dll`
+4. Start the service from the command line: `SampleA2aService.exe`
