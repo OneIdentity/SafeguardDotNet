@@ -8,4 +8,8 @@ appliances.
 
 - `SafeguardDotNetA2aTool` is specially built for calling Safeguard A2A
 
+- `SafeguardDotNetAccessRequestBrokerTool` is specially built for calling Safeguard A2A Access Request Broker
+
 - `SafeguardDotNetEventTool` is for listening for events in via Safeguard API or Safeguard A2A
+
+- `SafeguardDotNetGuiTester` is for testing the SafeguardDotNet.GuiLogin component
