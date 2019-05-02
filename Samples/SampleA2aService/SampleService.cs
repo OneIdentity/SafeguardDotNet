@@ -4,6 +4,7 @@ using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.Event;
 using OneIdentity.SafeguardDotNet.A2A;
 using System.Configuration;
+using System.Linq;
 using System.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -80,8 +81,23 @@ namespace SampleA2aService
             // NOTE: eventInfo won't have the API key field filled out because that isn't in the eventBody Json
             //       You can look up in the list of _monitoredPasswords to find the API key
 
-            // TODO: Add useful code here to fetch the new password and do something with it
+            try
+            {
+                var apiKey = _monitoredPasswords.Single(mp => mp.AssetName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ApiKey;
+                using (var password = _a2AContext.RetrievePassword(apiKey))
+                {
+                    // TODO: Add useful code here to do something with the fetched password
 
+                    // Also, note that the password you get back is a SecureString.  In order to turn it back into a regular string
+                    // you can use the provided convenience function:
+
+                    // password.ToInsecureString()
+                }
+            }
+            catch (Exception)
+            {
+                Log.Information("Password not in monitored list for handled event {MonitoredPassword}", eventInfo);
+            }
         }
 
         private void StartListener(MonitoredPassword monitored)
