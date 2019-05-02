@@ -1,7 +1,7 @@
 Sample A2A Service
 ==================
 
-TopShelf service that can be run to demonstrate monitoring for password chagnes via the Application to Application (A2A) functionality in Safeguard.
+TopShelf service that can be run to demonstrate monitoring for password changes via the Application to Application (A2A) functionality in Safeguard.
 
 This is built using the SafeguardDotNet nuget package from nuget.org, not using the source code from the repo.
 
@@ -41,11 +41,9 @@ Configure the Sample A2A Service
 
 On the machine where you will run the service:
 
-1. Make sure that the dotnet core runtime 2.1 or higher is installed. 
+1. Install test.full.pfx (or your own client certificate) to Current User\Personal. The password for the test certificate is test123. Make sure to mark the checkbox for "Mark this key as exportable". 
 
-2. Install test.full.pfx (or your own client certificate) to Current User\Personal. The password for the test certificate is test123. Make sure to mark the checkbox for "Mark this key as exportable". 
-
-3. Locate the SampleA2aService.dll.config file and modify it as follows: (be sure to specify your safeguard network address and change the thumbprint if you are using your own certificate)
+2. Locate the SampleA2aService.dll.config file and modify it as follows: (be sure to specify your safeguard network address and change the thumbprint if you are using your own certificate)
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
