@@ -43,7 +43,7 @@ On the machine where you will run the service:
 
 1. Make sure that the dotnet core runtime 2.1 or higher is installed. 
 
-2. Install test.full.pfx (or your own client certificate) to Machine\Personal. The password for the test certificate is test123. Make sure to mark the checkbox for "Mark this key as exportable".
+2. Install test.full.pfx (or your own client certificate) to Current User\Personal. The password for the test certificate is test123. Make sure to mark the checkbox for "Mark this key as exportable". 
 
 3. Locate the SampleA2aService.dll.config file and modify it as follows: (be sure to specify your safeguard network address and change the thumbprint if you are using your own certificate)
 
