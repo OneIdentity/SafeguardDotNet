@@ -203,4 +203,60 @@ Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -t $($script:UserThumbprint)
 Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
 
 Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from Computer Certificate Store..."
+Write-Host -ForegroundColor Magenta "TODO: this requires elevation to install the cert"
+# TODO: this requires elevation to install the cert
 
+Write-Host -ForegroundColor Yellow "Setting up for asset for A2A..."
+if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"Assets?filter=Name%20eq%20'SafeguardDotNetTest'&fields=Id,Name`" -p"))
+{
+    $local:Body = @{
+        Name = "SafeguardDotNetTest";
+        Description = "test asset for SafeguardDotNet test script";
+        PlatformId = 188;
+        AssetPartitionId = -1;
+        NetworkAddress = "fake.address.com"
+    }
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U Assets -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "'SafeguardDotNetTest' asset already exists"
+}
+$local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"Assets?filter=Name%20eq%20'SafeguardDotNetTest'&fields=Id,Name`" -p")
+if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"Assets/$($local:Result.Id)/Accounts?filter=Name%20eq%20'SafeguardDotNetTest'&fields=Id,Name`" -p"))
+{
+    $local:Body = @{
+        Name = "SafeguardDotNetTest";
+        AssetId = $local:Result.Id
+    }
+    $local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U `"AssetAccounts`" -p -b `"$(Get-StringEscapedBody $local:Body)`"")
+    $local:Result
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Put -U `"AssetAccounts/$($local:Result.Id)/Password`" -p -b `"'Test123'`""
+}
+else
+{
+    Write-Host "'SafeguardDotNetTest' asset account already exists"
+}
+
+Write-Host -ForegroundColor Yellow "Setting up for A2A credential retrieval..."
+if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'SafeguardDotNetTest'`" -p"))
+{
+    $local:Body = @{
+        AppName = "SafeguardDotNetTest";
+        Description = "test a2a registration for SafeguardDotNet test script";
+        CertificateUserThumbPrint = $script:UserThumbprint
+    }
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U A2ARegistrations -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "'SafeguardDotNetTest' A2A registration already exists"
+}
+$local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'SafeguardDotNetTest'`" -p")
+if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations/$($local:Result.Id)/RetrievableAccounts`" -p"))
+{
+}
+else
+{
+    Write-Host "'SafeguardDotNetTest' A2A registration already exists"
+}
