@@ -63,6 +63,10 @@ function Invoke-DotNetRun {
             {
                 $local:Obj
             }
+            else
+            {
+                [string]::Join("`n",$local:Output)
+            }
         }
         elseif ($local:Output -match "Error" -or $local:Output -match "Exception")
         {
@@ -244,10 +248,11 @@ else
 Write-Host -ForegroundColor Yellow "Setting up for A2A credential retrieval..."
 if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'SafeguardDotNetTest'`" -p"))
 {
+    $local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetCert'`" -p")
     $local:Body = @{
         AppName = "SafeguardDotNetTest";
         Description = "test a2a registration for SafeguardDotNet test script";
-        CertificateUserThumbPrint = $script:UserThumbprint
+        CertificateUserId = $local:Result.Id
     }
     Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U A2ARegistrations -p -b `"$(Get-StringEscapedBody $local:Body)`""
 }
@@ -278,6 +283,10 @@ else
 
 ### SafeguardDotNetA2aTool Tests
 
+$local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'SafeguardDotNetTest'`" -p")
 $local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations/$($local:Result.Id)/RetrievableAccounts?filter=AccountName%20eq%20'SafeguardDotNetTest'`" -p")
 $script:A2aCrApiKey = $local:Result.ApiKey
-$script:A2aCrApiKey
+
+Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file..."
+
+Invoke-DotNetRun $script:A2aToolDir "a" "-a 10.5.32.162 -x -c $($script:UserPfx) -A `"$($script:A2aCrApiKey)`" -p"
