@@ -119,8 +119,14 @@ $script:EventToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetEventTool")
 
 $script:TestDataDir = (Resolve-Path "$PSScriptRoot\TestData")
 $script:CertDir = (Resolve-Path "$($script:TestDataDir)\CERTS")
+$script:UserCert = (Resolve-Path "$($script:CertDir)\UserCert.pem")
+$script:UserPfx = (Resolve-Path "$($script:CertDir)\UserCert.pfx")
+$script:RootCert = (Resolve-Path "$($script:CertDir)\RootCA.pem")
+$script:CaCert = (Resolve-Path "$($script:CertDir)\IntermediateCA.pem")
 
-$script:Thumbprint = (Get-PfxCertificate "$($script:CertDir)\UserCert.cer").Thumbprint
+$script:UserThumbprint = (Get-PfxCertificate $script:UserCert).Thumbprint
+$script:RootThumbprint = (Get-PfxCertificate $script:RootCert).Thumbprint
+$script:CaThumbprint = (Get-PfxCertificate $script:CaCert).Thumbprint
 
 Write-Host -ForegroundColor Yellow "Building projects..."
 Test-ForDotNetTool
@@ -149,13 +155,37 @@ else
     Write-Host "'SafeguardDotNetTest' user already exists"
 }
 
+Write-Host -ForegroundColor Yellow "Setting up a cert trust chain..."
+if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Get -U `"TrustedCertificates?filter=Thumbprint%20eq%20'$($script:RootThumbprint)'`" -p"))
+{
+    $local:Body = @{
+        Base64CertificateData = [string](Get-Content -Raw $script:RootCert)
+    }
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U TrustedCertificates -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "Root cert already exists"
+}
+if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Get -U `"TrustedCertificates?filter=Thumbprint%20eq%20'$($script:CaThumbprint)'`" -p"))
+{
+    $local:Body = @{
+        Base64CertificateData = [string](Get-Content -Raw $script:CaCert)
+    }
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U TrustedCertificates -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "CA cert already exists"
+}
+
 Write-Host -ForegroundColor Yellow "Setting up a cert user (SafeguardDotNetCert)..."
 if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetCert'`" -p"))
 {
     $local:Body = @{
         PrimaryAuthenticationProviderId = -2;
         UserName = "SafeguardDotNetCert";
-        PrimaryAuthenticationIdentity = $script:Thumbprint
+        PrimaryAuthenticationIdentity = $script:UserThumbprint
     }
     Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
 }
@@ -163,3 +193,6 @@ else
 {
     Write-Host "'SafeguardDotNetCert' user already exists"
 }
+
+Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from PFX file..."
+Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -x -s Core -m Get -U Me -p"
