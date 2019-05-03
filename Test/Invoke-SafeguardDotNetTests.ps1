@@ -196,3 +196,11 @@ else
 
 Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from PFX file..."
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -x -s Core -m Get -U Me -p"
+
+Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from User Certificate Store..."
+Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
+Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -t $($script:UserThumbprint) -x -s Core -m Get -U Me -p"
+Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
+
+Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from Computer Certificate Store..."
+
