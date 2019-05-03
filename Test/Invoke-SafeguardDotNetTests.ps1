@@ -135,6 +135,9 @@ Invoke-DotNetBuild $script:A2aToolDir
 Invoke-DotNetBuild $script:AccessRequestBrokerToolDir
 Invoke-DotNetBuild $script:EventToolDir
 
+
+### SafeguardDotNetTool Tests
+
 Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($Appliance) as bootstrap admin..."
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"
 
@@ -253,10 +256,28 @@ else
     Write-Host "'SafeguardDotNetTest' A2A registration already exists"
 }
 $local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'SafeguardDotNetTest'`" -p")
-if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations/$($local:Result.Id)/RetrievableAccounts`" -p"))
+if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations/$($local:Result.Id)/RetrievableAccounts?filter=AccountName%20eq%20'SafeguardDotNetTest'`" -p"))
 {
+    $local:A2aId = $local:Result.Id
+    $local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"AssetAccounts?filter=Name%20eq%20'SafeguardDotNetTest'&fields=Id,AssetId`" -p")
+    if (-not $local:Result)
+    {
+        throw "Couldn't find asset account SafeguardDotNetTest to create A2A account retrieval"
+    }
+    $local:Body = @{
+        SystemId = $local:Result.AssetId;
+        AccountId = $local:Result.Id
+    }
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U `"A2ARegistrations/$($local:A2aId)/RetrievableAccounts`" -p -b `"$(Get-StringEscapedBody $local:Body)`""
 }
 else
 {
-    Write-Host "'SafeguardDotNetTest' A2A registration already exists"
+    Write-Host "'SafeguardDotNetTest' A2A registration account retrieval already exists"
 }
+
+
+### SafeguardDotNetA2aTool Tests
+
+$local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"A2ARegistrations/$($local:Result.Id)/RetrievableAccounts?filter=AccountName%20eq%20'SafeguardDotNetTest'`" -p")
+$script:A2aCrApiKey = $local:Result.ApiKey
+$script:A2aCrApiKey
