@@ -81,7 +81,8 @@ namespace SafeguardDotNetTool
                 var responseBody = opts.Csv
                     ? connection.InvokeMethodCsv(opts.Service, opts.Method, opts.RelativeUrl, opts.Body)
                     : connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body);
-                Log.Information(responseBody);
+                //Log.Information(responseBody); // if JSON is nested too deep Serilog swallows a '}' -- need to file issue with them
+                Console.WriteLine(responseBody);
 
                 connection.LogOut();
             }
