@@ -23,8 +23,7 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
                     {
-
-
+                        store.Open(OpenFlags.ReadOnly);
                         cert = store.Certificates.OfType<X509Certificate2>()
                             .FirstOrDefault(x => x.Thumbprint == thumbprint);
                         if (cert == null)
