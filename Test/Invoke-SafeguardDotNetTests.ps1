@@ -57,6 +57,27 @@ function Invoke-DotNetRun {
     }
 }
 
+function Test-ReturnsSuccess {
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$Directory,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$Password,
+        [Parameter(Mandatory=$false, Position=2)]
+        [string]$Command
+    )
+
+    try
+    {
+        Invoke-DotNetRun $Directory $Password $Command | Out-Null
+        $true
+    }
+    catch
+    {
+        $false
+    }
+}
+
 function Get-StringEscapedBody {
     Param(
         [Parameter(Mandatory=$true, Position=0)]
@@ -90,4 +111,4 @@ $local:Body = @{
     AdminRoles = @('GlobalAdmin','Auditor','AssetAdmin','ApplianceAdmin','PolicyAdmin','UserAdmin','HelpdeskAdmin','OperationsAdmin')
 }
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
-#Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Post -U Users -b '{`"PrimaryAuthenticationProviderId`":-1,`"UserName`":`"SafeguardDotNetTest`",`"AdminRoles`":[`"GlobalAdmin`","Auditor","AssetAdmin","ApplianceAdmin","PolicyAdmin","UserAdmin","HelpdeskAdmin","OperationsAdmin"]}'
+
