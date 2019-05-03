@@ -41,7 +41,9 @@ function Invoke-DotNetRun {
     try
     {
         Push-Location $Directory
-        $local:Output = (Invoke-Expression "`"$Password`" | & dotnet.exe run -- $Command")
+        $local:Expression = "`"$Password`" | & dotnet.exe run -- $Command"
+        Write-Host "Executing: $($local:Expression)"
+        $local:Output = (Invoke-Expression $local:Expression)
         if ($local:Output -match "Error" -or $local:Output -match "Exception")
         {
             throw $local:Output
@@ -53,6 +55,17 @@ function Invoke-DotNetRun {
     {
         Pop-Location
     }
+}
+
+function Get-StringEscapedBody {
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [hashtable]$Body
+    )
+
+    # quoting with the Invoke-Expression is complicated
+    # luckily our API will handle single quotes in JSON strings
+    (ConvertTo-Json $Body -Compress).Replace("`"","'")
 }
 
 $script:ToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetTool")
@@ -70,3 +83,11 @@ Invoke-DotNetBuild $script:EventToolDir
 Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($Appliance) as bootstrap admin..."
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"
 
+Write-Host -ForegroundColor Yellow "Setting up a test user (SafeguardDotNetTest)..."
+$local:Body = @{
+    PrimaryAuthenticationProviderId = -1;
+    UserName = "SafeguardDotNetTest";
+    AdminRoles = @('GlobalAdmin','Auditor','AssetAdmin','ApplianceAdmin','PolicyAdmin','UserAdmin','HelpdeskAdmin','OperationsAdmin')
+}
+Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
+#Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Post -U Users -b '{`"PrimaryAuthenticationProviderId`":-1,`"UserName`":`"SafeguardDotNetTest`",`"AdminRoles`":[`"GlobalAdmin`","Auditor","AssetAdmin","ApplianceAdmin","PolicyAdmin","UserAdmin","HelpdeskAdmin","OperationsAdmin"]}'
