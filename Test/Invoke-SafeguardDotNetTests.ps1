@@ -44,12 +44,36 @@ function Invoke-DotNetRun {
         $local:Expression = "`"$Password`" | & dotnet.exe run -- $Command"
         Write-Host "Executing: $($local:Expression)"
         $local:Output = (Invoke-Expression $local:Expression)
-        if ($local:Output -match "Error" -or $local:Output -match "Exception")
+        if ($local:Output -is [array])
+        {
+            # sometimes dotnet run adds weird debug output strings
+            # we just want the string with the JSON in it
+            $local:Output | ForEach-Object { 
+                if ($_ -match "Error" -or $_ -match "Exception")
+                {
+                    throw $local:Output
+                }
+                try
+                {
+                    $local:Obj = (ConvertFrom-Json $_)
+                }
+                catch {}
+            }
+            if ($local:Obj)
+            {
+                $local:Obj
+            }
+        }
+        elseif ($local:Output -match "Error" -or $local:Output -match "Exception")
         {
             throw $local:Output
         }
-        $local:Obj = (ConvertFrom-Json $local:Output)
-        $local:Obj
+        elseif ($local:Output)
+        {
+            $local:Obj = (ConvertFrom-Json $local:Output)
+            $local:Obj
+        }
+        # Crappy conditionals should have detected anything but empty output by here
     }
     finally
     {
@@ -69,8 +93,7 @@ function Test-ReturnsSuccess {
 
     try
     {
-        Invoke-DotNetRun $Directory $Password $Command | Out-Null
-        $true
+        [bool](Invoke-DotNetRun $Directory $Password $Command)
     }
     catch
     {
@@ -94,6 +117,11 @@ $script:A2aToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetA2aTool")
 $script:AccessRequestBrokerToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetAccessRequestBrokerTool")
 $script:EventToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetEventTool")
 
+$script:TestDataDir = (Resolve-Path "$PSScriptRoot\TestData")
+$script:CertDir = (Resolve-Path "$($script:TestDataDir)\CERTS")
+
+$script:Thumbprint = (Get-PfxCertificate "$($script:CertDir)\UserCert.cer").Thumbprint
+
 Write-Host -ForegroundColor Yellow "Building projects..."
 Test-ForDotNetTool
 Invoke-DotNetBuild $script:ToolDir
@@ -105,10 +133,33 @@ Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($A
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"
 
 Write-Host -ForegroundColor Yellow "Setting up a test user (SafeguardDotNetTest)..."
-$local:Body = @{
-    PrimaryAuthenticationProviderId = -1;
-    UserName = "SafeguardDotNetTest";
-    AdminRoles = @('GlobalAdmin','Auditor','AssetAdmin','ApplianceAdmin','PolicyAdmin','UserAdmin','HelpdeskAdmin','OperationsAdmin')
+if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetTest'`" -p"))
+{
+    $local:Body = @{
+        PrimaryAuthenticationProviderId = -1;
+        UserName = "SafeguardDotNetTest";
+        AdminRoles = @('GlobalAdmin','Auditor','AssetAdmin','ApplianceAdmin','PolicyAdmin','UserAdmin','HelpdeskAdmin','OperationsAdmin')
+    }
+    $local:Result = (Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`"")
+    $local:Result
+    Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Put -U Users/$($local:Result.Id)/Password -p -b `"'Test123'`""
 }
-Invoke-DotNetRun $script:ToolDir "Admin123" "-a 10.5.32.162 -u Admin -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
+else
+{
+    Write-Host "'SafeguardDotNetTest' user already exists"
+}
 
+Write-Host -ForegroundColor Yellow "Setting up a cert user (SafeguardDotNetCert)..."
+if (-not (Test-ReturnsSuccess $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetCert'`" -p"))
+{
+    $local:Body = @{
+        PrimaryAuthenticationProviderId = -2;
+        UserName = "SafeguardDotNetCert";
+        PrimaryAuthenticationIdentity = $script:Thumbprint
+    }
+    Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u SafeguardDotNetTest -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "'SafeguardDotNetCert' user already exists"
+}
