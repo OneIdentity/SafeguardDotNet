@@ -288,5 +288,9 @@ $local:Result = (Invoke-DotNetRun $script:ToolDir "Test123" "-a 10.5.32.162 -u S
 $script:A2aCrApiKey = $local:Result.ApiKey
 
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file..."
-
 Invoke-DotNetRun $script:A2aToolDir "a" "-a 10.5.32.162 -x -c $($script:UserPfx) -A `"$($script:A2aCrApiKey)`" -p"
+
+Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval from User Certificate Store..."
+Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
+Invoke-DotNetRun $script:A2aToolDir "a" "-a 10.5.32.162 -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -p"
+Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
