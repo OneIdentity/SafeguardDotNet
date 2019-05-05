@@ -17,7 +17,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         private readonly bool _ignoreSsl;
         private readonly SecureString _accessToken;
         private readonly SecureString _apiKey;
-        private readonly X509Certificate2 _clientCertificate;
+        private readonly CertificateContext _clientCertificate;
 
         private EventHandlerRegistry _eventHandlerRegistry;
         private DisconnectHandler _disconnectHandler = () => throw new SafeguardEventListenerDisconnectedException();
@@ -43,10 +43,10 @@ namespace OneIdentity.SafeguardDotNet.Event
             _accessToken = accessToken.Copy();
         }
 
-        public SafeguardEventListener(string eventUrl, X509Certificate2 clientCertificate, SecureString apiKey,
+        public SafeguardEventListener(string eventUrl, CertificateContext clientCertificate, SecureString apiKey,
             bool ignoreSsl) : this(eventUrl, ignoreSsl)
         {
-            _clientCertificate = CertificateUtilities.Copy(clientCertificate);
+            _clientCertificate = clientCertificate.Clone();
             if (apiKey == null)
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
             _apiKey = apiKey.Copy();
@@ -113,7 +113,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             else
             {
                 _signalrConnection.Headers.Add("Authorization", $"A2A {_apiKey.ToInsecureString()}");
-                _signalrConnection.AddClientCertificate(_clientCertificate);
+                _signalrConnection.AddClientCertificate(_clientCertificate.Certificate);
             }
             SignalrHubProxy = _signalrConnection.CreateHubProxy(NotificationHub);
 

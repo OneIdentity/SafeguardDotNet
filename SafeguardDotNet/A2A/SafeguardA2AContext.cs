@@ -16,7 +16,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
         private readonly string _networkAddress;
         private readonly bool _ignoreSsl;
 
-        private readonly X509Certificate2 _clientCertificate;
+        private readonly CertificateContext _clientCertificate;
         private readonly RestClient _a2AClient;
 
         // only used for cloning
@@ -45,9 +45,9 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
             _clientCertificate = !string.IsNullOrEmpty(_certificateThumbprint)
-                ? CertificateUtilities.GetClientCertificateFromStore(_certificateThumbprint)
-                : CertificateUtilities.GetClientCertificateFromFile(_certificatePath, _certificatePassword);
-            _a2AClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate };
+                ? new CertificateContext(_certificateThumbprint)
+                : new CertificateContext(_certificatePath, _certificatePassword);
+            _a2AClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
         }
 
         public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 

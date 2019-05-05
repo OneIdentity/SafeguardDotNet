@@ -10,21 +10,24 @@ namespace OneIdentity.SafeguardDotNet.Authentication
     {
         private bool _disposed;
 
-        private readonly string _certificateThumbprint;
-        private readonly string _certificatePath;
-        private readonly SecureString _certificatePassword;
+        private readonly CertificateContext _clientCertificate;
 
         public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
             bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
         {
-            _certificateThumbprint = certificateThumbprint;
+            _clientCertificate = new CertificateContext(certificateThumbprint);
         }
 
         public CertificateAuthenticator(string networkAddress, string certificatePath, SecureString certificatePassword,
             int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
         {
-            _certificatePath = certificatePath;
-            _certificatePassword = certificatePassword?.Copy();
+            _clientCertificate = new CertificateContext(certificatePath, certificatePassword);
+        }
+
+        private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,
+            bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+        {
+            _clientCertificate = clientCertificate.Clone();
         }
 
         protected override SecureString GetRstsTokenInternal()
@@ -40,28 +43,25 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     grant_type = "client_credentials",
                     scope = "rsts:sts:primaryproviderid:certificate"
                 });
-            var userCert = !string.IsNullOrEmpty(_certificateThumbprint)
-                ? CertificateUtilities.GetClientCertificateFromStore(_certificateThumbprint)
-                : CertificateUtilities.GetClientCertificateFromFile(_certificatePath, _certificatePassword);
-            RstsClient.ClientCertificates = new X509Certificate2Collection() { userCert };
+            RstsClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
             var response = RstsClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
                 throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error using client_credentials grant_type with " +
-                                                   $"{(string.IsNullOrEmpty(_certificatePath) ? $"thumbprint={_certificateThumbprint}" : $"file={_certificatePath}")}" +
+                throw new SafeguardDotNetException($"Error using client_credentials grant_type with {_clientCertificate}" +
                                                    $", Error: {response.StatusCode} {response.Content}", response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
+        
         }
 
         public override object Clone()
         {
-            var auth = !string.IsNullOrEmpty(_certificateThumbprint)
-                ? new CertificateAuthenticator(NetworkAddress, _certificateThumbprint, ApiVersion, IgnoreSsl)
-                : new CertificateAuthenticator(NetworkAddress, _certificatePath, _certificatePassword, ApiVersion, IgnoreSsl);
-            auth.AccessToken = AccessToken?.Copy();
+            var auth = new CertificateAuthenticator(NetworkAddress, _clientCertificate, ApiVersion, IgnoreSsl)
+            {
+                AccessToken = AccessToken?.Copy()
+            };
             return auth;
         }
 
@@ -72,7 +72,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             base.Dispose(true);
             try
             {
-                _certificatePassword?.Dispose();
+                _clientCertificate?.Dispose();
             }
             finally
             {
