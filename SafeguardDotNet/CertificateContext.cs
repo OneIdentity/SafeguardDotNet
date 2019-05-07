@@ -33,7 +33,7 @@ namespace OneIdentity.SafeguardDotNet
             {
                 Thumbprint = Thumbprint,
                 FilePath = FilePath,
-                Password = Password.Copy()
+                Password = Password?.Copy()
             };
             clone.Certificate = clone.Thumbprint != null
                 ? CertificateUtilities.GetClientCertificateFromStore(Thumbprint)
