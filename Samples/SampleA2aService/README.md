@@ -68,3 +68,13 @@ To run as a Windows service:
 `SampleA2aService.exe install`
 
 `net start Samplea2aService`
+
+Notes
+=====
+
+This sample demonstrates a lot of integration functionality in Safeguard and demonstrates the secure
+method for running an external integration application against Safeguard.  Using A2A and client
+certificate authentication are the preferred methods for accessing the Safeguard API from an automated
+process.  This same technique can be used in your own custom integrations and robotic process automations
+(RPAs).  Using a client certificate securely enrolled via a secure certificate enrollment process where
+the private key has never left the certificate store is the most secure option.
