@@ -3,7 +3,8 @@ Sample A2A Service
 
 TopShelf service that can be run to demonstrate monitoring for password changes via the Application to Application (A2A) functionality in Safeguard.
 
-This is built using the SafeguardDotNet nuget package from nuget.org, not using the source code from the repo.
+This is built using the SafeguardDotNet nuget package from nuget.org, not using the source code from
+this repository.
 
 This sample demonstrates:
 
@@ -67,3 +68,13 @@ To run as a Windows service:
 `SampleA2aService.exe install`
 
 `net start Samplea2aService`
+
+Notes
+=====
+
+This sample demonstrates a lot of integration functionality in Safeguard and demonstrates the secure
+method for running an external integration application against Safeguard.  Using A2A and client
+certificate authentication are the preferred methods for accessing the Safeguard API from an automated
+process.  This same technique can be used in your own custom integrations and robotic process automations
+(RPAs).  Using a client certificate securely enrolled via a secure certificate enrollment process where
+the private key has never left the certificate store is the most secure option.
