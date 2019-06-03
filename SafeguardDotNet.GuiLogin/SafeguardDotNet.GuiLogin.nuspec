@@ -6,12 +6,12 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</licenseUrl>
+    <license>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</license>
     <projectUrl>https://github.com/OneIdentity/SafeguardDotNet</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <releaseNotes>Initial release of GuiLogin assembly for .NET interactive login.</releaseNotes>
     <copyright>(c) 2019 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
   </metadata>
