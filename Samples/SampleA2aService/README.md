@@ -22,7 +22,7 @@ Configure Safeguard
 If you already have a CA cert and SSL client certificate you can use use those. Just replace the thumbprint below with the thumbprint of your client certificate. If not, there are test certificates in the certs folder of the project that you can use to set up the sample:
 
 1. Log in to your Safeguard appliance as a user administrator. Create a new local user called a2a. On the authentication tab select "Certificate" specify the thumbprint: ec1c1c5862471c27925b9c7180eb4facf8398c58 (or your client cert thumbprint). On the permissions tab select "Auditor".
-2. Log in to your Safeguard appliance as an appliance administrator and go to Settings -> Certificates -> Trusted Roots and add test-ca.crt (or your own CA cert) as a Trusted Root.
+2. Log in to your Safeguard appliance as an appliance administrator and go to Settings -> Certificates -> Trusted Certificates and add test-ca.crt (or your own CA cert).
 3. Now go to External Integration -> Application to Application. Add a new registration called test. Select the a2a user. Select the  credential retrieval checkbox. On the Credential Retrieval tab select some accounts to monitor for password changes. If there are no accounts, you need to add some accounts first.
  
 
