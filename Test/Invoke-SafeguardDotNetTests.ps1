@@ -56,10 +56,14 @@ function Invoke-DotNetRun {
                 try
                 {
                     $local:Obj = (ConvertFrom-Json $_)
+                    $local:IsJson = $true
                 }
-                catch {}
+                catch
+                {
+                    $local:IsJson = $false
+                }
             }
-            if ($local:Obj)
+            if ($local:IsJson)
             {
                 $local:Obj
             }
