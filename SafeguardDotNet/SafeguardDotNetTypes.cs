@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Security;
+using Newtonsoft.Json;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -42,8 +45,34 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public class FullResponse
     {
-        public HttpStatusCode StatusCode;
-        public IDictionary<string, string> Headers;
-        public string Body;
+        public HttpStatusCode StatusCode { get; set; }
+        public IDictionary<string, string> Headers { get; set; }
+        public string Body { get; set; }
+    }
+
+
+    public class A2ARetrievableAccount : IDisposable
+    {
+        public string ApplicationName { get; set; }
+        public string Description { get; set; }
+        public bool Disabled { get; set; }
+        public SecureString ApiKey { get; set; }
+        public int AssetId { get; set; }
+        public string AssetName { get; set; }
+        public int AccountId { get; set; }
+        public string AccountName { get; set; }
+        public string DomainName { get; set; }
+        public string AccountType { get; set; }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        public void Dispose()
+        {
+            ApiKey?.Dispose();
+            ApiKey = null;
+        }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
@@ -18,6 +20,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
         private readonly CertificateContext _clientCertificate;
         private readonly RestClient _a2AClient;
+        private readonly RestClient _coreClient;
 
         // only used for cloning
         private readonly string _certificateThumbprint;
@@ -39,15 +42,20 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{_apiVersion}";
             _a2AClient = new RestClient(safeguardA2AUrl);
 
+            var safeguardCoreUrl = $"https://{_networkAddress}/service/core/v{_apiVersion}";
+            _coreClient = new RestClient(safeguardCoreUrl);
+
             if (ignoreSsl)
             {
                 _ignoreSsl = true;
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+                _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
             _clientCertificate = !string.IsNullOrEmpty(_certificateThumbprint)
                 ? new CertificateContext(_certificateThumbprint)
                 : new CertificateContext(_certificatePath, _certificatePassword);
             _a2AClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
+            _coreClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
         }
 
         public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 
@@ -60,6 +68,58 @@ namespace OneIdentity.SafeguardDotNet.A2A
             this(networkAddress, null, certificatePath, certificatePassword,
                 apiVersion, ignoreSsl)
         {
+        }
+
+        public IList<A2ARetrievableAccount> GetRetrievableAccounts()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+
+            var list = new List<A2ARetrievableAccount>();
+
+            var request = new RestRequest("A2ARegistrations", RestSharp.Method.GET)
+                .AddHeader("Accept", "application/json");
+            var response = _coreClient.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
+            if (!response.IsSuccessful)
+                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
+                                                   $"{response.StatusCode} {response.Content}", response.Content);
+            var json = JArray.Parse(response.Content);
+            dynamic registrations = json;
+            foreach (var registration in registrations)
+            {
+                var registrationId = registration.Id;
+                var retrievalRequest = new RestRequest($"A2ARegistrations/{registrationId}/RetrievableAccounts")
+                    .AddHeader("Accept", "application/json");
+                var retrievalResponse = _coreClient.Execute(retrievalRequest);
+                if (retrievalResponse.ResponseStatus != ResponseStatus.Completed)
+                    throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.BaseUrl}, Error: " +
+                                                       retrievalResponse.ErrorMessage);
+                if (!retrievalResponse.IsSuccessful)
+                    throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
+                                                       $"{retrievalResponse.StatusCode} {retrievalResponse.Content}", retrievalResponse.Content);
+                var retrievalJson = JArray.Parse(retrievalResponse.Content);
+                dynamic retrievals = retrievalJson;
+                foreach (var retrieval in retrievals)
+                {
+                    list.Add(new A2ARetrievableAccount
+                    {
+                        ApplicationName = registration.AppName,
+                        Description = registration.Description,
+                        Disabled = (bool) registration.Disabled || (bool) (retrieval.AccountDisabled),
+                        ApiKey = ((string) retrieval.ApiKey).ToSecureString(),
+                        AssetId = retrieval.SystemId,
+                        AssetName = retrieval.SystemName,
+                        AccountId = retrieval.AccountId,
+                        AccountName = retrieval.AccountName,
+                        DomainName = retrieval.DomainName,
+                        AccountType = retrieval.AccountType
+                    });
+                }
+            }
+            return list;
         }
 
         public SecureString RetrievePassword(SecureString apiKey)
