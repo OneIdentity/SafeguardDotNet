@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security;
 using OneIdentity.SafeguardDotNet.Event;
 
@@ -10,6 +11,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
     /// </summary>
     public interface ISafeguardA2AContext : IDisposable
     {
+        /// <summary>
+        /// Retrieves the list of retrievable accounts for this A2A context.  Listing the retrievable accounts is a
+        /// new feature for Safeguard v2.8+, and it needs to be enabled in the A2A configuration.
+        /// </summary>
+        /// <returns>A list of retrievable accounts.</returns>
+        IList<A2ARetrievableAccount> GetRetrievableAccounts();
+
         /// <summary>
         /// Retrieves a password using Safeguard A2A.
         /// </summary>

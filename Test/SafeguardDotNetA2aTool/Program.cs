@@ -77,8 +77,19 @@ namespace SafeguardDotNetA2aTool
 
                 using (var context = CreateA2AContext(opts))
                 {
-                    var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString());
-                    Log.Information(responseBody.ToInsecureString());
+                    if (opts.ApiKey.Equals("?"))
+                    {
+                        var responseBody = context.GetRetrievableAccounts();
+                        foreach (var obj in responseBody)
+                        {
+                            Log.Information(obj.ToString());
+                        }
+                    }
+                    else
+                    {
+                        var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString());
+                        Log.Information(responseBody.ToInsecureString());
+                    }
                 }
             }
             catch (Exception ex)
