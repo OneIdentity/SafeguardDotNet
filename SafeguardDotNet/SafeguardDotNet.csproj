@@ -27,8 +27,7 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
-- Default API version (v3) for Safeguard 2.7
-- Added supporting GuiLogin assembly for .NET Framework</PackageReleaseNotes>
+- Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
