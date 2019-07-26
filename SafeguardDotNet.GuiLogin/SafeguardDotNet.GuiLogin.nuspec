@@ -11,7 +11,7 @@
     <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Initial release of GuiLogin assembly for .NET interactive login.</releaseNotes>
+    <releaseNotes>GuiLogin assembly for .NET interactive login.</releaseNotes>
     <copyright>(c) 2019 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
   </metadata>
