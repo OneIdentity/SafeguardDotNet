@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNet.GuiLogin", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetGuiTester", "Test\SafeguardDotNetGuiTester\SafeguardDotNetGuiTester.csproj", "{3298668C-7255-45E9-806C-111ED4DFB800}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A1C31631-3433-415B-81D5-3C9BC80710AC} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{0852DDE0-8C16-4C29-B49F-8E67A2993078} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{741143E4-C1AB-450C-8CCA-11225D037548} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{37DC1680-E01E-4D39-8D5B-E2A0D908EB33} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{3298668C-7255-45E9-806C-111ED4DFB800} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D9CB73C2-C8BA-4198-AC5A-583C98326F2D}
