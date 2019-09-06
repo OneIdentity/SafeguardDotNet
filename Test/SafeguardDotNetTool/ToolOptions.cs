@@ -17,6 +17,10 @@ namespace SafeguardDotNetTool
             HelpText = "Read any required password from console stdin")]
         public bool ReadPassword { get; set; }
 
+        [Option('A', "Anonymous", Required = true, SetName = "AnonymousSet",
+            HelpText =  "Do not authenticate, call API anonymously")]
+        public bool Anonymous { get; set; }
+
         [Option('V', "Verbose", Required = false, Default = false,
             HelpText = "Display verbose debug output")]
         public bool Verbose { get; set; }

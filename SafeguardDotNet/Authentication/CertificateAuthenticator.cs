@@ -30,6 +30,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             _clientCertificate = clientCertificate.Clone();
         }
 
+        public override string Id => "Certificate";
+
         protected override SecureString GetRstsTokenInternal()
         {
             if (_disposed)
