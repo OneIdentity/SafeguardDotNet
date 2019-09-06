@@ -32,7 +32,7 @@ function Invoke-DotNetRun {
     Param(
         [Parameter(Mandatory=$true, Position=0)]
         [string]$Directory,
-        [Parameter(Mandatory=$true, Position=1)]
+        [Parameter(Mandatory=$false, Position=1)]
         [string]$Password,
         [Parameter(Mandatory=$false, Position=2)]
         [string]$Command
@@ -41,7 +41,14 @@ function Invoke-DotNetRun {
     try
     {
         Push-Location $Directory
-        $local:Expression = "`"$Password`" | & dotnet.exe run -- $Command"
+        if ($Password)
+        {
+            $local:Expression = "`"$Password`" | & dotnet.exe run -- $Command"
+        }
+        else # if there is no password don't try to pass it to stdin
+        {
+            $local:Expression = "& dotnet.exe run -- $Command"
+        }
         Write-Host "Executing: $($local:Expression)"
         $local:Output = (Invoke-Expression $local:Expression)
         if ($local:Output -is [array])
@@ -145,6 +152,9 @@ Invoke-DotNetBuild $script:EventToolDir
 
 
 ### SafeguardDotNetTool Tests
+
+Write-Host -ForegroundColor Yellow "Testing whether anonymous notification Status endpoint can be reached on Safeguard ($Appliance)..."
+Invoke-DotNetRun $script:ToolDir $null "-a $Appliance -A -x -s Notification -m Get -U Status"
 
 Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($Appliance) as bootstrap admin..."
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"

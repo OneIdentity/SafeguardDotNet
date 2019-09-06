@@ -71,9 +71,13 @@ namespace SafeguardDotNetTool
                 {
                     connection = Safeguard.Connect(opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
                 }
+                else if (opts.Anonymous)
+                {
+                    connection = Safeguard.Connect(opts.Appliance, opts.ApiVersion, opts.Insecure);
+                }
                 else
                 {
-                    throw new Exception("Must specify Username, CertificateFile, or Thumbprint");
+                    throw new Exception("Must specify Anonymous, Username, CertificateFile, or Thumbprint");
                 }
 
                 Log.Debug($"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
