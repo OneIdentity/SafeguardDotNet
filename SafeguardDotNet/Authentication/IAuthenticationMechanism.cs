@@ -5,11 +5,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 {
     internal interface IAuthenticationMechanism : IDisposable, ICloneable
     {
+        string Id { get;  }
+
         string NetworkAddress { get; }
 
         int ApiVersion { get; }
 
         bool IgnoreSsl { get; }
+
+        bool IsAnonymous { get; }
 
         bool HasAccessToken();
 

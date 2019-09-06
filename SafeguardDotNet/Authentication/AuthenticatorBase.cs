@@ -37,12 +37,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             }
         }
 
+        public abstract string Id { get; }
+
         public string NetworkAddress { get; }
 
         public int ApiVersion { get; }
 
         public bool IgnoreSsl { get; }
 
+        public virtual bool IsAnonymous => false;
 
         public bool HasAccessToken()
         {
@@ -103,7 +106,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
                                                        response.ErrorMessage);
                 if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException("Error exchanging RSTS token for Safeguard API access token, Error: " +
+                    throw new SafeguardDotNetException($"Error exchanging RSTS token from {Id} authenticator for Safeguard API access token, Error: " +
                                                        $"{response.StatusCode} {response.Content}", response.Content);
                 var jObject = JObject.Parse(response.Content);
                 AccessToken = jObject.GetValue("UserToken").ToString().ToSecureString();

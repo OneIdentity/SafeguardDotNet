@@ -29,6 +29,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             _password = password.Copy();
         }
 
+        public override string Id => "Password";
+
         private void ResolveProviderToScope()
         {
             try

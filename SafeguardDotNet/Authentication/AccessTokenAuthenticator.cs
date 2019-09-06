@@ -15,6 +15,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             AccessToken = accessToken.Copy();
         }
 
+        public override string Id => "AccessToken";
+
         protected override SecureString GetRstsTokenInternal()
         {
             throw new SafeguardDotNetException("Original authentication was with access token unable to refresh, Error: Unsupported operation");

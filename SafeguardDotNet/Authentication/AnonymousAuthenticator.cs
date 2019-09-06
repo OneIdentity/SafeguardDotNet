@@ -11,6 +11,10 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
         }
 
+        public override string Id => "Anonymous";
+
+        public override bool IsAnonymous => true;
+
         protected override SecureString GetRstsTokenInternal()
         {
             throw new SafeguardDotNetException("Anonymous connection cannot be used to get an API access token, Error: Unsupported operation");

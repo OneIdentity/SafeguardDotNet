@@ -77,13 +77,15 @@ namespace OneIdentity.SafeguardDotNet
                 throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
 
             var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod());
-            if (!_authenticationMechanism.HasAccessToken())
-                throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
-            if (service != Service.Notification)
+            if (!_authenticationMechanism.IsAnonymous)
+            {
+                if (!_authenticationMechanism.HasAccessToken())
+                    throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
                 request.AddHeader("Authorization",
                     $"Bearer {_authenticationMechanism.GetAccessToken().ToInsecureString()}");
+            }
             if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
                 request.AddHeader("Accept", "application/json"); // Assume JSON unless specified
             if (additionalHeaders != null)
