@@ -27,7 +27,8 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
-- Bug fixes and dependency updates.</PackageReleaseNotes>
+- Fixed a bug where anonymous authentication mechanism didn't work.
+- Additional bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
