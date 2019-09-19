@@ -38,6 +38,18 @@ namespace OneIdentity.SafeguardDotNet.A2A
         ISafeguardEventListener GetA2AEventListener(SecureString apiKey, SafeguardEventHandler handler);
 
         /// <summary>
+        /// Gets an A2A event listener. The handler passed in will be registered for the AssetAccountPasswordUpdated
+        /// event, which is the only one supported in A2A. You just have to call Start(). The event listener returned
+        /// by this method WILL NOT automatically recover from a SignalR timeout which occurs when there is a 30+
+        /// second outage. To get an event listener that supports recovering from longer term outages, please use
+        /// GetPersistentEventListener() to request a persistent event listener.
+        /// </summary>
+        /// <param name="apiKeys">A list of API keys corresponding to the configured accounts to listen for.</param>
+        /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
+        /// <returns>The event listener.</returns>
+        ISafeguardEventListener GetA2AEventListener(IEnumerable<SecureString> apiKeys, SafeguardEventHandler handler);
+
+        /// <summary>
         /// Gets a persistent A2A event listener. The handler passed in will be registered for the
         /// AssetAccountPasswordUpdated event, which is the only one supported in A2A. You just have to call Start().
         /// The event listener returned by this method will not automatically recover from a SignalR timeout which
@@ -47,6 +59,17 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
         /// <returns>The event listener.</returns>
         ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey, SafeguardEventHandler handler);
+
+        /// <summary>
+        /// Gets a persistent A2A event listener. The handler passed in will be registered for the
+        /// AssetAccountPasswordUpdated event, which is the only one supported in A2A. You just have to call Start().
+        /// The event listener returned by this method will not automatically recover from a SignalR timeout which
+        /// occurs when there is a 30+ second outage.
+        /// </summary>
+        /// <param name="apiKeys">A list of API keys corresponding to the configured accounts to listen for.</param>
+        /// <param name="handler">A delegate to call any time the AssetAccountPasswordUpdate event occurs.</param>
+        /// <returns>The event listener.</returns>
+        ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys, SafeguardEventHandler handler);
 
         /// <summary>
         /// Creates an access request on behalf of another user using Safeguard A2A.

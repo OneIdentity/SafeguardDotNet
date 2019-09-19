@@ -159,6 +159,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return eventListener;
         }
 
+        public ISafeguardEventListener GetA2AEventListener(IEnumerable<SecureString> apiKeys,
+            SafeguardEventHandler handler)
+        {
+            // TODO:
+            throw new NotImplementedException();
+        }
+
         public ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
@@ -167,6 +174,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
 
             return new PersistentSafeguardA2AEventListener(Clone() as SafeguardA2AContext, apiKey, handler);
+        }
+
+        public ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
+            SafeguardEventHandler handler)
+        {
+            // TODO:
+            throw new NotImplementedException();
         }
 
         public string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest)
