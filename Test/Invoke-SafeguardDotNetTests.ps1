@@ -140,7 +140,7 @@ $script:RootCert = (Resolve-Path "$($script:CertDir)\RootCA.pem")
 $script:CaCert = (Resolve-Path "$($script:CertDir)\IntermediateCA.pem")
 
 $script:TestObj = "SafeguardDotNetTest"
-$script:TestCred = "!@#2309asefl;kasdlf209349qauerA"
+$script:TestCred = "2309aseflkasdlf209349qauerA"
 
 $script:UserThumbprint = (Get-PfxCertificate $script:UserCert).Thumbprint
 $script:RootThumbprint = (Get-PfxCertificate $script:RootCert).Thumbprint
