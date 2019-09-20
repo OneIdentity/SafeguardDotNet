@@ -102,6 +102,10 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _signalrConnection?.Dispose();
                 SignalrHubProxy = null;
             }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "SignalR dispose threw an exception");
+            }
             finally
             {
                 _signalrConnection = null;
@@ -181,6 +185,9 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _accessToken?.Dispose();
                 _clientCertificate?.Dispose();
                 _apiKey?.Dispose();
+                if (_apiKeys != null)
+                    foreach (var apiKey in _apiKeys)
+                        apiKey.Dispose();
             }
             finally
             {
