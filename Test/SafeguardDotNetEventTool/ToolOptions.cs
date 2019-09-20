@@ -41,7 +41,7 @@ namespace SafeguardDotNetEventTool
         public string CertificateFile { get; set; }
 
         [Option('A', "ApiKey", Required = false, Default = null,
-            HelpText = "ApiKey for listening to Safeguard A2A")]
+            HelpText = "ApiKey(s) for listening to Safeguard A2A; comma-delimited")]
         public string ApiKey { get; set; }
 
         [Option('E', "Event", Required = false,
