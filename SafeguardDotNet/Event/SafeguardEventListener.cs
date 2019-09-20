@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Http;
 using Serilog;
@@ -17,6 +18,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         private readonly bool _ignoreSsl;
         private readonly SecureString _accessToken;
         private readonly SecureString _apiKey;
+        private readonly IList<SecureString> _apiKeys;
         private readonly CertificateContext _clientCertificate;
 
         private EventHandlerRegistry _eventHandlerRegistry;
@@ -50,6 +52,19 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (apiKey == null)
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
             _apiKey = apiKey.Copy();
+        }
+
+        public SafeguardEventListener(string eventUrl, CertificateContext clientCertificate, IEnumerable<SecureString> apiKeys,
+            bool ignoreSsl) : this(eventUrl, ignoreSsl)
+        {
+            _clientCertificate = clientCertificate.Clone();
+            if (apiKeys == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+            _apiKeys = new List<SecureString>();
+            foreach (var apiKey in apiKeys)
+                _apiKeys.Add(apiKey.Copy());
+            if (!_apiKeys.Any())
+                throw new ArgumentException("Parameter must include at least one item", nameof(apiKeys));
         }
 
         public void SetDisconnectHandler(DisconnectHandler handler)
@@ -87,6 +102,10 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _signalrConnection?.Dispose();
                 SignalrHubProxy = null;
             }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "SignalR dispose threw an exception");
+            }
             finally
             {
                 _signalrConnection = null;
@@ -112,7 +131,10 @@ namespace OneIdentity.SafeguardDotNet.Event
             }
             else
             {
-                _signalrConnection.Headers.Add("Authorization", $"A2A {_apiKey.ToInsecureString()}");
+                _signalrConnection.Headers.Add("Authorization",
+                    _apiKey != null
+                        ? $"A2A {_apiKey.ToInsecureString()}"
+                        : $"A2A {string.Join(" ", _apiKeys.Select(apiKey => apiKey.ToInsecureString()))}");
                 _signalrConnection.AddClientCertificate(_clientCertificate.Certificate);
             }
             SignalrHubProxy = _signalrConnection.CreateHubProxy(NotificationHub);
@@ -163,6 +185,9 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _accessToken?.Dispose();
                 _clientCertificate?.Dispose();
                 _apiKey?.Dispose();
+                if (_apiKeys != null)
+                    foreach (var apiKey in _apiKeys)
+                        apiKey?.Dispose();
             }
             finally
             {

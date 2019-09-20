@@ -132,7 +132,7 @@ namespace OneIdentity.SafeguardDotNet
             Log.Debug("Reponse status code: {StatusCode}", fullResponse.StatusCode);
             Log.Debug("  Response headers: {ResponseHeaders}",
                 fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
             Log.Debug("  Body size: {ResponseBodySize}",
                 fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
             return fullResponse;

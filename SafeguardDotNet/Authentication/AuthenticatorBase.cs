@@ -6,7 +6,7 @@ using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
-    internal abstract class AuthenticatorBase : IAuthenticationMechanism, ICloneable
+    internal abstract class AuthenticatorBase : IAuthenticationMechanism
     {
         private bool _disposed;
 

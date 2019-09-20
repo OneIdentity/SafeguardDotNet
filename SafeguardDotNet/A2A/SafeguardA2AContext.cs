@@ -4,7 +4,6 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
@@ -159,6 +158,21 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return eventListener;
         }
 
+        public ISafeguardEventListener GetA2AEventListener(IEnumerable<SecureString> apiKeys,
+            SafeguardEventHandler handler)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKeys == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+
+            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
+                apiKeys, _ignoreSsl);
+            eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            Log.Debug("Event listener successfully created for Safeguard A2A context.");
+            return eventListener;
+        }
+
         public ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
@@ -167,6 +181,17 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
 
             return new PersistentSafeguardA2AEventListener(Clone() as SafeguardA2AContext, apiKey, handler);
+        }
+
+        public ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
+            SafeguardEventHandler handler)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKeys == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+
+            return new PersistentSafeguardA2AEventListener(Clone() as SafeguardA2AContext, apiKeys, handler);
         }
 
         public string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest)
