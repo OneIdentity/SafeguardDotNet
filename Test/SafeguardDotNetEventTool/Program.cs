@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
@@ -53,13 +54,22 @@ namespace SafeguardDotNetEventTool
                 if (!string.IsNullOrEmpty(opts.CertificateFile))
                 {
                     var password = HandlePassword(opts.ReadPassword);
-                    return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(), A2AHandler,
-                        opts.Appliance, opts.CertificateFile, password, opts.ApiVersion, opts.Insecure);
-
+                    if (!opts.ApiKey.Contains(','))
+                        return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(),
+                            A2AHandler, opts.Appliance, opts.CertificateFile, password, opts.ApiVersion, opts.Insecure);
+                    return Safeguard.A2A.Event.GetPersistentA2AEventListener(
+                        opts.ApiKey.Split(',').Select(k => k.ToSecureString()), A2AHandler, opts.Appliance,
+                        opts.CertificateFile, password, opts.ApiVersion, opts.Insecure);
                 }
                 if (!string.IsNullOrEmpty(opts.Thumbprint))
-                    return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(), A2AHandler,
-                        opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
+                {
+                    if (!opts.ApiKey.Contains(','))
+                        return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(),
+                            A2AHandler, opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
+                    return Safeguard.A2A.Event.GetPersistentA2AEventListener(
+                        opts.ApiKey.Split(',').Select(k => k.ToSecureString()), A2AHandler, opts.Appliance,
+                        opts.Thumbprint, opts.ApiVersion, opts.Insecure);
+                }
                 throw new Exception("Must specify CertificateFile or Thumbprint");
             }
 
