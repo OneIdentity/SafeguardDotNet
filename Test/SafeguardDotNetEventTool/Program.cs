@@ -130,8 +130,13 @@ namespace SafeguardDotNetEventTool
         {
             using (var context = CreateA2AContext(opts))
             {
-                return context.GetA2AEventListener(opts.ApiKey.ToSecureString(),
-                    (name, body) => { Log.Information("Received A2A Event: {EventBody}", body); });
+                void A2AHandler(string name, string body)
+                {
+                    Log.Information("Received A2AHandler Event: {EventBody}", body);
+                }
+                if (!opts.ApiKey.Contains(','))
+                    return context.GetA2AEventListener(opts.ApiKey.ToSecureString(), A2AHandler);
+                return context.GetA2AEventListener(opts.ApiKey.Split(',').Select(k => k.ToSecureString()), A2AHandler);
             }
         }
 
