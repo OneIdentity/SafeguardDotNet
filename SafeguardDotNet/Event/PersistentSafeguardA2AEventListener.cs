@@ -55,7 +55,10 @@ namespace OneIdentity.SafeguardDotNet.Event
             try
             {
                 base.Dispose(true);
-                _apiKey.Dispose();
+                _apiKey?.Dispose();
+                if (_apiKeys != null)
+                    foreach (var apiKey in _apiKeys)
+                        apiKey?.Dispose();
                 _a2AContext?.Dispose();
             }
             finally

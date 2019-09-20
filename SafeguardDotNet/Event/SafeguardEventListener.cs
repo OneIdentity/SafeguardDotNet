@@ -187,7 +187,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _apiKey?.Dispose();
                 if (_apiKeys != null)
                     foreach (var apiKey in _apiKeys)
-                        apiKey.Dispose();
+                        apiKey?.Dispose();
             }
             finally
             {
