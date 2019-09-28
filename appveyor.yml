@@ -11,7 +11,7 @@ build:
 deploy:
 - provider: NuGet
   api_key:
-    secure: weO0O7MnQecxmMNErE6FEp+ZOeIAsMY1bWM017ZPX9Q5UTdXRSYtPHHoLMKDOfOW
+    secure: xE+LvURfgfWntKUSJwsSnvRwhrcZGtq/OB/mtXfsdXscEXT4QMx/swljqSiJ8YVU
 notifications:
 - provider: Email
   to:
