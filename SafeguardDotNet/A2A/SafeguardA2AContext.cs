@@ -111,10 +111,12 @@ namespace OneIdentity.SafeguardDotNet.A2A
                         ApiKey = ((string) retrieval.ApiKey).ToSecureString(),
                         AssetId = retrieval.SystemId,
                         AssetName = retrieval.SystemName,
+                        AssetDescription = retrieval.SystemDescription,
                         AccountId = retrieval.AccountId,
                         AccountName = retrieval.AccountName,
                         DomainName = retrieval.DomainName,
-                        AccountType = retrieval.AccountType
+                        AccountType = retrieval.AccountType,
+                        AccountDescription = retrieval.AccountDescription
                     });
                 }
             }
