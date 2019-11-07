@@ -59,10 +59,12 @@ namespace OneIdentity.SafeguardDotNet
         public SecureString ApiKey { get; set; }
         public int AssetId { get; set; }
         public string AssetName { get; set; }
+        public string AssetDescription { get; set; }
         public int AccountId { get; set; }
         public string AccountName { get; set; }
         public string DomainName { get; set; }
         public string AccountType { get; set; }
+        public string AccountDescription { get; set; }
 
         public override string ToString()
         {
