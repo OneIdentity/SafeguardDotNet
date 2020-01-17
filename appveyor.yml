@@ -1,5 +1,5 @@
-version: 2.11.0-dev-{build}
-image: Visual Studio 2017
+version: 2.12.0-dev-{build}
+image: Visual Studio 2019
 configuration: Release
 before_build:
 - ps: '& .\appveyor-prebuild.ps1'
