@@ -129,7 +129,7 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in response.Headers)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
-            Log.Debug("Reponse status code: {StatusCode}", fullResponse.StatusCode);
+            Log.Debug("Response status code: {StatusCode}", fullResponse.StatusCode);
             Log.Debug("  Response headers: {ResponseHeaders}",
                 fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
                     .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
