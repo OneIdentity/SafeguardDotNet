@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
@@ -55,8 +56,16 @@ namespace SafeguardDotNetAccessRequestBrokerTool
             if (!string.IsNullOrEmpty(opts.CertificateFile))
             {
                 var password = HandlePassword(opts.ReadPassword);
-                context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
-                    opts.Insecure);
+                if (opts.CertificateAsData)
+                {
+                    var bytes = File.ReadAllBytes(opts.CertificateFile);
+                    context = Safeguard.A2A.GetContext(opts.Appliance, bytes, password, opts.ApiVersion, opts.Insecure);
+                }
+                else
+                {
+                    context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
+                        opts.Insecure);
+                }
             }
             else if (!string.IsNullOrEmpty(opts.Thumbprint))
             {

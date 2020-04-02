@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security;
 using CommandLine;
@@ -54,6 +55,16 @@ namespace SafeguardDotNetEventTool
                 if (!string.IsNullOrEmpty(opts.CertificateFile))
                 {
                     var password = HandlePassword(opts.ReadPassword);
+                    if (opts.CertificateAsData)
+                    {
+                        var bytes = File.ReadAllBytes(opts.CertificateFile);
+                        if (!opts.ApiKey.Contains(','))
+                            return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(),
+                                A2AHandler, opts.Appliance, bytes, password, opts.ApiVersion, opts.Insecure);
+                        return Safeguard.A2A.Event.GetPersistentA2AEventListener(
+                            opts.ApiKey.Split(',').Select(k => k.ToSecureString()), A2AHandler, opts.Appliance,
+                            bytes, password, opts.ApiVersion, opts.Insecure);
+                    }
                     if (!opts.ApiKey.Contains(','))
                         return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(),
                             A2AHandler, opts.Appliance, opts.CertificateFile, password, opts.ApiVersion, opts.Insecure);

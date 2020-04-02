@@ -311,6 +311,9 @@ $script:A2aCrApiKey = $local:Result.ApiKey
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file..."
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) -A `"$($script:A2aCrApiKey)`" -p"
 
+Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file as data..."
+Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) -d -A `"$($script:A2aCrApiKey)`" -p"
+
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval from User Certificate Store..."
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -p"

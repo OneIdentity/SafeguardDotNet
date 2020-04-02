@@ -40,6 +40,10 @@ namespace SafeguardDotNetEventTool
             HelpText = "File path for client certificate")]
         public string CertificateFile { get; set; }
 
+        [Option('d', "CertificateAsData", Required = false, SetName = "CertificateFile",
+            HelpText = "Create client certificate as data buffer")]
+        public bool CertificateAsData { get; set; }
+
         [Option('A', "ApiKey", Required = false, Default = null,
             HelpText = "ApiKey(s) for listening to Safeguard A2A; comma-delimited")]
         public string ApiKey { get; set; }
