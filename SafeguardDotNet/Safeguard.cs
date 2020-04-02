@@ -99,6 +99,22 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         /// <summary>
+        /// Connect to Safeguard API using a client certificate stored in a memory.
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+        /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
+            SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
+                apiVersion, ignoreSsl));
+        }
+
+        /// <summary>
         /// This static class provides access to Safeguard Event functionality with persistent event listeners. Persistent
         /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
         /// recommended to use these interfaces when listening for Safeguard events from a long-running service.

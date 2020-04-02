@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 
@@ -6,23 +8,42 @@ namespace OneIdentity.SafeguardDotNet
 {
     internal class CertificateContext : IDisposable
     {
+        private enum ContextType
+        {
+            Thumbprint,
+            File,
+            Data
+        }
+
         public CertificateContext(string thumbprint)
         {
+            Type = ContextType.Thumbprint;
             Thumbprint = thumbprint;
             Certificate = CertificateUtilities.GetClientCertificateFromStore(Thumbprint);
         }
 
         public CertificateContext(string filepath, SecureString password)
         {
+            Type = ContextType.File;
             FilePath = filepath;
             Password = password;
             Certificate = CertificateUtilities.GetClientCertificateFromFile(FilePath, Password);
         }
 
+        public CertificateContext(IEnumerable<byte> data, SecureString password)
+        {
+            Type = ContextType.Data;
+            DataBuffer = data.ToArray();
+            Password = password;
+            Certificate = CertificateUtilities.GetClientCertificateFromDataBuffer(DataBuffer, Password);
+        }
+
         private CertificateContext()
         {}
+        private ContextType Type { get; set; }
         private string Thumbprint { get; set; }
         private string FilePath { get; set; }
+        private byte[] DataBuffer { get; set; }
         private SecureString Password { get; set; }
 
         public X509Certificate2 Certificate { get; private set; }
@@ -31,19 +52,46 @@ namespace OneIdentity.SafeguardDotNet
         {
             var clone = new CertificateContext
             {
+                Type = Type,
                 Thumbprint = Thumbprint,
                 FilePath = FilePath,
+                DataBuffer = DataBuffer?.ToArray(),
                 Password = Password?.Copy()
             };
-            clone.Certificate = clone.Thumbprint != null
-                ? CertificateUtilities.GetClientCertificateFromStore(Thumbprint)
-                : CertificateUtilities.GetClientCertificateFromFile(FilePath, Password);
+
+            switch (Type)
+            {
+                case ContextType.Thumbprint:
+                    clone.Certificate = CertificateUtilities.GetClientCertificateFromStore(Thumbprint);
+                    break;
+                case ContextType.File:
+                    clone.Certificate = CertificateUtilities.GetClientCertificateFromFile(FilePath, Password);
+                    break;
+                case ContextType.Data:
+                    clone.Certificate = CertificateUtilities.GetClientCertificateFromDataBuffer(DataBuffer, Password);
+                    break;
+                default:
+                    throw new SafeguardDotNetException(
+                        $"Error calling Clone() on unknown CertificateContext type: {Enum.GetName(typeof(ContextType), Type)}");
+            }
+
             return clone;
         }
 
         public override string ToString()
         {
-            return $"{(string.IsNullOrEmpty(FilePath) ? $"thumbprint={Thumbprint}" : $"file={FilePath}")}";
+            switch (Type)
+            {
+                case ContextType.Thumbprint:
+                    return $"thumbprint={Thumbprint}";
+                case ContextType.File:
+                    return $"file={FilePath}";
+                case ContextType.Data:
+                    return $"data={DataBuffer.Length} bytes";
+                default:
+                    throw new SafeguardDotNetException(
+                        $"Error calling ToString() on unknown CertificateContext type: {Enum.GetName(typeof(ContextType), Type)}");
+            }
         }
 
         public void Dispose()
