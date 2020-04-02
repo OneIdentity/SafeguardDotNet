@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using CommandLine.Text;
 using OneIdentity.SafeguardDotNet;
 
 namespace SafeguardDotNetTool
@@ -44,6 +45,10 @@ namespace SafeguardDotNetTool
         [Option('c', "CertificateFile", Required = true, SetName = "CertificateFile",
             HelpText = "File path for client certificate")]
         public string CertificateFile { get; set; }
+
+        [Option('d', "CertificateAsData", Required = false, SetName = "CertificateFile",
+            HelpText = "Create client certificate as data buffer")]
+        public bool CertificateAsData { get; set; }
 
         [Option('s', "Service", Required = true,
             HelpText = "Safeguard service to use")]

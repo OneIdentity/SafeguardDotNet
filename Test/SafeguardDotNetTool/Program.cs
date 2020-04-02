@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.IO;
 using System.Security;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
@@ -64,8 +66,16 @@ namespace SafeguardDotNetTool
                 else if (!string.IsNullOrEmpty(opts.CertificateFile))
                 {
                     var password = HandlePassword(opts.ReadPassword);
-                    connection = Safeguard.Connect(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
-                        opts.Insecure);
+                    if (opts.CertificateAsData)
+                    {
+                        var bytes = File.ReadAllBytes(opts.CertificateFile);
+                        connection = Safeguard.Connect(opts.Appliance, bytes, password, opts.ApiVersion, opts.Insecure);
+                    }
+                    else
+                    {
+                        connection = Safeguard.Connect(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
+                            opts.Insecure);
+                    }
                 }
                 else if (!string.IsNullOrEmpty(opts.Thumbprint))
                 {
