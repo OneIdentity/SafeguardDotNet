@@ -49,5 +49,17 @@ namespace OneIdentity.SafeguardDotNet
                 throw new SafeguardDotNetException($"Failure to get certificate from file={filepath}", ex);
             }
         }
+
+        public static X509Certificate2 GetClientCertificateFromDataBuffer(byte[] data, SecureString password)
+        {
+            try
+            {
+                return password == null ? new X509Certificate2(data) : new X509Certificate2(data, password);
+            }
+            catch (Exception ex)
+            {
+                throw new SafeguardDotNetException($"Failure to get certificate from data buffer={data.Length} bytes", ex);
+            }
+        }
     }
 }

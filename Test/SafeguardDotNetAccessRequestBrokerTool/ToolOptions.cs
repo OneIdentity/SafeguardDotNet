@@ -34,6 +34,10 @@ namespace SafeguardDotNetAccessRequestBrokerTool
             HelpText = "File path for client certificate")]
         public string CertificateFile { get; set; }
 
+        [Option('d', "CertificateAsData", Required = false, SetName = "CertificateFile",
+            HelpText = "Create client certificate as data buffer")]
+        public bool CertificateAsData { get; set; }
+
         [Option('A', "ApiKey", Required = true, Default = null,
             HelpText = "ApiKey for call Safeguard A2A")]
         public string ApiKey { get; set; }

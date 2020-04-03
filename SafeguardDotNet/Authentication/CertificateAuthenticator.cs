@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
@@ -22,6 +23,12 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
         {
             _clientCertificate = new CertificateContext(certificatePath, certificatePassword);
+        }
+
+        public CertificateAuthenticator(string networkAddress, IEnumerable<byte> certificateData,
+            SecureString certificatePassword, int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+        {
+            _clientCertificate = new CertificateContext(certificateData, certificatePassword);
         }
 
         private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,

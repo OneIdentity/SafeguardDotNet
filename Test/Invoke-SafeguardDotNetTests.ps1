@@ -221,6 +221,9 @@ else
 Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from PFX file..."
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -x -s Core -m Get -U Me -p"
 
+Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from PFX file as data..."
+Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -d -x -s Core -m Get -U Me -p"
+
 Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from User Certificate Store..."
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -t $($script:UserThumbprint) -x -s Core -m Get -U Me -p"
@@ -307,6 +310,9 @@ $script:A2aCrApiKey = $local:Result.ApiKey
 
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file..."
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) -A `"$($script:A2aCrApiKey)`" -p"
+
+Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file as data..."
+Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) -d -A `"$($script:A2aCrApiKey)`" -p"
 
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval from User Certificate Store..."
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)

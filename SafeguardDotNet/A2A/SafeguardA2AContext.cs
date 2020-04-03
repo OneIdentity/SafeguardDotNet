@@ -15,27 +15,17 @@ namespace OneIdentity.SafeguardDotNet.A2A
         private bool _disposed;
 
         private readonly string _networkAddress;
+        private readonly int _apiVersion; 
         private readonly bool _ignoreSsl;
 
         private readonly CertificateContext _clientCertificate;
         private readonly RestClient _a2AClient;
         private readonly RestClient _coreClient;
 
-        // only used for cloning
-        private readonly string _certificateThumbprint;
-        private readonly string _certificatePath;
-        private readonly SecureString _certificatePassword;
-        private readonly int _apiVersion;
-
-        private SafeguardA2AContext(string networkAddress, string certificateThumbprint, string certificatePath,
-            SecureString certificatePassword, int apiVersion, bool ignoreSsl)
+        private SafeguardA2AContext(string networkAddress, CertificateContext clientCertificate, int apiVersion,
+            bool ignoreSsl)
         {
             _networkAddress = networkAddress;
-
-            // set cloning properties
-            _certificateThumbprint = certificateThumbprint;
-            _certificatePath = certificatePath;
-            _certificatePassword = certificatePassword?.Copy();
             _apiVersion = apiVersion;
 
             var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{_apiVersion}";
@@ -50,22 +40,26 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
-            _clientCertificate = !string.IsNullOrEmpty(_certificateThumbprint)
-                ? new CertificateContext(_certificateThumbprint)
-                : new CertificateContext(_certificatePath, _certificatePassword);
-            _a2AClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
-            _coreClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
+
+            _clientCertificate = clientCertificate.Clone();
+            _a2AClient.ClientCertificates = new X509Certificate2Collection() {_clientCertificate.Certificate};
+            _coreClient.ClientCertificates = new X509Certificate2Collection() {_clientCertificate.Certificate};
         }
 
         public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 
-            this(networkAddress, certificateThumbprint, null, null, apiVersion, ignoreSsl)
+            this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl)
         {
         }
 
         public SafeguardA2AContext(string networkAddress, string certificatePath, SecureString certificatePassword,
             int apiVersion, bool ignoreSsl) :
-            this(networkAddress, null, certificatePath, certificatePassword,
-                apiVersion, ignoreSsl)
+            this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl)
+        {
+        }
+
+        public SafeguardA2AContext(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword,
+            int apiVersion, bool ignoreSsl) :
+            this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl)
         {
         }
 
@@ -247,9 +241,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
         public object Clone()
         {
-            return !string.IsNullOrEmpty(_certificateThumbprint)
-                ? new SafeguardA2AContext(_networkAddress, _certificateThumbprint, _apiVersion, _ignoreSsl)
-                : new SafeguardA2AContext(_networkAddress, _certificatePath, _certificatePassword, _apiVersion, _ignoreSsl);
+            return new SafeguardA2AContext(_networkAddress, _clientCertificate, _apiVersion, _ignoreSsl);
         }
     }
 }
