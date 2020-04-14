@@ -14,6 +14,10 @@ One Identity Safeguard Web API C# SDK
 
 -----------
 
+## Support
+
+One Identity open source projects are supported through [One Identity GitHub issues](https://github.com/OneIdentity/SafeguardDotNet/issues) and the [One Identity Community](https://www.oneidentity.com/community/). This includes all scripts, plugins, SDKs, modules, code snippets or other solutions. For assistance with any One Identity GitHub project, please raise a new Issue on the [One Identity GitHub project](https://github.com/OneIdentity/SafeguardDotNet/issues) page. You may also visit the [One Identity Community](https://www.oneidentity.com/community/) to ask questions.  Requests for assistance made through official One Identity Support will be referred back to GitHub and the One Identity Community forums where those requests can benefit all users.
+
 ## Introduction
 
 All functionality in Safeguard is available via the Safeguard API. There is
@@ -147,8 +151,8 @@ Console.WriteLine(connection.InvokeMethod(Service.Notification, Method.Get, "Sta
 
 ```C#
 // Assume connection is already made
-var json = connection.InvokeMethod(Service.Core, Method.Post, "Assets", 
-    JsonConvert.SerializeObject(new { 
+var json = connection.InvokeMethod(Service.Core, Method.Post, "Assets",
+    JsonConvert.SerializeObject(new {
         Name = "linux.blue.vas",
         NetworkAddress = "linux.blue.vas",
         Description = "A new linux asset",
@@ -162,7 +166,7 @@ Console.WriteLine(json);
 
 ```C#
 // Assume connection is already made
-var userJson = connection.InvokeMethod(Service.Core, Method.Post, "Users", 
+var userJson = connection.InvokeMethod(Service.Core, Method.Post, "Users",
     JsonConvert.SerializeObject(new {
         PrimaryAuthenticationProviderId = -1,
         UserName = "MyNewUser"
