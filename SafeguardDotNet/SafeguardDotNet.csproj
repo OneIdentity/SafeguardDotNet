@@ -27,6 +27,7 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
+- Use certificate stored in memory (byte array) to authenticate
 - Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
