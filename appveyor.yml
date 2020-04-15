@@ -1,4 +1,4 @@
-version: 6.0.0-dev-{build}
+version: 6.6.0-dev-{build}
 image: Visual Studio 2019
 configuration: Release
 before_build:
