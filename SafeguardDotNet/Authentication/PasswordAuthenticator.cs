@@ -58,14 +58,17 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                         .AddParameter("loginRequestStep", 1, ParameterType.QueryString);
                     response = RstsClient.Execute(request);
                 }
+
                 if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new SafeguardDotNetException("Unable to connect to RSTS to find identity provider scopes, Error: " +
-                                                       response.ErrorMessage);
+                    throw new SafeguardDotNetException(
+                        "Unable to connect to RSTS to find identity provider scopes, Error: " +
+                        response.ErrorMessage);
                 if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException("Error requesting identity provider scopes from RSTS, Error: " +
-                                                       $"{response.StatusCode} {response.Content}", response.Content);
+                    throw new SafeguardDotNetException(
+                        "Error requesting identity provider scopes from RSTS, Error: " +
+                        $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
                 var jObject = JObject.Parse(response.Content);
-                var jProviders = (JArray)jObject["Providers"];
+                var jProviders = (JArray) jObject["Providers"];
                 var knownScopes = jProviders.Select(s => s["Id"]).Values<string>().ToArray();
                 var scope = knownScopes.FirstOrDefault(s => s.EqualsNoCase(_provider));
                 if (scope != null)
@@ -76,8 +79,13 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     if (_providerScope != null)
                         _providerScope = $"rsts:sts:primaryproviderid:{scope}";
                     else
-                        throw new SafeguardDotNetException($"Unable to find scope matching '{_provider}' in [{string.Join(",", knownScopes)}]");
+                        throw new SafeguardDotNetException(
+                            $"Unable to find scope matching '{_provider}' in [{string.Join(",", knownScopes)}]");
                 }
+            }
+            catch (SafeguardDotNetException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -108,8 +116,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException($"Error using password grant_type with scope {_providerScope}, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    $"Error using password grant_type with scope {_providerScope}, Error: " +
+                    $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
         }

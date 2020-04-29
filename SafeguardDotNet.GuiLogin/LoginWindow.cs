@@ -65,8 +65,9 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                 throw new SafeguardDotNetException($"Unable to connect to RSTS service {rstsClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error using authorization code grant_type, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    "Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
         }
@@ -89,8 +90,9 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                 throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error using authorization code grant_type, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    "Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
             return JObject.Parse(response.Content);
         }
 

@@ -35,7 +35,9 @@ function Invoke-DotNetRun {
         [Parameter(Mandatory=$false, Position=1)]
         [string]$Password,
         [Parameter(Mandatory=$false, Position=2)]
-        [string]$Command
+        [string]$Command,
+        [Parameter(Mandatory=$false)]
+        [switch]$IgnoreOutput
     )
 
     try
@@ -50,45 +52,52 @@ function Invoke-DotNetRun {
             $local:Expression = "& dotnet.exe run -- $Command"
         }
         Write-Host "Executing: $($local:Expression)"
-        $local:Output = (Invoke-Expression $local:Expression)
-        if ($local:Output -is [array])
+        if ($IgnoreOutput)
         {
-            # sometimes dotnet run adds weird debug output strings
-            # we just want the string with the JSON in it
-            $local:Output | ForEach-Object {
-                if ($_ -match "Error" -or $_ -match "Exception")
-                {
-                    throw $local:Output
+            (Invoke-Expression $local:Expression)
+        }
+        else
+        {
+            $local:Output = (Invoke-Expression $local:Expression)
+            if ($local:Output -is [array])
+            {
+                # sometimes dotnet run adds weird debug output strings
+                # we just want the string with the JSON in it
+                $local:Output | ForEach-Object {
+                    if ($_ -match "Error" -or $_ -match "Exception")
+                    {
+                        throw $local:Output
+                    }
+                    try
+                    {
+                        $local:Obj = (ConvertFrom-Json $_)
+                        $local:IsJson = $true
+                    }
+                    catch
+                    {
+                        $local:IsJson = $false
+                    }
                 }
-                try
+                if ($local:IsJson)
                 {
-                    $local:Obj = (ConvertFrom-Json $_)
-                    $local:IsJson = $true
+                    $local:Obj
                 }
-                catch
+                else
                 {
-                    $local:IsJson = $false
+                    [string]::Join("`n",$local:Output)
                 }
             }
-            if ($local:IsJson)
+            elseif ($local:Output -match "Error" -or $local:Output -match "Exception")
             {
+                throw $local:Output
+            }
+            elseif ($local:Output)
+            {
+                $local:Obj = (ConvertFrom-Json $local:Output)
                 $local:Obj
             }
-            else
-            {
-                [string]::Join("`n",$local:Output)
-            }
+            # Crappy conditionals should have detected anything but empty output by here
         }
-        elseif ($local:Output -match "Error" -or $local:Output -match "Exception")
-        {
-            throw $local:Output
-        }
-        elseif ($local:Output)
-        {
-            $local:Obj = (ConvertFrom-Json $local:Output)
-            $local:Obj
-        }
-        # Crappy conditionals should have detected anything but empty output by here
     }
     finally
     {
@@ -128,6 +137,7 @@ function Get-StringEscapedBody {
 }
 
 $script:ToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetTool")
+$script:ExceptionTestDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetExceptionTest")
 $script:A2aToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetA2aTool")
 $script:AccessRequestBrokerToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetAccessRequestBrokerTool")
 $script:EventToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetEventTool")
@@ -149,6 +159,7 @@ $script:CaThumbprint = (Get-PfxCertificate $script:CaCert).Thumbprint
 Write-Host -ForegroundColor Yellow "Building projects..."
 Test-ForDotNetTool
 Invoke-DotNetBuild $script:ToolDir
+Invoke-DotNetBuild $script:ExceptionTestDir
 Invoke-DotNetBuild $script:A2aToolDir
 Invoke-DotNetBuild $script:AccessRequestBrokerToolDir
 Invoke-DotNetBuild $script:EventToolDir
@@ -161,6 +172,9 @@ Invoke-DotNetRun $script:ToolDir $null "-a $Appliance -A -x -s Notification -m G
 
 Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($Appliance) as bootstrap admin..."
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"
+
+Write-Host -ForegroundColor Yellow "Testing SafeguardDotNetExceptions against Safeguard ($Appliance)..."
+Invoke-DotNetRun $script:ExceptionTestDir "Admin123" "-a $Appliance -u Admin -x -p"
 
 Write-Host -ForegroundColor Yellow "Setting up a test user ($($script:TestObj))..."
 if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:TestObj)'`" -p"))

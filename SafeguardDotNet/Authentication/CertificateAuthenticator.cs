@@ -58,11 +58,11 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException($"Error using client_credentials grant_type with {_clientCertificate}" +
-                                                   $", Error: {response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    $"Error using client_credentials grant_type with {_clientCertificate}" +
+                    $", Error: {response.StatusCode} {response.Content}", response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
-        
         }
 
         public override object Clone()

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Security;
 using CommandLine;
@@ -107,14 +106,12 @@ namespace SafeguardDotNetTool
             }
         }
 
-
         private static void HandleParseError(IEnumerable<Error> errors)
         {
             Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
             Log.Error("Invalid command line options");
             Environment.Exit(1);
         }
-
 
         private static void Main(string[] args)
         {

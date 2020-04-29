@@ -106,8 +106,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
                                                        response.ErrorMessage);
                 if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException($"Error exchanging RSTS token from {Id} authenticator for Safeguard API access token, Error: " +
-                                                       $"{response.StatusCode} {response.Content}", response.Content);
+                    throw new SafeguardDotNetException(
+                        $"Error exchanging RSTS token from {Id} authenticator for Safeguard API access token, Error: " +
+                        $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
                 var jObject = JObject.Parse(response.Content);
                 AccessToken = jObject.GetValue("UserToken").ToString().ToSecureString();
             }

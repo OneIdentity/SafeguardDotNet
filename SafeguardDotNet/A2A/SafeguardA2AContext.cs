@@ -77,8 +77,9 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
             var json = JArray.Parse(response.Content);
             dynamic registrations = json;
             foreach (var registration in registrations)
@@ -91,8 +92,10 @@ namespace OneIdentity.SafeguardDotNet.A2A
                     throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.BaseUrl}, Error: " +
                                                        retrievalResponse.ErrorMessage);
                 if (!retrievalResponse.IsSuccessful)
-                    throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
-                                                       $"{retrievalResponse.StatusCode} {retrievalResponse.Content}", retrievalResponse.Content);
+                    throw new SafeguardDotNetException(
+                        "Error returned from Safeguard API, Error: " +
+                        $"{retrievalResponse.StatusCode} {retrievalResponse.Content}", retrievalResponse.StatusCode,
+                        retrievalResponse.Content);
                 var retrievalJson = JArray.Parse(retrievalResponse.Content);
                 dynamic retrievals = retrievalJson;
                 foreach (var retrieval in retrievals)
@@ -133,8 +136,9 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
             var json = JToken.Parse(response.Content);
             Log.Information("Successfully retrieved A2A password.");
             return json.Root.ToString().ToSecureString();
@@ -213,8 +217,9 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
             Log.Information("Successfully created A2A access request.");
             return response.Content;
         }
