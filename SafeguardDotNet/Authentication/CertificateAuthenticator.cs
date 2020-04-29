@@ -63,7 +63,6 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     $", Error: {response.StatusCode} {response.Content}", response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
             return jObject.GetValue("access_token").ToString().ToSecureString();
-        
         }
 
         public override object Clone()
