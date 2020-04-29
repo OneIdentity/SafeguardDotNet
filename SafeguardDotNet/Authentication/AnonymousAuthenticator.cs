@@ -11,7 +11,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public AnonymousAuthenticator(string networkAddress, int apiVersion, bool ignoreSsl) :
             base(networkAddress, apiVersion, ignoreSsl)
         {
-            var notificationUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
+            var notificationUrl = $"https://{NetworkAddress}/service/notification/v{ApiVersion}";
             var notificationClient = new RestClient(notificationUrl);
             var request = new RestRequest("Status", RestSharp.Method.GET)
                 .AddHeader("Accept", "application/json")
