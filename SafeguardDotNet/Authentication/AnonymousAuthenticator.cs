@@ -1,4 +1,6 @@
-﻿using System.Security;
+﻿using System;
+using System.Security;
+using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
@@ -9,6 +11,17 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public AnonymousAuthenticator(string networkAddress, int apiVersion, bool ignoreSsl) :
             base(networkAddress, apiVersion, ignoreSsl)
         {
+            var notificationUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
+            var notificationClient = new RestClient(notificationUrl);
+            var request = new RestRequest("Status", RestSharp.Method.GET)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Content-type", "application/json");
+            var response = notificationClient.Execute(request);
+            if (!response.IsSuccessful)
+            {
+                throw new SafeguardDotNetException($"Unable to anonymously connect to {networkAddress}, Error: " +
+                                                   response.ErrorMessage);
+            }
         }
 
         public override string Id => "Anonymous";
