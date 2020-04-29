@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Net;
 using System.Runtime.Serialization;
+using Newtonsoft.Json.Linq;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -28,10 +30,17 @@ namespace OneIdentity.SafeguardDotNet
         {
         }
 
-        public SafeguardDotNetException(string message, string response)
+        public SafeguardDotNetException(string message, HttpStatusCode httpStatusCode, string response)
             : base(message)
         {
+            HttpStatusCode = httpStatusCode;
             Response = response;
+            if (JToken.Parse(Response) is JObject responseObj &&
+                responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var value))
+            {
+                if (int.TryParse(value.ToString(), out var code))
+                    ErrorCode = code;
+            }
         }
 
         protected SafeguardDotNetException
@@ -39,6 +48,16 @@ namespace OneIdentity.SafeguardDotNet
             : base(info, context)
         {
         }
+
+        /// <summary>
+        /// HTTP status code returned from Safeguard API as part of the failure.
+        /// </summary>
+        public HttpStatusCode? HttpStatusCode { get; }
+
+        /// <summary>
+        /// Response error code returned from Safeguard API as part of the failure.
+        /// </summary>
+        public int? ErrorCode { get; }
 
         /// <summary>
         /// Response data returned from Safeguard API as part of the failure.

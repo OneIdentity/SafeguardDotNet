@@ -116,8 +116,9 @@ namespace OneIdentity.SafeguardDotNet
                 throw new SafeguardDotNetException($"Unable to connect to web service {client.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
-                throw new SafeguardDotNetException("Error returned from Safeguard API, Error: " +
-                                                   $"{response.StatusCode} {response.Content}", response.Content);
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
             var fullResponse = new FullResponse
             {
                 StatusCode = response.StatusCode,
