@@ -35,11 +35,17 @@ namespace OneIdentity.SafeguardDotNet
         {
             HttpStatusCode = httpStatusCode;
             Response = response;
-            if (JToken.Parse(Response) is JObject responseObj &&
-                responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var value))
+            if (!string.IsNullOrEmpty(Response) && JToken.Parse(Response) is JObject responseObj)
             {
-                if (int.TryParse(value.ToString(), out var code))
-                    ErrorCode = code;
+                if (responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var codeVal))
+                {
+                    if (int.TryParse(codeVal.ToString(), out var code))
+                        ErrorCode = code;
+                }
+                if (responseObj.TryGetValue("Message", StringComparison.OrdinalIgnoreCase, out var messageVal))
+                {
+                    ErrorMessage = messageVal.ToString();
+                }
             }
         }
 
@@ -55,9 +61,14 @@ namespace OneIdentity.SafeguardDotNet
         public HttpStatusCode? HttpStatusCode { get; }
 
         /// <summary>
-        /// Response error code returned from Safeguard API as part of the failure.
+        /// Safeguard error code returned from Safeguard API as part of the failure.
         /// </summary>
         public int? ErrorCode { get; }
+
+        /// <summary>
+        /// Safeguard error code returned from Safeguard API as part of the failure.
+        /// </summary>
+        public string ErrorMessage { get; }
 
         /// <summary>
         /// Response data returned from Safeguard API as part of the failure.
