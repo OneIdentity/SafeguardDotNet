@@ -174,7 +174,7 @@ Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($A
 Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"
 
 Write-Host -ForegroundColor Yellow "Testing SafeguardDotNetExceptions against Safeguard ($Appliance)..."
-Invoke-DotNetRun $script:ExceptionTestDir "Admin123" "-a $Appliance -u Admin -x -p" -IgnoreOutput
+Invoke-DotNetRun $script:ExceptionTestDir "Admin123" "-a $Appliance -u Admin -x -p"
 
 Write-Host -ForegroundColor Yellow "Setting up a test user ($($script:TestObj))..."
 if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:TestObj)'`" -p"))

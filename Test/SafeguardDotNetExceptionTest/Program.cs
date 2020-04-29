@@ -51,7 +51,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (!string.Equals(ex.Message,
                     "Unable to anonymously connect to bad.dns.name, Error: No such host is known. No such host is known.")
                 )
@@ -74,7 +73,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (!string.Equals(ex.Message,
                     "Unable to connect to RSTS to find identity provider scopes, Error: No such host is known. No such host is known.")
                 )
@@ -97,7 +95,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (ex.HttpStatusCode != HttpStatusCode.BadRequest)
                     throw;
                 if (!ex.HasResponse)
@@ -116,7 +113,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (ex.HttpStatusCode != HttpStatusCode.BadRequest)
                     throw;
                 if (!ex.HasResponse)
@@ -130,7 +126,7 @@ namespace SafeguardDotNetExceptionTest
 
         private static void TestApiExceptions(ISafeguardConnection connection)
         {
-            Console.WriteLine("Test exception with no response body");
+            Console.WriteLine("Test catching one with no response body");
             try
             {
                 connection.InvokeMethod(Service.Core, Method.Get, "This/Does/nt/Exist");
@@ -138,7 +134,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (ex.HttpStatusCode != HttpStatusCode.NotFound)
                     throw;
                 if (!ex.HasResponse)
@@ -149,7 +144,7 @@ namespace SafeguardDotNetExceptionTest
                     throw;
             }
 
-            Console.WriteLine("Test exception for bad request no filter");
+            Console.WriteLine("Test catching one for bad request no filter");
             try
             {
                 connection.InvokeMethod(Service.Core, Method.Get, "Me/RequestableAssets", 
@@ -158,7 +153,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (ex.HttpStatusCode != HttpStatusCode.BadRequest)
                     throw;
                 if (!ex.HasResponse)
@@ -170,7 +164,7 @@ namespace SafeguardDotNetExceptionTest
                     throw;
             }
 
-            Console.WriteLine("Test exception with model state issues");
+            Console.WriteLine("Test catching one with model state issues");
             try
             {
                 connection.InvokeMethod(Service.Appliance, Method.Put, "NetworkInterfaces/X1",
@@ -179,7 +173,6 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
-                Console.WriteLine(ex);
                 if (ex.HttpStatusCode != HttpStatusCode.BadRequest)
                     throw;
                 if (!ex.HasResponse)
