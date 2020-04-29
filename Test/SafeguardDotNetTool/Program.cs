@@ -107,14 +107,12 @@ namespace SafeguardDotNetTool
             }
         }
 
-
         private static void HandleParseError(IEnumerable<Error> errors)
         {
             Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
             Log.Error("Invalid command line options");
             Environment.Exit(1);
         }
-
 
         private static void Main(string[] args)
         {
