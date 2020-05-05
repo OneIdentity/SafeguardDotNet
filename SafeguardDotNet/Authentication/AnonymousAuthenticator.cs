@@ -13,6 +13,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
             var notificationUrl = $"https://{NetworkAddress}/service/notification/v{ApiVersion}";
             var notificationClient = new RestClient(notificationUrl);
+            if (ignoreSsl)
+                notificationClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             var request = new RestRequest("Status", RestSharp.Method.GET)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json");
