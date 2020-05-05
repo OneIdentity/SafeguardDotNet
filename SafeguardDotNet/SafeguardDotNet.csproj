@@ -33,7 +33,7 @@ Updates:
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\SafeguardLogo.ico" Link="SafeguardLogo.ico" Pack="true" PackagePath="images\" />
+    <None Include="..\SafeguardLogo.png" Link="SafeguardLogo.png" Pack="true" PackagePath="images\" />
   </ItemGroup>
 
   <ItemGroup>
