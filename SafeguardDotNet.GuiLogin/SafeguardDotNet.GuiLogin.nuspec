@@ -14,9 +14,6 @@
     <releaseNotes>GuiLogin assembly for .NET interactive login.</releaseNotes>
     <copyright>(c) 2020 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
-    <files>
-      <file src="..\SafeguardLogo.ico" target="images\" />
-    </files>
     <dependencies>
       <group targetFramework=".NetFramework4.6.2" />
     </dependencies>
@@ -27,4 +24,7 @@
       <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework="net462" />
     </frameworkAssemblies>
   </metadata>
+  <files>
+    <file src="..\SafeguardLogo.ico" target="images\" />
+  </files>
 </package>
