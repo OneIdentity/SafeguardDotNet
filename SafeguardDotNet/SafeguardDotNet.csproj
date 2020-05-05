@@ -7,9 +7,9 @@
     <Authors>One Identity LLC</Authors>
     <Copyright>(c) 2020 One Identity LLC. All rights reserved.</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</PackageIconUrl>
+    <PackageIcon>images\SafeguardLogo.ico</PackageIcon>
     <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
     <Version>9999.9999.9999</Version>
     <Description>One Identity Safeguard Web API .NET SDK</Description>
@@ -17,6 +17,8 @@
     <FileVersion>9999.9999.9999.9999</FileVersion>
     <AssemblyName>OneIdentity.SafeguardDotNet</AssemblyName>
     <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
     <PackageReleaseNotes>One Identity Safeguard Web API .NET SDK
 
@@ -29,6 +31,10 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 Updates:
 - Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\SafeguardLogo.ico" Link="SafeguardLogo.ico" Pack="true" PackagePath="images\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNet.SignalR.Client" Version="2.4.1" />

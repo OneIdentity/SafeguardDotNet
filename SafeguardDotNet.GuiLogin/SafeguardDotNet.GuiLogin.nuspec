@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package >
+<package>
   <metadata>
     <id>$id$</id>
     <version>9999.9999.9999</version>
@@ -8,11 +8,25 @@
     <owners>$author$</owners>
     <license type="expression">Apache-2.0</license>
     <projectUrl>https://github.com/OneIdentity/SafeguardDotNet</projectUrl>
-    <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
+    <icon>images\SafeguardLogo.ico</icon>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>GuiLogin assembly for .NET interactive login.</releaseNotes>
     <copyright>(c) 2020 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
+    <dependencies>
+      <dependency id="Newtonsoft.Json" version="(12.0.3, )" />
+      <dependency id="RestSharp" version="(106.10.1, )" />
+      <dependency id="Serilog" version="(2.9.0, )" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System.Web" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework=".NETFramework4.6.2" />
+    </frameworkAssemblies>
   </metadata>
+  <files>
+    <file src="..\SafeguardLogo.ico" target="images\" />
+  </files>
 </package>
