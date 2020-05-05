@@ -18,10 +18,10 @@
       <group targetFramework=".NetFramework4.6.2" />
     </dependencies>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework="net462" />
-      <frameworkAssembly assemblyName="System.Core" targetFramework="net462" />
-      <frameworkAssembly assemblyName="System.Web" targetFramework="net462" />
-      <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework="net462" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System.Web" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework=".NETFramework4.6.2" />
     </frameworkAssemblies>
   </metadata>
   <files>
