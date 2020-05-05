@@ -8,12 +8,15 @@
     <owners>$author$</owners>
     <license type="expression">Apache-2.0</license>
     <projectUrl>https://github.com/OneIdentity/SafeguardDotNet</projectUrl>
-    <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
+    <icon>../SafeguardLogo.ico</icon>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>GuiLogin assembly for .NET interactive login.</releaseNotes>
     <copyright>(c) 2020 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
+    <dependencies>
+      <group targetFramework=".NetFramework4.6.2" />
+    </dependencies>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework="net462" />
       <frameworkAssembly assemblyName="System.Core" targetFramework="net462" />
