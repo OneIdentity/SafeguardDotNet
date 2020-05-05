@@ -9,7 +9,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
-    <PackageIcon>images\SafeguardLogo.png</PackageIcon>
+    <PackageIcon>Content\images\SafeguardLogo.png</PackageIcon>
     <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
     <Version>9999.9999.9999</Version>
     <Description>One Identity Safeguard Web API .NET SDK</Description>
@@ -33,7 +33,7 @@ Updates:
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\SafeguardLogo.png" Link="SafeguardLogo.png" Pack="true" PackagePath="images\" />
+    <None Include="..\SafeguardLogo.png" Link="SafeguardLogo.png" Pack="true" PackagePath="Content\images\" />
   </ItemGroup>
 
   <ItemGroup>
