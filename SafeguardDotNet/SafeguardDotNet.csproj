@@ -29,6 +29,8 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
+- Added a debug symbols nuget package
+- Updated exceptions to provide more information about failures
 - Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
