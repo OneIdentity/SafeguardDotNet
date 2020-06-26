@@ -44,7 +44,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                         .AddParameter("response_type", "token", ParameterType.QueryString)
                         .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
                         .AddParameter("loginRequestStep", 1, ParameterType.QueryString)
-                        .AddBody("RelayState=");
+                        .AddJsonBody("RelayState=");
                     response = RstsClient.Execute(request);
                 }
                 catch (WebException)
