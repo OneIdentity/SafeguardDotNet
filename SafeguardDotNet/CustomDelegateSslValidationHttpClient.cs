@@ -30,7 +30,7 @@ namespace OneIdentity.SafeguardDotNet
             return messageHandler;
         }
 
-        bool ValidationCallback(HttpRequestMessage sender, X509Certificate2 certificate, X509Chain chain,
+        private bool ValidationCallback(HttpRequestMessage sender, X509Certificate2 certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors)
         {
             return _validationCallback(sender, certificate, chain, sslPolicyErrors);
