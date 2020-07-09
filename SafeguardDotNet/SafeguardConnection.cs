@@ -37,6 +37,12 @@ namespace OneIdentity.SafeguardDotNet
                 _applianceClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _notificationClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
+            else if (authenticationMechanism.ValidationCallback != null)
+            {
+                _coreClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
+                _applianceClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
+                _notificationClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
+            }
         }
 
         public int GetAccessTokenLifetimeRemaining()
@@ -157,7 +163,7 @@ namespace OneIdentity.SafeguardDotNet
                 throw new ObjectDisposedException("SafeguardConnection");
             var eventListener = new SafeguardEventListener(
                 $"https://{_authenticationMechanism.NetworkAddress}/service/event",
-                _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl);
+                _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl, _authenticationMechanism.ValidationCallback);
             Log.Debug("Event listener successfully created for Safeguard connection.");
             return eventListener;
         }

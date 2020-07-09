@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Security;
 using System.Security;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
@@ -12,6 +13,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         int ApiVersion { get; }
 
         bool IgnoreSsl { get; }
+
+        RemoteCertificateValidationCallback ValidationCallback { get; }
 
         bool IsAnonymous { get; }
 

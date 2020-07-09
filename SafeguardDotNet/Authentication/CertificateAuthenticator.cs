@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
@@ -14,25 +15,25 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         private readonly CertificateContext _clientCertificate;
 
         public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
-            bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             _clientCertificate = new CertificateContext(certificateThumbprint);
         }
 
         public CertificateAuthenticator(string networkAddress, string certificatePath, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             _clientCertificate = new CertificateContext(certificatePath, certificatePassword);
         }
 
-        public CertificateAuthenticator(string networkAddress, IEnumerable<byte> certificateData,
-            SecureString certificatePassword, int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+        public CertificateAuthenticator(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword, 
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             _clientCertificate = new CertificateContext(certificateData, certificatePassword);
         }
 
         private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,
-            bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             _clientCertificate = clientCertificate.Clone();
         }
@@ -67,7 +68,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public override object Clone()
         {
-            var auth = new CertificateAuthenticator(NetworkAddress, _clientCertificate, ApiVersion, IgnoreSsl)
+            var auth = new CertificateAuthenticator(NetworkAddress, _clientCertificate, ApiVersion, IgnoreSsl, ValidationCallback)
             {
                 AccessToken = AccessToken?.Copy()
             };

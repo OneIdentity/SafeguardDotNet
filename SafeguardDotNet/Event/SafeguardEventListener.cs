@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Security;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Http;
 using Serilog;
@@ -13,9 +16,10 @@ namespace OneIdentity.SafeguardDotNet.Event
     internal class SafeguardEventListener : ISafeguardEventListener
     {
         private bool _disposed;
-
+        
         private readonly string _eventUrl;
         private readonly bool _ignoreSsl;
+        private readonly RemoteCertificateValidationCallback _validationCallback;
         private readonly SecureString _accessToken;
         private readonly SecureString _apiKey;
         private readonly IList<SecureString> _apiKeys;
@@ -30,15 +34,16 @@ namespace OneIdentity.SafeguardDotNet.Event
 
         private const string NotificationHub = "notificationHub";
 
-        private SafeguardEventListener(string eventUrl, bool ignoreSsl)
+        private SafeguardEventListener(string eventUrl, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
         {
             _eventUrl = eventUrl;
             _ignoreSsl = ignoreSsl;
+            _validationCallback = validationCallback;
             _eventHandlerRegistry = new EventHandlerRegistry();
         }
 
-        public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl) : 
-            this(eventUrl, ignoreSsl)
+        public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : 
+            this(eventUrl, ignoreSsl, validationCallback)
         {
             if (accessToken == null)
                 throw new ArgumentException("Parameter may not be null", nameof(accessToken));
@@ -46,7 +51,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         }
 
         public SafeguardEventListener(string eventUrl, CertificateContext clientCertificate, SecureString apiKey,
-            bool ignoreSsl) : this(eventUrl, ignoreSsl)
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : this(eventUrl, ignoreSsl, validationCallback)
         {
             _clientCertificate = clientCertificate.Clone();
             if (apiKey == null)
@@ -55,7 +60,7 @@ namespace OneIdentity.SafeguardDotNet.Event
         }
 
         public SafeguardEventListener(string eventUrl, CertificateContext clientCertificate, IEnumerable<SecureString> apiKeys,
-            bool ignoreSsl) : this(eventUrl, ignoreSsl)
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : this(eventUrl, ignoreSsl, validationCallback)
         {
             _clientCertificate = clientCertificate.Clone();
             if (apiKeys == null)
@@ -143,7 +148,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             {
                 _signalrConnection.Received += HandleEvent;
                 _signalrConnection.Closed += HandleDisconnect;
-                _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : new DefaultHttpClient())
+                _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : (DefaultHttpClient)new CustomDelegateSslValidationHttpClient(_validationCallback))
                     .Wait();
                 _isStarted = true;
             }
