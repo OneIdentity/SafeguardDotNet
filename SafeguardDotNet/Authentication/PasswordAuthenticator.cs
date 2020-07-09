@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Security;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -17,8 +18,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         private readonly string _username;
         private readonly SecureString _password;
 
-        public PasswordAuthenticator(string networkAddress, string provider, string username,
-            SecureString password, int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+        public PasswordAuthenticator(string networkAddress, string provider, string username, SecureString password, int apiVersion, 
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             _provider = provider;
             if (string.IsNullOrEmpty(_provider))
@@ -126,7 +127,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public override object Clone()
         {
             var auth =
-                new PasswordAuthenticator(NetworkAddress, _provider, _username, _password, ApiVersion, IgnoreSsl)
+                new PasswordAuthenticator(NetworkAddress, _provider, _username, _password, ApiVersion, IgnoreSsl, ValidationCallback)
                 {
                     AccessToken = AccessToken?.Copy()
                 };

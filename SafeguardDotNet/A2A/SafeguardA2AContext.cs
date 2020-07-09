@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
@@ -17,13 +19,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
         private readonly string _networkAddress;
         private readonly int _apiVersion; 
         private readonly bool _ignoreSsl;
+        private readonly RemoteCertificateValidationCallback _validationCallback;
 
         private readonly CertificateContext _clientCertificate;
         private readonly RestClient _a2AClient;
         private readonly RestClient _coreClient;
 
         private SafeguardA2AContext(string networkAddress, CertificateContext clientCertificate, int apiVersion,
-            bool ignoreSsl)
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
         {
             _networkAddress = networkAddress;
             _apiVersion = apiVersion;
@@ -37,8 +40,16 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (ignoreSsl)
             {
                 _ignoreSsl = true;
+                _validationCallback = null;
                 _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+            }
+            else if (validationCallback != null)
+            {
+                _ignoreSsl = false;
+                _validationCallback = validationCallback;
+                _a2AClient.RemoteCertificateValidationCallback += validationCallback;
+                _coreClient.RemoteCertificateValidationCallback += validationCallback;
             }
 
             _clientCertificate = clientCertificate.Clone();
@@ -46,20 +57,20 @@ namespace OneIdentity.SafeguardDotNet.A2A
             _coreClient.ClientCertificates = new X509Certificate2Collection() {_clientCertificate.Certificate};
         }
 
-        public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl) : 
-            this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl)
+        public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : 
+            this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl, validationCallback)
         {
         }
 
         public SafeguardA2AContext(string networkAddress, string certificatePath, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl) :
-            this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl)
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) :
+            this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl, validationCallback)
         {
         }
 
         public SafeguardA2AContext(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl) :
-            this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl)
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) :
+            this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl, validationCallback)
         {
         }
 
@@ -152,14 +163,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
 
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
-                apiKey, _ignoreSsl);
+                apiKey, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
 
-        public ISafeguardEventListener GetA2AEventListener(IEnumerable<SecureString> apiKeys,
-            SafeguardEventHandler handler)
+        public ISafeguardEventListener GetA2AEventListener(IEnumerable<SecureString> apiKeys, SafeguardEventHandler handler)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");
@@ -167,7 +177,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
 
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
-                apiKeys, _ignoreSsl);
+                apiKeys, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
@@ -246,7 +256,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
         public object Clone()
         {
-            return new SafeguardA2AContext(_networkAddress, _clientCertificate, _apiVersion, _ignoreSsl);
+            return new SafeguardA2AContext(_networkAddress, _clientCertificate, _apiVersion, _ignoreSsl, _validationCallback);
         }
     }
 }

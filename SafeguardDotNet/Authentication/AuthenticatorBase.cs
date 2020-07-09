@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Security;
 using System.Security;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -18,7 +19,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         protected RestClient RstsClient;
         protected RestClient CoreClient;
 
-        protected AuthenticatorBase(string networkAddress, int apiVersion, bool ignoreSsl)
+        protected AuthenticatorBase(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
         {
             NetworkAddress = networkAddress;
             ApiVersion = apiVersion;
@@ -32,8 +33,16 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             if (ignoreSsl)
             {
                 IgnoreSsl = true;
+                ValidationCallback = null;
                 RstsClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 CoreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+            } 
+            else if (validationCallback != null)
+            {
+                IgnoreSsl = false;
+                ValidationCallback = validationCallback;
+                RstsClient.RemoteCertificateValidationCallback += validationCallback;
+                CoreClient.RemoteCertificateValidationCallback += validationCallback;
             }
         }
 
@@ -44,6 +53,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public int ApiVersion { get; }
 
         public bool IgnoreSsl { get; }
+
+        public RemoteCertificateValidationCallback ValidationCallback { get; }
 
         public virtual bool IsAnonymous => false;
 

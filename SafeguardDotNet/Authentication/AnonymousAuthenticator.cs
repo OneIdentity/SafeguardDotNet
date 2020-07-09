@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Security;
 using System.Security;
 using RestSharp;
 
@@ -8,13 +9,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
     {
         private bool _disposed;
 
-        public AnonymousAuthenticator(string networkAddress, int apiVersion, bool ignoreSsl) :
-            base(networkAddress, apiVersion, ignoreSsl)
+        public AnonymousAuthenticator(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) :
+            base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             var notificationUrl = $"https://{NetworkAddress}/service/notification/v{ApiVersion}";
             var notificationClient = new RestClient(notificationUrl);
             if (ignoreSsl)
                 notificationClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+            else if (validationCallback != null)
+                notificationClient.RemoteCertificateValidationCallback += validationCallback;
             var request = new RestRequest("Status", RestSharp.Method.GET)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json");

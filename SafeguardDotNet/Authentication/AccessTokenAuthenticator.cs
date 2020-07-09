@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Security;
 using System.Security;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
@@ -8,7 +9,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         private bool _disposed;
 
         public AccessTokenAuthenticator(string networkAddress, SecureString accessToken,
-            int apiVersion, bool ignoreSsl) : base(networkAddress, apiVersion, ignoreSsl)
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             if (accessToken == null)
                 throw new ArgumentException("Parameter may not be null", nameof(accessToken));
