@@ -5,8 +5,8 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNet.SignalR.Client;
-using Microsoft.AspNet.SignalR.Client.Http;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
 using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Event
@@ -30,9 +30,6 @@ namespace OneIdentity.SafeguardDotNet.Event
 
         private bool _isStarted;
         private HubConnection _signalrConnection;
-        public IHubProxy SignalrHubProxy { get; private set; }
-
-        private const string NotificationHub = "notificationHub";
 
         private SafeguardEventListener(string eventUrl, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
         {
@@ -101,11 +98,9 @@ namespace OneIdentity.SafeguardDotNet.Event
             {
                 if (_signalrConnection != null)
                 {
-                    _signalrConnection.Received -= HandleEvent;
-                    _signalrConnection.Closed -= HandleDisconnect;
+                    _signalrConnection.Closed -= _signalrConnection_Closed;
                 }
-                _signalrConnection?.Dispose();
-                SignalrHubProxy = null;
+                _signalrConnection?.DisposeAsync().Wait();
             }
             catch (Exception ex)
             {
@@ -129,33 +124,68 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardEventListener");
             CleanupConnection();
-            _signalrConnection = new HubConnection(_eventUrl);
-            if (_accessToken != null)
-            {
-                _signalrConnection.Headers.Add("Authorization", $"Bearer {_accessToken.ToInsecureString()}");
-            }
-            else
-            {
-                _signalrConnection.Headers.Add("Authorization",
-                    _apiKey != null
-                        ? $"A2A {_apiKey.ToInsecureString()}"
-                        : $"A2A {string.Join(" ", _apiKeys.Select(apiKey => apiKey.ToInsecureString()))}");
-                _signalrConnection.AddClientCertificate(_clientCertificate.Certificate);
-            }
-            SignalrHubProxy = _signalrConnection.CreateHubProxy(NotificationHub);
+            _signalrConnection = new HubConnectionBuilder()
+                .WithUrl(_eventUrl, options =>
+                {
+                    if (_accessToken != null)
+                    {
+                        options.AccessTokenProvider = () => Task.FromResult(_accessToken.ToInsecureString());
+                    }
+                    else
+                    {
+                        options.Headers.Add("Authorization",
+                            _apiKey != null
+                                ? $"A2A {_apiKey.ToInsecureString()}"
+                                : $"A2A {string.Join(" ", _apiKeys.Select(apiKey => apiKey.ToInsecureString()))}");
+                        options.ClientCertificates.Add(_clientCertificate.Certificate);
+                    }
+
+                    options.HttpMessageHandlerFactory = (message) =>
+                    {
+                        // https://stackoverflow.com/questions/35609141/how-can-i-ignore-https-certificate-warnings-in-the-c-sharp-signalr-client
+                        // https://stackoverflow.com/questions/55345115/ignore-ssl-errors-with-signalr-core-client/59835125#59835125
+
+                        if (message is HttpClientHandler clientHandler)
+                        {
+                            if (_ignoreSsl)
+                            {
+                                clientHandler.ServerCertificateCustomValidationCallback =
+                                    (sender, certificate, chain, sslPolicyErrors) => true;
+                            }
+                            else 
+                            {
+                                if (_validationCallback == null)
+                                {
+                                    throw new Exception("Unable to get HttpClientHandler to ignore certificate errors");
+                                }
+
+                                clientHandler.ServerCertificateCustomValidationCallback =
+                                    (sender, certificate, chain, sslPolicyErrors) => _validationCallback(sender, certificate, chain, sslPolicyErrors);
+                            }                             
+                        }
+                        return message;
+                    };
+                })
+                .Build();
 
             try
             {
-                _signalrConnection.Received += HandleEvent;
-                _signalrConnection.Closed += HandleDisconnect;
-                _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : (DefaultHttpClient)new CustomDelegateSslValidationHttpClient(_validationCallback))
-                    .Wait();
+                _signalrConnection.On("NotifyEventAsync", (object message) => HandleEvent(message.ToString()));
+                _signalrConnection.Closed += _signalrConnection_Closed;
+
+                _signalrConnection.StartAsync().Wait();
+                
                 _isStarted = true;
             }
             catch (Exception ex)
             {
                 throw new SafeguardDotNetException("Failure starting SignalR", ex);
             }
+        }
+
+        private Task _signalrConnection_Closed(Exception arg)
+        {
+            return Task.Run(() => HandleDisconnect());
         }
 
         public void Stop()
@@ -165,7 +195,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             try
             {
                 _isStarted = false;
-                _signalrConnection?.Stop();
+                _signalrConnection?.StopAsync();
                 CleanupConnection();
             }
             catch (Exception ex)

@@ -48,16 +48,14 @@ namespace OneIdentity.SafeguardDotNet.Event
             {
                 var events = new List<(string, JToken)>();
                 var jObject = JObject.Parse(eventObject);
-                var jEvents = jObject["A"];
-                foreach (var jEvent in jEvents)
-                {
-                    var name = jEvent["Name"];
-                    var body = jEvent["Data"];
-                    // Work around for bug in A2A events in Safeguard 2.2 and 2.3
-                    if (name != null && int.TryParse(name.ToString(), out _))
-                        name = body["EventName"];
-                    events.Add((name?.ToString(), body));
-                }
+
+                var name = jObject["name"];
+                var body = jObject["data"];
+                // Work around for bug in A2A events in Safeguard 2.2 and 2.3
+                if (name != null && int.TryParse(name.ToString(), out _))
+                    name = body["EventName"];
+                events.Add((name?.ToString(), body));
+                
                 return events.ToArray();
             }
             catch (Exception)
