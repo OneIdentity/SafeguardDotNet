@@ -29,6 +29,8 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
+- Support for custom TLS certificate validation
+- Support for alternate identity providers (Active Directory) for certificate authentication
 - Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
