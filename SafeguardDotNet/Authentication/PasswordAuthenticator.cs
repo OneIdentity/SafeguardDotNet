@@ -32,74 +32,12 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public override string Id => "Password";
 
-        private void ResolveProviderToScope()
-        {
-            try
-            {
-                IRestResponse response;
-                try
-                {
-                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.POST)
-                        .AddHeader("Accept", "application/json")
-                        .AddHeader("Content-type", "application/x-www-form-urlencoded")
-                        .AddParameter("response_type", "token", ParameterType.QueryString)
-                        .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
-                        .AddParameter("loginRequestStep", 1, ParameterType.QueryString)
-                        .AddJsonBody("RelayState=");
-                    response = RstsClient.Execute(request);
-                }
-                catch (WebException)
-                {
-                    Log.Debug("Caught exception with POST to find identity provider scopes, trying GET");
-                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.GET)
-                        .AddHeader("Accept", "application/json")
-                        .AddHeader("Content-type", "application/x-www-form-urlencoded")
-                        .AddParameter("response_type", "token", ParameterType.QueryString)
-                        .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
-                        .AddParameter("loginRequestStep", 1, ParameterType.QueryString);
-                    response = RstsClient.Execute(request);
-                }
-
-                if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new SafeguardDotNetException(
-                        "Unable to connect to RSTS to find identity provider scopes, Error: " +
-                        response.ErrorMessage);
-                if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException(
-                        "Error requesting identity provider scopes from RSTS, Error: " +
-                        $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-                var jObject = JObject.Parse(response.Content);
-                var jProviders = (JArray) jObject["Providers"];
-                var knownScopes = jProviders.Select(s => s["Id"]).Values<string>().ToArray();
-                var scope = knownScopes.FirstOrDefault(s => s.EqualsNoCase(_provider));
-                if (scope != null)
-                    _providerScope = $"rsts:sts:primaryproviderid:{scope}";
-                else
-                {
-                    scope = knownScopes.FirstOrDefault(s => s.ContainsNoCase(_provider));
-                    if (_providerScope != null)
-                        _providerScope = $"rsts:sts:primaryproviderid:{scope}";
-                    else
-                        throw new SafeguardDotNetException(
-                            $"Unable to find scope matching '{_provider}' in [{string.Join(",", knownScopes)}]");
-                }
-            }
-            catch (SafeguardDotNetException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw new SafeguardDotNetException("Unable to connect to determine identity provider", ex);
-            }
-        }
-
         protected override SecureString GetRstsTokenInternal()
         {
             if (_disposed)
                 throw new ObjectDisposedException("PasswordAuthenticator");
             if (_providerScope == null)
-                ResolveProviderToScope();
+                _providerScope = ResolveProviderToScope(_provider);
             var request = new RestRequest("oauth2/token", RestSharp.Method.POST)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")

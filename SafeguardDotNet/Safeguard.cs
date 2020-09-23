@@ -211,6 +211,108 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         /// <summary>
+        /// Connect to Safeguard API using a client certificate from the certificate store.  Use PowerShell to list
+        /// certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+        /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, string certificateThumbprint, string provider,
+            int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion,
+                ignoreSsl, null, provider));
+        }
+
+        /// <summary>
+        /// Connect to Safeguard API using a client certificate from the certificate store.  Use PowerShell to list
+        /// certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+        /// <param name="validationCallback">Certificate validation callback delegate.</param>
+        /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, string certificateThumbprint,
+            RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion,
+                false, validationCallback, provider));
+        }
+
+        /// <summary>
+        /// Connect to Safeguard API using a client certificate stored in a file.
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+        /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+        /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, string certificatePath,
+            SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
+                apiVersion, ignoreSsl, null, provider));
+        }
+
+        /// <summary>
+        /// Connect to Safeguard API using a client certificate stored in a file.
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+        /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+        /// <param name="validationCallback">Certificate validation callback delegate.</param>
+        /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, string certificatePath,
+            SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
+                apiVersion, false, validationCallback, provider));
+        }
+
+        /// <summary>
+        /// Connect to Safeguard API using a client certificate stored in a memory.
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+        /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
+        /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
+            SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
+                apiVersion, ignoreSsl, null, provider));
+        }
+
+        /// <summary>
+        /// Connect to Safeguard API using a client certificate stored in a memory.
+        /// </summary>
+        /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+        /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+        /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
+        /// <param name="validationCallback">Certificate validation callback delegate.</param>
+        /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+        /// <param name="apiVersion">Target API version to use.</param>
+        /// <returns>Reusable Safeguard API connection.</returns>
+        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
+            SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+        {
+            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
+                apiVersion, false, validationCallback, provider));
+        }
+
+        /// <summary>
         /// This static class provides access to Safeguard Event functionality with persistent event listeners. Persistent
         /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
         /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
@@ -347,6 +449,110 @@ namespace OneIdentity.SafeguardDotNet
             {
                 return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
                     certificatePath, certificatePassword, apiVersion, false, validationCallback)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate from the certificate store for authentication.
+            /// Use PowerShell to list certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificateThumbprint, string provider, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(
+                    new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null, provider)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate from the certificate store for authentication.
+            /// Use PowerShell to list certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+            /// <param name="validationCallback">Certificate validation callback delegate.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificateThumbprint, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(
+                    new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, false, validationCallback, provider)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate stored in memory.
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                IEnumerable<byte> certificateData, SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
+                    certificateData, certificatePassword, apiVersion, ignoreSsl, null, provider)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate stored in memory.
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+            /// <param name="validationCallback">Certificate validation callback delegate.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                IEnumerable<byte> certificateData, SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
+                    certificateData, certificatePassword, apiVersion, false, validationCallback, provider)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate stored in a file.
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificatePath, SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
+                    certificatePath, certificatePassword, apiVersion, ignoreSsl, null, provider)));
+            }
+
+            /// <summary>
+            /// Get a persistent event listener using a client certificate stored in a file.
+            /// </summary>
+            /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+            /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+            /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+            /// <param name="validationCallback">Certificate validation callback delegate.</param>
+            /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <returns>New persistent Safeguard event listener.</returns>
+            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
+                string certificatePath, SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+            {
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
+                    certificatePath, certificatePassword, apiVersion, false, validationCallback, provider)));
             }
         }
 

@@ -14,6 +14,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         private readonly CertificateContext _clientCertificate;
 
+        private string _provider;
+
         public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
             bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
@@ -38,6 +40,34 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             _clientCertificate = clientCertificate.Clone();
         }
 
+        public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        {
+            _provider = provider;
+            _clientCertificate = new CertificateContext(certificateThumbprint);
+        }
+
+        public CertificateAuthenticator(string networkAddress, string certificatePath, SecureString certificatePassword,
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        {
+            _provider = provider;
+            _clientCertificate = new CertificateContext(certificatePath, certificatePassword);
+        }
+
+        public CertificateAuthenticator(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword,
+            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        {
+            _provider = provider;
+            _clientCertificate = new CertificateContext(certificateData, certificatePassword);
+        }
+
+        private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,
+            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        {
+            _provider = provider;
+            _clientCertificate = clientCertificate.Clone();
+        }
+
         public override string Id => "Certificate";
 
         protected override SecureString GetRstsTokenInternal()
@@ -45,13 +75,18 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             if (_disposed)
                 throw new ObjectDisposedException("CertificateAuthenticator");
 
+            string providerScope = "rsts:sts:primaryproviderid:certificate";
+
+            if (!string.IsNullOrEmpty(_provider))
+                providerScope = ResolveProviderToScope(_provider);
+
             var request = new RestRequest("oauth2/token", RestSharp.Method.POST)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")
                 .AddJsonBody(new
                 {
                     grant_type = "client_credentials",
-                    scope = "rsts:sts:primaryproviderid:certificate"
+                    scope = providerScope
                 });
             RstsClient.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
             var response = RstsClient.Execute(request);

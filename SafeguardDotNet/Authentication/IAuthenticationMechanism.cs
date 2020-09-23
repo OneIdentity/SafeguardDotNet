@@ -27,5 +27,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         int GetAccessTokenLifetimeRemaining();
 
         void RefreshAccessToken();
+
+        string ResolveProviderToScope(string provider);
     }
 }
