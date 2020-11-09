@@ -155,7 +155,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return json.Root.ToString().ToSecureString();
         }
 
-        public SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat)
+        public SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardA2AContext");

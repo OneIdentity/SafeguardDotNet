@@ -56,15 +56,15 @@ namespace OneIdentity.SafeguardDotNet
     public enum KeyFormat
     {
         /// <summary>
-        /// Legacy OpenSSH format (PKCS#1)
+        /// OpenSSH legacy PEM format
         /// </summary>
         OpenSsh,
         /// <summary>
-        /// Tectia format compatible with SSH.com tools
+        /// Tectia format for use with tools from SSH.com
         /// </summary>
         Ssh2,
         /// <summary>
-        /// PuTTY format compatible with PuTTY ssh tools
+        /// Putty format for use with PuTTY tools
         /// </summary>
         Putty
     }
