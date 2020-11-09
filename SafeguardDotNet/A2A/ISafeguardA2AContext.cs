@@ -31,7 +31,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// <param name="apiKey">API key corresponding to the configured account.</param>
         /// <param name="keyFormat">Format to use when returning private key.</param>
         /// <returns>The SSH private key.</returns>
-        SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat);
+        SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh);
 
         /// <summary>
         /// Gets an A2A event listener. The handler passed in will be registered for the AssetAccountPasswordUpdated
