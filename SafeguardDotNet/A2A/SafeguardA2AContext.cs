@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -190,6 +189,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
                 apiKey, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
@@ -204,6 +204,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
                 apiKeys, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
