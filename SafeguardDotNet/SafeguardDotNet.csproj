@@ -31,7 +31,8 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 Updates:
 - Support for custom TLS certificate validation
 - Support for alternate identity providers (Active Directory) for certificate authentication
-- Bug fixes and dependency updates.</PackageReleaseNotes>
+- Fixed issues with A2A and requesting SSH private keys
+- Additional bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
