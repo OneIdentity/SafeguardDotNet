@@ -148,8 +148,12 @@ namespace OneIdentity.SafeguardDotNet.Event
             {
                 _signalrConnection.Received += HandleEvent;
                 _signalrConnection.Closed += HandleDisconnect;
-                _signalrConnection.Start(_ignoreSsl ? new IgnoreSslValidationHttpClient() : (DefaultHttpClient)new CustomDelegateSslValidationHttpClient(_validationCallback))
-                    .Wait();
+                if (_ignoreSsl)
+                    _signalrConnection.Start(new IgnoreSslValidationHttpClient()).Wait();
+                else if (_validationCallback != null)
+                    _signalrConnection.Start(new CustomDelegateSslValidationHttpClient(_validationCallback)).Wait();
+                else
+                    _signalrConnection.Start(new DefaultHttpClient()).Wait();
                 _isStarted = true;
             }
             catch (Exception ex)

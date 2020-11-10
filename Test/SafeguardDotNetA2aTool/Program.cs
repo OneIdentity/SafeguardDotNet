@@ -96,8 +96,16 @@ namespace SafeguardDotNetA2aTool
                     }
                     else
                     {
-                        var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString());
-                        Log.Information(responseBody.ToInsecureString());
+                        if (opts.PrivateKey)
+                        {
+                            using (var responseBody = context.RetrievePrivateKey(opts.ApiKey.ToSecureString(), opts.KeyFormat))
+                                Log.Information(responseBody.ToInsecureString());
+                        }
+                        else
+                        {
+                            using (var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString()))
+                                Log.Information(responseBody.ToInsecureString());
+                        }
                     }
                 }
             }
