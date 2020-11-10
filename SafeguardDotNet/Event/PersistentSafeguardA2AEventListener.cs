@@ -22,6 +22,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
             _apiKey = apiKey.Copy();
             RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Persistent A2A event listener successfully created.");
         }
 
@@ -37,6 +38,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (!_apiKeys.Any())
                 throw  new ArgumentException("Parameter must include at least one item", nameof(apiKeys));
             RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Persistent A2A event listener successfully created.");
         }
 

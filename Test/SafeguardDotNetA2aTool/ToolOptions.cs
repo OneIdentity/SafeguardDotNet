@@ -1,4 +1,6 @@
 ﻿using CommandLine;
+using CommandLine.Text;
+using OneIdentity.SafeguardDotNet;
 
 namespace SafeguardDotNetA2aTool
 {
@@ -39,5 +41,13 @@ namespace SafeguardDotNetA2aTool
         [Option('A', "ApiKey", Required = true, Default = null,
             HelpText = "ApiKey for call Safeguard A2A")]
         public string ApiKey { get; set; }
+
+        [Option('K', "PrivateKey", Required = false, Default = false,
+            HelpText = "Request private key rather than password")]
+        public bool PrivateKey { get; set; }
+
+        [Option('F', "KeyFormat", Required = false, Default = null,
+            HelpText = "Private key format to request")]
+        public KeyFormat KeyFormat { get; set; }
     }
 }

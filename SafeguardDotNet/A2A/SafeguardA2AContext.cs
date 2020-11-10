@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -155,6 +154,31 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return json.Root.ToString().ToSecureString();
         }
 
+        public SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+
+            var request = new RestRequest("Credentials", RestSharp.Method.GET)
+                .AddParameter("type", "PrivateKey", ParameterType.QueryString)
+                .AddParameter("keyFormat", keyFormat.ToString(), ParameterType.QueryString)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
+            var response = _a2AClient.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
+            if (!response.IsSuccessful)
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
+            var json = JToken.Parse(response.Content);
+            Log.Information("Successfully retrieved A2A private key.");
+            return json.Root.ToString().ToSecureString();
+        }
+
         public ISafeguardEventListener GetA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
@@ -165,6 +189,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
                 apiKey, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
@@ -179,6 +204,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
                 apiKeys, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
+            eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }

@@ -26,6 +26,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
         SecureString RetrievePassword(SecureString apiKey);
 
         /// <summary>
+        /// Retrieves an SSH private key using Safeguard A2A.
+        /// </summary>
+        /// <param name="apiKey">API key corresponding to the configured account.</param>
+        /// <param name="keyFormat">Format to use when returning private key.</param>
+        /// <returns>The SSH private key.</returns>
+        SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh);
+
+        /// <summary>
         /// Gets an A2A event listener. The handler passed in will be registered for the AssetAccountPasswordUpdated
         /// event, which is the only one supported in A2A. You just have to call Start(). The event listener returned
         /// by this method WILL NOT automatically recover from a SignalR timeout which occurs when there is a 30+
