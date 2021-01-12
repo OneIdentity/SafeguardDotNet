@@ -118,6 +118,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
                         ApiKey = ((string) retrieval.ApiKey).ToSecureString(),
                         AssetId = retrieval.SystemId,
                         AssetName = retrieval.SystemName,
+                        AssetNetworkAddress = retrieval.NetworkAddress,
                         AssetDescription = retrieval.SystemDescription,
                         AccountId = retrieval.AccountId,
                         AccountName = retrieval.AccountName,

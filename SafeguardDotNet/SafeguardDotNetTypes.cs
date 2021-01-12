@@ -80,6 +80,7 @@ namespace OneIdentity.SafeguardDotNet
         public SecureString ApiKey { get; set; }
         public int AssetId { get; set; }
         public string AssetName { get; set; }
+        public string AssetNetworkAddress { get; set; }
         public string AssetDescription { get; set; }
         public int AccountId { get; set; }
         public string AccountName { get; set; }

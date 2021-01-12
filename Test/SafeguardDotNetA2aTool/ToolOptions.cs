@@ -46,6 +46,10 @@ namespace SafeguardDotNetA2aTool
             HelpText = "Request private key rather than password")]
         public bool PrivateKey { get; set; }
 
+        [Option('R', "RetrievableAccounts", Required = false, Default = false,
+            HelpText = "Display retrievable account information")]
+        public bool RetrievableAccounts { get; set; }
+
         [Option('F', "KeyFormat", Required = false, Default = null,
             HelpText = "Private key format to request")]
         public KeyFormat KeyFormat { get; set; }

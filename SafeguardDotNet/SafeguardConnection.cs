@@ -162,7 +162,7 @@ namespace OneIdentity.SafeguardDotNet
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             var eventListener = new SafeguardEventListener(
-                $"https://{_authenticationMechanism.NetworkAddress}/service/event",
+                $"https://{_authenticationMechanism.NetworkAddress}/service/event/signalr",
                 _authenticationMechanism.GetAccessToken(), _authenticationMechanism.IgnoreSsl, _authenticationMechanism.ValidationCallback);
             Log.Debug("Event listener successfully created for Safeguard connection.");
             return eventListener;

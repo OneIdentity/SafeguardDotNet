@@ -285,6 +285,7 @@ if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u
     $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetCert'`" -p")
     $local:Body = @{
         AppName = "$($script:TestObj)";
+        VisibleToCertificateUsers = $true;
         Description = "test a2a registration for SafeguardDotNet test script";
         CertificateUserId = $local:Result.Id
     }
@@ -321,6 +322,9 @@ Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:Test
 $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'$($script:TestObj)'`" -p")
 $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"A2ARegistrations/$($local:Result.Id)/RetrievableAccounts?filter=AccountName%20eq%20'$($script:TestObj)'`" -p")
 $script:A2aCrApiKey = $local:Result.ApiKey
+
+Write-Host -ForegroundColor Yellow "Calling A2A retrievable accounts..."
+Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) -A `"$($script:A2aCrApiKey)`" -R -p"
 
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval with Pfx file..."
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) -A `"$($script:A2aCrApiKey)`" -p"
