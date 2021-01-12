@@ -1,4 +1,4 @@
-version: 6.7.0-dev-{build}
+version: 6.8.0-dev-{build}
 image: Visual Studio 2019
 configuration: Release
 before_build:
@@ -13,7 +13,7 @@ build:
 deploy:
 - provider: NuGet
   api_key:
-    secure: xE+LvURfgfWntKUSJwsSnvRwhrcZGtq/OB/mtXfsdXscEXT4QMx/swljqSiJ8YVU
+    secure: PcQIyD1ut9IpptUFeKkjYEjTmlgYBBwhpMnt51oAUeqPcsO1Q6cEgmAfwMv5w9Of
 notifications:
 - provider: Email
   to:

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Security;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
@@ -122,6 +124,85 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                         $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
                 var jObject = JObject.Parse(response.Content);
                 AccessToken = jObject.GetValue("UserToken").ToString().ToSecureString();
+            }
+        }
+
+        public string ResolveProviderToScope(string provider)
+        {
+            try
+            {
+                IRestResponse response;
+                try
+                {
+                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.POST)
+                        .AddHeader("Accept", "application/json")
+                        .AddHeader("Content-type", "application/x-www-form-urlencoded")
+                        .AddParameter("response_type", "token", ParameterType.QueryString)
+                        .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
+                        .AddParameter("loginRequestStep", 1, ParameterType.QueryString)
+                        .AddJsonBody("RelayState=");
+                    response = RstsClient.Execute(request);
+                }
+                catch (WebException)
+                {
+                    Log.Debug("Caught exception with POST to find identity provider scopes, trying GET");
+                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.GET)
+                        .AddHeader("Accept", "application/json")
+                        .AddHeader("Content-type", "application/x-www-form-urlencoded")
+                        .AddParameter("response_type", "token", ParameterType.QueryString)
+                        .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
+                        .AddParameter("loginRequestStep", 1, ParameterType.QueryString);
+                    response = RstsClient.Execute(request);
+                }
+
+                if (response.ResponseStatus != ResponseStatus.Completed)
+                    throw new SafeguardDotNetException(
+                        "Unable to connect to RSTS to find identity provider scopes, Error: " +
+                        response.ErrorMessage);
+                if (!response.IsSuccessful)
+                    throw new SafeguardDotNetException(
+                        "Error requesting identity provider scopes from RSTS, Error: " +
+                        $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
+                var jObject = JObject.Parse(response.Content);
+                var jProviders = (JArray)jObject["Providers"];
+                var knownScopes = jProviders.Select(s => new { Id = s["Id"].ToString(), DisplayName = s["DisplayName"].ToString() });
+
+                // 3 step check for determining if the user provided scope is valid:
+                //
+                // 1. User value == RSTSProviderId
+                // 2. User value == Identity Provider Display Name.
+                //    - This allows the caller to specify the domain name for AD.
+                // 3. User Value is contained in RSTSProviderId.
+                //    - This allows the caller to specify the provider Id rather than the full RSTSProviderId.
+                //    - Such a broad check could provide some issues with false matching, however since this
+                //      was in the original code, this check has been left in place.
+                var scope = knownScopes.FirstOrDefault(s => s.Id.EqualsNoCase(provider));
+                if (scope == null)
+                { 
+                    scope = knownScopes.FirstOrDefault(s => s.DisplayName.EqualsNoCase(provider));
+
+                    if (scope == null)
+                    {
+                        scope = knownScopes.FirstOrDefault(s => s.Id.ContainsNoCase(provider));
+
+                        if (scope == null)
+                        {
+                            throw new SafeguardDotNetException(
+                            $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
+                        }
+                    }
+                        
+                }
+
+                return $"rsts:sts:primaryproviderid:{scope.Id}";
+            }
+            catch (SafeguardDotNetException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new SafeguardDotNetException("Unable to connect to determine identity provider", ex);
             }
         }
 

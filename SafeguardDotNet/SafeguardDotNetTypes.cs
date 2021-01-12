@@ -50,7 +50,28 @@ namespace OneIdentity.SafeguardDotNet
         public string Body { get; set; }
     }
 
+    /// <summary>
+    /// A list of private key formats supported by Safeguard.
+    /// </summary>
+    public enum KeyFormat
+    {
+        /// <summary>
+        /// OpenSSH legacy PEM format
+        /// </summary>
+        OpenSsh,
+        /// <summary>
+        /// Tectia format for use with tools from SSH.com
+        /// </summary>
+        Ssh2,
+        /// <summary>
+        /// Putty format for use with PuTTY tools
+        /// </summary>
+        Putty
+    }
 
+    /// <summary>
+    /// A class representing the asset accounts that can be used with A2A credential retrieval.
+    /// </summary>
     public class A2ARetrievableAccount : IDisposable
     {
         public string ApplicationName { get; set; }

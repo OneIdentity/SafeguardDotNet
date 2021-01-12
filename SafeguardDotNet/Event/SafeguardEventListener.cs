@@ -174,7 +174,6 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _signalrConnection.Closed += _signalrConnection_Closed;
 
                 _signalrConnection.StartAsync().Wait();
-                
                 _isStarted = true;
             }
             catch (Exception ex)

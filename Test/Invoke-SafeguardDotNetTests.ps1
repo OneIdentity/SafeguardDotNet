@@ -6,7 +6,7 @@ Param(
 $ErrorActionPreference = "Stop"
 
 function Test-ForDotNetTool {
-    if (-not (Test-Command "dotnet.exe")) {
+    if (-not (Get-Command "dotnet.exe" -EA SilentlyContinue)) {
         throw "This test tool requires the dotnet.exe command line tool"
     }
 }
