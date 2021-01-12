@@ -96,6 +96,11 @@ namespace SafeguardDotNetA2aTool
                     }
                     else
                     {
+                        if (opts.RetrievableAccounts)
+                        {
+                            var accounts = context.GetRetrievableAccounts();
+                            Log.Information(ObjectDumper.Dump(accounts));
+                        }
                         if (opts.PrivateKey)
                         {
                             using (var responseBody = context.RetrievePrivateKey(opts.ApiKey.ToSecureString(), opts.KeyFormat))
