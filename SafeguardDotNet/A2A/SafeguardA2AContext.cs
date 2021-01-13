@@ -187,8 +187,8 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (apiKey == null)
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
 
-            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
-                apiKey, _ignoreSsl, _validationCallback);
+            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a/signalr",
+                _clientCertificate, apiKey, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
@@ -202,7 +202,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (apiKeys == null)
                 throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
 
-            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a", _clientCertificate,
+            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a/signalr", _clientCertificate,
                 apiKeys, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
