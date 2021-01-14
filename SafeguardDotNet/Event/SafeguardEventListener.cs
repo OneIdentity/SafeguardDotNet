@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Serilog;
@@ -152,16 +151,18 @@ namespace OneIdentity.SafeguardDotNet.Event
                                 clientHandler.ServerCertificateCustomValidationCallback =
                                     (sender, certificate, chain, sslPolicyErrors) => true;
                             }
-                            else 
+                            else
                             {
                                 if (_validationCallback == null)
                                 {
-                                    throw new Exception("Unable to get HttpClientHandler to ignore certificate errors");
+                                    // Use standard validation
                                 }
-
-                                clientHandler.ServerCertificateCustomValidationCallback =
-                                    (sender, certificate, chain, sslPolicyErrors) => _validationCallback(sender, certificate, chain, sslPolicyErrors);
-                            }                             
+                                else
+                                {
+                                    clientHandler.ServerCertificateCustomValidationCallback =
+                                        (sender, certificate, chain, sslPolicyErrors) => _validationCallback(sender, certificate, chain, sslPolicyErrors);
+                                }
+                            }
                         }
                         return message;
                     };
