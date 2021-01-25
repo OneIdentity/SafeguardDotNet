@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.Security;
+﻿using System.Net.Security;
 using System.Security;
 using RestSharp;
 

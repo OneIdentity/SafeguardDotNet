@@ -70,6 +70,11 @@ namespace OneIdentity.SafeguardDotNet
             IDictionary<string, string> additionalHeaders = null);
 
         /// <summary>
+        /// Provides support for HTTP streaming requests
+        /// </summary>
+        IStreamingRequest Streaming { get; }
+
+        /// <summary>
         /// Gets a Safeguard event listener. You will need to call the RegisterEventHandler()
         /// method to establish callbacks. Then, you just have to call Start().  Call Stop()
         /// when you are finished. The event listener returned by this method WILL NOT
