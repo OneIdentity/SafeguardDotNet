@@ -1,5 +1,4 @@
 ﻿using CommandLine;
-using CommandLine.Text;
 using OneIdentity.SafeguardDotNet;
 
 namespace SafeguardDotNetTool
@@ -69,5 +68,9 @@ namespace SafeguardDotNetTool
         [Option('C', "Csv", Required = false, Default = null,
             HelpText = "Request for a response as CSV")]
         public bool Csv { get; set; }
+
+        [Option('F', "File", Required = false, Default = null,
+            HelpText = "Path to a file to stream as the request body")]
+        public string File { get; set; }
     }
 }

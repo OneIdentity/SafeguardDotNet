@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security;
+using System.Threading;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
 using Serilog;
@@ -10,6 +11,8 @@ namespace SafeguardDotNetTool
 {
     internal class Program
     {
+        private static CancellationTokenSource Cts { get; } = new CancellationTokenSource();
+
         private static SecureString PromptForSecret(string name)
         {
             Console.Write($"{name}: ");
@@ -91,9 +94,22 @@ namespace SafeguardDotNetTool
 
                 Log.Debug($"Access Token Lifetime Remaining: {connection.GetAccessTokenLifetimeRemaining()}");
 
-                var responseBody = opts.Csv
+                string responseBody;
+                if (!string.IsNullOrEmpty(opts.File))
+                {
+                    using FileStream fs = File.OpenRead(opts.File);
+                    var progress = opts.Verbose ? new Progress<UploadProgress>(p =>
+                    {
+                        Console.Write("\rUploading: {0,3}% ({1}/{2})                                  ", p.PercentComplete, p.BytesTransferred, p.BytesTotal);
+                    }) : null;
+                    responseBody = connection.Streaming.UploadAsync(opts.Service, opts.RelativeUrl, fs, progress, cancellationToken: Cts.Token).Result;
+                }
+                else
+                {
+                    responseBody = opts.Csv
                     ? connection.InvokeMethodCsv(opts.Service, opts.Method, opts.RelativeUrl, opts.Body)
                     : connection.InvokeMethod(opts.Service, opts.Method, opts.RelativeUrl, opts.Body);
+                }
                 //Log.Information(responseBody); // if JSON is nested too deep Serilog swallows a '}' -- need to file issue with them
                 Console.WriteLine(responseBody);
 
@@ -115,6 +131,11 @@ namespace SafeguardDotNetTool
 
         private static void Main(string[] args)
         {
+            Console.CancelKeyPress += delegate 
+            {
+                Cts.Cancel();
+            };
+
             Parser.Default.ParseArguments<ToolOptions>(args)
                 .WithParsed(Execute)
                 .WithNotParsed(HandleParseError);

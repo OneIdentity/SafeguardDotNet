@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Net;
 using System.Net.Security;
 using System.Security;
 using Newtonsoft.Json.Linq;
 using RestSharp;
-using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {

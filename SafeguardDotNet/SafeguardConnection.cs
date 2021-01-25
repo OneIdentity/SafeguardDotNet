@@ -43,7 +43,16 @@ namespace OneIdentity.SafeguardDotNet
                 _applianceClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
                 _notificationClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
             }
+
+            _lazyStreamingRequest = new Lazy<IStreamingRequest>(() =>
+            {
+                return new StreamingRequest(_authenticationMechanism, () => _disposed);
+            });
         }
+
+
+        private Lazy<IStreamingRequest> _lazyStreamingRequest;
+        public IStreamingRequest Streaming => _lazyStreamingRequest.Value;
 
         public int GetAccessTokenLifetimeRemaining()
         {
@@ -108,14 +117,7 @@ namespace OneIdentity.SafeguardDotNet
             }
 
             var client = GetClientForService(service);
-            Log.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
-                client.BaseUrl + $"/{relativeUrl}");
-            Log.Debug("  Query parameters: {QueryParameters}",
-                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
-                    .TrimEnd('&') ?? "None");
-            Log.Debug("  Additional headers: {AdditionalHeaders}",
-                additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
+            LogRequestDetails(method, new Uri(client.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
             var response = client.Execute(request);
             Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             if (response.ResponseStatus != ResponseStatus.Completed)
@@ -136,12 +138,8 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in response.Headers)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
-            Log.Debug("Response status code: {StatusCode}", fullResponse.StatusCode);
-            Log.Debug("  Response headers: {ResponseHeaders}",
-                fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
-            Log.Debug("  Body size: {ResponseBodySize}",
-                fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
+            LogResponseDetails(fullResponse);
+            
             return fullResponse;
         }
 
@@ -199,6 +197,30 @@ namespace OneIdentity.SafeguardDotNet
             }
             _authenticationMechanism.ClearAccessToken();
             Log.Debug("Cleared access token");
+        }
+
+        internal static void LogRequestDetails(Method method, Uri uri, IDictionary<string, string> parameters = null,
+            IDictionary<string, string> additionalHeaders = null)
+        {
+            Log.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
+                uri);
+                //client.BaseUrl + $"/{relativeUrl}");
+            Log.Debug("  Query parameters: {QueryParameters}",
+                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
+                    .TrimEnd('&') ?? "None");
+            Log.Debug("  Additional headers: {AdditionalHeaders}",
+                additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
+        }
+
+        internal static void LogResponseDetails(FullResponse fullResponse)
+        {
+            Log.Debug("Response status code: {StatusCode}", fullResponse.StatusCode);
+            Log.Debug("  Response headers: {ResponseHeaders}",
+                fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
+            Log.Debug("  Body size: {ResponseBodySize}",
+                fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
         }
 
         private RestClient GetClientForService(Service service)

@@ -1,5 +1,4 @@
 ﻿using CommandLine;
-using CommandLine.Text;
 using OneIdentity.SafeguardDotNet;
 
 namespace SafeguardDotNetA2aTool
