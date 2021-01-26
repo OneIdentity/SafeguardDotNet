@@ -28,7 +28,7 @@ namespace OneIdentity.SafeguardDotNet
             _lazyHttpClient = new Lazy<HttpClient>(()=> CreateHttpClient(_progressMessageHandler));
         }
 
-        public async Task<string> UploadAsync(Service service, string relativeUrl, Stream stream, IProgress<UploadProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
+        public async Task<string> UploadAsync(Service service, string relativeUrl, Stream stream, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
         {
             if (_isDisposed())
                 throw new ObjectDisposedException("SafeguardConnection");
@@ -75,7 +75,7 @@ namespace OneIdentity.SafeguardDotNet
                     {
                         progressHandlerFunc = (sender, args) =>
                         {
-                            var uploadProgress = new UploadProgress
+                            var uploadProgress = new TransferProgress
                             {
                                 BytesTotal = args.TotalBytes.GetValueOrDefault(0),
                                 BytesTransferred = args.BytesTransferred
@@ -115,6 +115,98 @@ namespace OneIdentity.SafeguardDotNet
             }
         }
 
+        public async Task DownloadAsync(Service service, string relativeUrl, string outputFilePath, string body = null, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
+        {
+            if (_isDisposed())
+                throw new ObjectDisposedException("SafeguardConnection");
+            if (string.IsNullOrEmpty(relativeUrl))
+                throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+
+            var token = cancellationToken ?? CancellationToken.None;
+            var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
+            if (parameters != null)
+            {
+                uri = QueryHelpers.AddQueryString(uri, parameters);
+            }
+
+            using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
+            {
+                if (!_authenticationMechanism.IsAnonymous)
+                {
+                    if (!_authenticationMechanism.HasAccessToken())
+                        throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
+                    // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
+                    // I'm not sure there is anything you can do about it.
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authenticationMechanism.GetAccessToken().ToInsecureString());
+                }
+
+                if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
+                    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+
+                if (additionalHeaders != null)
+                {
+                    foreach (var header in additionalHeaders)
+                        request.Headers.Add(header.Key, header.Value);
+                }
+
+                SafeguardConnection.LogRequestDetails(Method.Post, new Uri(uri), parameters, additionalHeaders);
+
+                EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
+
+                if(!string.IsNullOrEmpty(body))
+                {
+                    request.Content = new StringContent(body);
+                    request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                }
+
+                if (progress != null)
+                {
+                    progressHandlerFunc = (sender, args) =>
+                    {
+                        var downloadProgress = new TransferProgress
+                        {
+                            BytesTotal = args.TotalBytes.GetValueOrDefault(0),
+                            BytesTransferred = args.BytesTransferred
+                        };
+                        progress.Report(downloadProgress);
+                    };
+                    _progressMessageHandler.HttpReceiveProgress += progressHandlerFunc;
+                }
+
+                try
+                {
+                    var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
+
+                    using(var fs = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+                    {
+                        var downloadStream = await response.Content.ReadAsStreamAsync();
+                        await downloadStream.CopyToAsync(fs, DefaultBufferSize);
+                    }
+                    
+                    var fullResponse = new FullResponse
+                    {
+                        Body = "<stream content>",
+                        Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
+                        StatusCode = response.StatusCode
+                    };
+
+                    if (!response.IsSuccessStatusCode)
+                        throw new SafeguardDotNetException(
+                            $"Error returned from Safeguard API, Error: {fullResponse.StatusCode} {fullResponse.Body}",
+                            fullResponse.StatusCode, fullResponse.Body);
+
+                    SafeguardConnection.LogResponseDetails(fullResponse);
+                }
+                finally
+                {
+                    if (progressHandlerFunc != null)
+                    {
+                        _progressMessageHandler.HttpReceiveProgress -= progressHandlerFunc;
+                    }
+                }
+            }
+        }
+
         private HttpClient CreateHttpClient(ProgressMessageHandler progressHandler)
         {
             var httpClientHandler = new HttpClientHandler();
@@ -127,8 +219,26 @@ namespace OneIdentity.SafeguardDotNet
             {
                 httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => _authenticationMechanism.ValidationCallback(message, cert, chain, errors);
             }
+
+            var client = new HttpClient(progressHandler); 
+            // do not time out on streaming requests, let the cancellation token handle timeouts
+            client.Timeout = Timeout.InfiniteTimeSpan;
+            return client;
+        }
+
+        
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed() || !disposing)
+                return;
             
-            return new HttpClient(progressHandler); // do not dispose
+            Client.Dispose();
         }
     }
 }

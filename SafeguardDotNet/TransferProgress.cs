@@ -1,6 +1,6 @@
 ﻿namespace OneIdentity.SafeguardDotNet
 {
-    public class UploadProgress
+    public class TransferProgress
     {
         public long BytesTransferred { get; set;  }
         public long BytesTotal { get; set; }

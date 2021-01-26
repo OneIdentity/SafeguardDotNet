@@ -254,6 +254,8 @@ namespace OneIdentity.SafeguardDotNet
             try
             {
                 _authenticationMechanism?.Dispose();
+                if (_lazyStreamingRequest.IsValueCreated)
+                    Streaming.Dispose();
             }
             finally
             {
