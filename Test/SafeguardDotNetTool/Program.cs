@@ -97,12 +97,7 @@ namespace SafeguardDotNetTool
                 string responseBody;
                 if (!string.IsNullOrEmpty(opts.File))
                 {
-                    using FileStream fs = File.OpenRead(opts.File);
-                    var progress = opts.Verbose ? new Progress<UploadProgress>(p =>
-                    {
-                        Console.Write("\rUploading: {0,3}% ({1}/{2})                                  ", p.PercentComplete, p.BytesTransferred, p.BytesTotal);
-                    }) : null;
-                    responseBody = connection.Streaming.UploadAsync(opts.Service, opts.RelativeUrl, fs, progress, cancellationToken: Cts.Token).Result;
+                    responseBody = HandleStreamingRequest(opts, connection);
                 }
                 else
                 {
@@ -119,6 +114,41 @@ namespace SafeguardDotNetTool
             {
                 Log.Error(ex, "Fatal exception occurred");
                 Environment.Exit(1);
+            }
+        }
+
+        private static string HandleStreamingRequest(ToolOptions opts, ISafeguardConnection connection)
+        {
+            if (opts.Method == Method.Post)
+            {
+                using FileStream fs = File.OpenRead(opts.File);
+                var progress = opts.Verbose ? new Progress<TransferProgress>(p =>
+                {
+                    Console.Write("\rUploading: {0,3}% ({1}/{2})                                  ", p.PercentComplete, p.BytesTransferred, p.BytesTotal);
+                }) : null;
+                return connection.Streaming.UploadAsync(opts.Service, opts.RelativeUrl, fs, progress, cancellationToken: Cts.Token).Result;
+            }
+            else if (opts.Method == Method.Get)
+            {
+                if (File.Exists(opts.File))
+                    throw new Exception($"File exists, remove it first: {opts.File}");
+                var progress = opts.Verbose ? new Progress<TransferProgress>(p =>
+                {
+                    if (p.BytesTotal == 0)
+                    {
+                        Console.Write("\rDownloading: {0}", p.BytesTransferred);
+                    }
+                    else
+                    {
+                        Console.Write("\rDownloading: {0,3}% ({1}/{2})                                  ", p.PercentComplete, p.BytesTransferred, p.BytesTotal);
+                    }
+                }) : null;
+                connection.Streaming.DownloadAsync(opts.Service, opts.RelativeUrl, opts.File, progress: progress, cancellationToken: Cts.Token).Wait(Cts.Token);
+                return $"Download written to {opts.File}";
+            }
+            else
+            {
+                throw new Exception($"Streaming is not supported for HTTP method: {opts.Method}");
             }
         }
 
