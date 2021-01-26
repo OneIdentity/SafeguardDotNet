@@ -33,10 +33,12 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="body">Request body to pass to the method.</param>
         /// <param name="parameters">Additional parameters to add to the URL.</param>
         /// <param name="additionalHeaders">Additional headers to add to the request.</param>
+        /// <param name="timeout">Optional per-request timeout</param>
         /// <returns>Response body as a string.</returns>
         string InvokeMethod(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null);
+            IDictionary<string, string> additionalHeaders = null,
+            TimeSpan? timeout = null);
 
         /// <summary>
         /// Call a Safeguard API method and get a detailed response with status code, headers,
@@ -48,10 +50,12 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="body">Request body to pass to the method.</param>
         /// <param name="parameters">Additional parameters to add to the URL.</param>
         /// <param name="additionalHeaders">Additional headers to add to the request.</param>
+        /// <param name="timeout">Optional per-request timeout</param>
         /// <returns>Response with status code, headers, and body as string.</returns>
         FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null);
+            IDictionary<string, string> additionalHeaders = null,
+            TimeSpan? timeout = null);
 
         /// <summary>
         /// Call a Safeguard API method and get any response as a CSV string. Some Safeguard API
@@ -64,10 +68,12 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="body">Request body to pass to the method.</param>
         /// <param name="parameters">Additional parameters to add to the URL.</param>
         /// <param name="additionalHeaders">Additional headers to add to the request.</param>
+        /// <param name="timeout">Optional per-request timeout</param>
         /// <returns>Response body as a CSV string.</returns>
         string InvokeMethodCsv(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null);
+            IDictionary<string, string> additionalHeaders = null,
+            TimeSpan? timeout = null);
 
         /// <summary>
         /// Provides support for HTTP streaming requests

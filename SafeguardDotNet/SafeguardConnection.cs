@@ -75,16 +75,17 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
-            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders)
+            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders, 
+            TimeSpan? timeout = null)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
-            return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
+            return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout).Body;
         }
 
         public FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null)
+            IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
@@ -115,9 +116,15 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var param in parameters)
                     request.AddParameter(param.Key, param.Value, ParameterType.QueryString);
             }
+            if (timeout.HasValue)
+            {
+                request.Timeout = (timeout.Value.TotalMilliseconds > int.MaxValue)
+                    ? int.MaxValue : (int)timeout.Value.TotalMilliseconds;
+            }
 
             var client = GetClientForService(service);
             LogRequestDetails(method, new Uri(client.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
+            
             var response = client.Execute(request);
             Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             if (response.ResponseStatus != ResponseStatus.Completed)
@@ -145,14 +152,14 @@ namespace OneIdentity.SafeguardDotNet
 
         public string InvokeMethodCsv(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null)
+            IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
             if (additionalHeaders == null)
                 additionalHeaders = new Dictionary<string, string>();
             additionalHeaders.Add("Accept", "text/csv");
-            return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders).Body;
+            return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout).Body;
         }
 
         public ISafeguardEventListener GetEventListener()
