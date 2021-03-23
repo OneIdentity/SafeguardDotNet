@@ -21,7 +21,7 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
-displayName: ".NET Standard SDK and .NET Framework GUI component"
+name: ".NET Standard SDK and .NET Framework GUI component"
 pool:
   vmImages: 'windows-latest'
 
