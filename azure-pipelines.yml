@@ -23,7 +23,7 @@ variables:
 
 name: ".NET Standard SDK and .NET Framework GUI component"
 pool:
-  vmImages: 'windows-latest'
+  vmImage: 'windows-latest'
 
 steps:
 - task: PowerShell@2
