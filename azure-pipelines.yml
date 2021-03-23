@@ -17,50 +17,45 @@ variables:
   semanticVersion: "6.9.0"
   isPrerelease: ${{ true }}
   isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
 
-jobs:
-- job:
-  displayName: ".NET Standard SDK and .NET Framework GUI component"
-  pool: 
-    vmImages: 'windows-latest'
-  
-  # Windows Build Variables
-  variables:
-    solution: '**/*.sln'
-    buildPlatform: 'Any CPU'
-    buildConfiguration: 'Release'
-  
-  steps:
-  - task: PowerShell@2
-    inputs:
-      targetType: filePath
-      filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
-    displayName: 'Setting build version'
+displayName: ".NET Standard SDK and .NET Framework GUI component"
+pool:
+  vmImages: 'windows-latest'
 
-  - task: NuGetToolInstaller@1
+steps:
+- task: PowerShell@2
+  inputs:
+    targetType: filePath
+    filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
+    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+  displayName: 'Setting build version'
 
-  - task: NuGetCommand@2
-    inputs:
-      restoreSolution: '$(solution)'
+- task: NuGetToolInstaller@1
 
-  - task: AzureKeyVault@1
-    inputs:
-      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
-      KeyVaultName: 'SafeguardBuildSecrets'
-      SecretsFilter: 'NugetOrgApiKey'
-    displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
-    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
 
-  - task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: 'env | sort'
-    displayName: 'Display environment variables'
-  
-  - task: VSBuild@1
-    inputs:
-      solution: '$(solution)'
-      platform: '$(buildPlatform)'
-      configuration: '$(buildConfiguration)'
-    displayName: 'Build $(solution)'
+- task: AzureKeyVault@1
+  inputs:
+    azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+    KeyVaultName: 'SafeguardBuildSecrets'
+    SecretsFilter: 'NugetOrgApiKey'
+  displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'env | sort'
+  displayName: 'Display environment variables'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+  displayName: 'Build $(solution)'
