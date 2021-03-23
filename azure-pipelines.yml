@@ -1,0 +1,66 @@
+# which branch should trigger a build
+trigger:
+  branches:
+    include: [ master, release-*, azure-pipelines ]
+
+# Global Variables:
+#
+# semanticVersion.<generated build number> gets set in a variable called VersionString.
+#   VersionString is used to replace placeholders in assemblies and packages.
+#
+# isPrerelease controls whether the release artifacts on GitHub and the Powershell module
+#   in the Powershell Gallery is marked as prerelease or not.
+#
+# isReleaseBranch controls whether packages will be generated and published.
+#
+variables:
+  semanticVersion: "6.9.0"
+  isPrerelease: ${{ true }}
+  isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+
+jobs:
+- job:
+  displayName: ".NET Standard SDK and .NET Framework GUI component"
+  pool: 
+    vmImages: 'windows-latest'
+  
+  # Windows Build Variables
+  variables:
+    solution: '**/*.sln'
+    buildPlatform: 'Any CPU'
+    buildConfiguration: 'Release'
+  
+  steps:
+  - task: PowerShell@2
+    inputs:
+      targetType: filePath
+      filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
+      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+    displayName: 'Setting build version'
+
+  - task: NuGetToolInstaller@1
+
+  - task: NuGetCommand@2
+    inputs:
+      restoreSolution: '$(solution)'
+
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'NugetOrgApiKey'
+    displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'env | sort'
+    displayName: 'Display environment variables'
+  
+  - task: VSBuild@1
+    inputs:
+      solution: '$(solution)'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(solution)'
