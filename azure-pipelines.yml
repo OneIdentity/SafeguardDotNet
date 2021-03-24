@@ -8,8 +8,8 @@ pr:
     exclude:
     - README.md
 
-jobs:
-  - template: build.yml
+  jobs:
+    - template: build.yml
 
 # merge trigger
 trigger:
@@ -21,18 +21,18 @@ trigger:
     exclude:
     - README.md
 
-jobs:
-  - template: build.yml
-  - task: NuGetAuthenticate@0
-    inputs:
-      nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
-    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  jobs:
+    - template: build.yml
+    - task: NuGetAuthenticate@0
+      inputs:
+        nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
+      condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-  - task: NuGetCommand@2
-    inputs:
-      command: 'push'
-      nuGetFeedType: 'external'
-      packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-      verbosityPush: 'Detailed'
-    displayName: 'Publishing NuGet packages to NuGet.org'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+    - task: NuGetCommand@2
+      inputs:
+        command: 'push'
+        nuGetFeedType: 'external'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+        verbosityPush: 'Detailed'
+      displayName: 'Publishing NuGet packages to NuGet.org'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
