@@ -1,5 +1,5 @@
 variables:
-  - template: pipeline-templates/variables.yml
+  - template: pipeline-templates/global-variables.yml
 trigger:
   branches:
     include:

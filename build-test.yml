@@ -1,13 +1,6 @@
 variables:
   - template: pipeline-templates/global-variables.yml
-trigger:
-  branches:
-    include:
-      - master
-      - release-*
-  paths:
-    exclude:
-      - README.md
+trigger: none
 pr:
   branches:
     include:
