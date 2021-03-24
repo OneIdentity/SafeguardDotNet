@@ -18,7 +18,7 @@ trigger:
 variables:
   semanticVersion: "6.9.0"
   isPrerelease: ${{ true }}
-  isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+  isReleaseBranch: $[ or( eq(variables['System.TargetBranch'], 'master'), startsWith(variables['System.TargetBranch'], 'release-') ) ]
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
