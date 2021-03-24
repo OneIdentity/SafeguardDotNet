@@ -5,8 +5,10 @@ trigger:
 
 # Global Variables:
 #
-# semanticVersion.<generated build number> gets set in a variable called VersionString.
-#   VersionString is used to replace placeholders in assemblies and packages.
+# semanticVersion.<generated build number> gets set in a variable called AssemblyVersion.
+# semanticVersion and <generated build number> are used to generate a variable called PackageVersion depending on prerelease flag.
+#   AssemblyVersion is used to replace placeholders in assemblies.
+#   PackageVersion is used ot replace placehodlers in packages.
 #
 # isPrerelease controls whether the release artifacts on GitHub and the Powershell module
 #   in the Powershell Gallery is marked as prerelease or not.
@@ -32,7 +34,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId) $(isPrerelease)
   displayName: 'Setting build version'
 
 - task: NuGetToolInstaller@1
@@ -87,5 +89,8 @@ steps:
     command: 'pack'
     packagesToPack: '**/SafeguardDotNet.csproj;**/SafeguardDotNet.GuiLogin.nuspec'
     versioningScheme: 'off'
+    configuration: '$(buildConfiguration)'
+    packDestination: '$(Build.ArtifactStagingDirectory)'
     includeSymbols: true
     verbosityPack: 'Detailed'
+  displayName: Building NuGet packages
