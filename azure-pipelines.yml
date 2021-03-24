@@ -34,7 +34,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId) $(isPrerelease)
+    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId) $$(isPrerelease)
   displayName: 'Setting build version'
 
 - task: NuGetToolInstaller@1
@@ -94,3 +94,9 @@ steps:
     includeSymbols: true
     verbosityPack: 'Detailed'
   displayName: Building NuGet packages
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'SafeguardDotNet'
+  displayName: 'Publishing the artifacts'
