@@ -1,0 +1,30 @@
+variables:
+  - template: pipeline-templates/variables.yml
+trigger:
+  branches:
+    include:
+      - master
+      - release-*
+  paths:
+    exclude:
+      - README.md
+pr: none
+jobs:
+  - job: Build
+    displayName: 'Build and publish .NET Standard SDK and .NET Framework GUI component'
+    variables:
+      - template: pipeline-templates/job-variables.yml
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - template: pipeline-templates/build-steps.yml
+      - task: NuGetAuthenticate@0
+        inputs:
+          nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
+      - task: NuGetCommand@2
+        inputs:
+          command: 'push'
+          nuGetFeedType: 'external'
+          packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+          verbosityPush: 'Detailed'
+        displayName: 'Publishing NuGet packages to NuGet.org'
