@@ -37,6 +37,12 @@ steps:
     arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId) $$(isPrerelease)
   displayName: 'Setting build version'
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'env | sort'
+  displayName: 'Display environment variables'
+
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
@@ -49,15 +55,6 @@ steps:
     KeyVaultName: 'CodeSigningCertificates'
     SecretsFilter: '*'
   displayName: 'Get code signing certificate from Azure Key Vault'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-- task: AzureKeyVault@1
-  inputs:
-    azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
-    KeyVaultName: 'SafeguardBuildSecrets'
-    SecretsFilter: 'NugetOrgApiKey'
-  displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
 - powershell: |
     $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
@@ -68,13 +65,6 @@ steps:
     Write-Verbose -Verbose $certpath
     [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
   displayName: 'Save code signing certificate to PFX file'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'env | sort'
-  displayName: 'Display environment variables'
 
 - task: VSBuild@1
   inputs:
@@ -100,3 +90,17 @@ steps:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'SafeguardDotNet'
   displayName: 'Publishing the artifacts'
+
+- task: NuGetAuthenticate@0
+  inputs:
+    nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    nuGetFeedType: 'external'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    verbosityPush: 'Detailed'
+  displayName: 'Publishing NuGet packages to NuGet.org'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
