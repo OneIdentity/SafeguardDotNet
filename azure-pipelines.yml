@@ -1,108 +1,38 @@
-# which branch should trigger a build
+# pr trigger
+pr:
+  branches:
+    include:
+    - master
+    - release-*
+  paths:
+    exclude:
+    - README.md
+
+jobs:
+  - template: build.yml
+
+# merge trigger
 trigger:
   branches:
-    include: [ master, release-* ]
+    include:
+    - master
+    - release-*
+  paths:
+    exclude:
+    - README.md
 
-# Global Variables:
-#
-# semanticVersion.<generated build number> gets set in a variable called AssemblyVersion.
-# semanticVersion and <generated build number> are used to generate a variable called PackageVersion depending on prerelease flag.
-#   AssemblyVersion is used to replace placeholders in assemblies.
-#   PackageVersion is used ot replace placehodlers in packages.
-#
-# isPrerelease controls whether the release artifacts on GitHub and the Powershell module
-#   in the Powershell Gallery is marked as prerelease or not.
-#
-# isReleaseBranch controls whether packages will be generated and published.
-#
-variables:
-  semanticVersion: "6.9.0"
-  isPrerelease: ${{ true }}
-  isReleaseBranch: $[ or( eq(variables['System.TargetBranch'], 'master'), startsWith(variables['System.TargetBranch'], 'release-') ) ]
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-  codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
-  signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
+jobs:
+  - template: build.yml
+  - task: NuGetAuthenticate@0
+    inputs:
+      nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-name: ".NET Standard SDK and .NET Framework GUI component"
-pool:
-  vmImage: 'windows-latest'
-
-steps:
-- task: PowerShell@2
-  inputs:
-    targetType: filePath
-    filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId) $$(isPrerelease)
-  displayName: 'Setting build version'
-
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'env | sort'
-  displayName: 'Display environment variables'
-
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
-
-# - task: AzureKeyVault@1
-#   inputs:
-#     azureSubscription: 'Azure.Infrastructure.CodeSigning'
-#     KeyVaultName: 'CodeSigningCertificates'
-#     SecretsFilter: '*'
-#   displayName: 'Get code signing certificate from Azure Key Vault'
-#   condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-# - powershell: |
-#     $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
-#     $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-#     $certCollection.Import($kvSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-#     $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12,"$(OneIdentity-CodeSigningCertPassword)")
-#     $certpath = '$(Build.BinariesDirectory)/$(codeSigningCertFileName)'
-#     Write-Verbose -Verbose $certpath
-#     [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
-#   displayName: 'Save code signing certificate to PFX file'
-#   condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    # msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-  displayName: 'Build $(solution)'
-
-- task: NuGetCommand@2
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/SafeguardDotNet.csproj;**/SafeguardDotNet.GuiLogin.nuspec'
-    versioningScheme: 'off'
-    configuration: '$(buildConfiguration)'
-    packDestination: '$(Build.ArtifactStagingDirectory)'
-    includeSymbols: true
-    verbosityPack: 'Detailed'
-  displayName: Building NuGet packages
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'SafeguardDotNet'
-  displayName: 'Publishing the artifacts'
-
-- task: NuGetAuthenticate@0
-  inputs:
-    nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-- task: NuGetCommand@2
-  inputs:
-    command: 'push'
-    nuGetFeedType: 'external'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    verbosityPush: 'Detailed'
-  displayName: 'Publishing NuGet packages to NuGet.org'
+  - task: NuGetCommand@2
+    inputs:
+      command: 'push'
+      nuGetFeedType: 'external'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+      verbosityPush: 'Detailed'
+    displayName: 'Publishing NuGet packages to NuGet.org'
   condition: and(succeeded(), eq(variables.isReleaseBranch, true))
