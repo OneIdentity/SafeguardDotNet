@@ -1,7 +1,7 @@
 # which branch should trigger a build
 trigger:
   branches:
-    include: [ master, release-*, azure-pipelines ]
+    include: [ master, release-* ]
 
 # Global Variables:
 #
