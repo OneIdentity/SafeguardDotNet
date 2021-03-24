@@ -81,3 +81,15 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(solution) with signing'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/SafeguardDotNet.csproj'
+    versioningScheme: 'off'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/SafeguardDotNet.GuiLogin.nuspec'
+    versioningScheme: 'off'
