@@ -55,6 +55,7 @@ steps:
     KeyVaultName: 'CodeSigningCertificates'
     SecretsFilter: '*'
   displayName: 'Get code signing certificate from Azure Key Vault'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
 - powershell: |
     $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
@@ -65,6 +66,7 @@ steps:
     Write-Verbose -Verbose $certpath
     [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
   displayName: 'Save code signing certificate to PFX file'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
 - task: VSBuild@1
   inputs:
