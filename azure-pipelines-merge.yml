@@ -1,4 +1,4 @@
-name: 'SafeguardDotNet pr test pipeline'
+name: 'SafeguardDotNet merge publish pipeline'
 variables:
   semanticVersion: "6.9.0"
   isPrerelease: ${{ true }}
