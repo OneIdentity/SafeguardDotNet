@@ -1,0 +1,22 @@
+name: 'SafeguardDotNet pr test pipeline'
+variables:
+  semanticVersion: "6.9.0"
+  isPrerelease: ${{ true }}
+trigger:
+  branches:
+    include:
+    - master
+    - release-*
+  paths:
+    exclude:
+    - README.md
+pr:
+  branches:
+    include:
+    - master
+    - release-*
+  paths:
+    exclude:
+    - README.md
+jobs:
+  - template: build.yml

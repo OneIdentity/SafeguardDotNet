@@ -1,17 +1,7 @@
-# pr trigger
-pr:
-  branches:
-    include:
-    - master
-    - release-*
-  paths:
-    exclude:
-    - README.md
-
-  jobs:
-    - template: build.yml
-
-# merge trigger
+name: 'SafeguardDotNet pr test pipeline'
+variables:
+  semanticVersion: "6.9.0"
+  isPrerelease: ${{ true }}
 trigger:
   branches:
     include:
@@ -20,13 +10,14 @@ trigger:
   paths:
     exclude:
     - README.md
-
-  jobs:
-    - template: build.yml
+pr: none
+jobs:
+  - template: build.yml
+  - job:
+    displayName: 'Publishing packages to NuGet.org'
     - task: NuGetAuthenticate@0
       inputs:
         nuGetServiceConnections: 'SafeguardNuGetOrgServiceConnection'
-      condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
     - task: NuGetCommand@2
       inputs:
@@ -35,4 +26,3 @@ trigger:
         packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
         verbosityPush: 'Detailed'
       displayName: 'Publishing NuGet packages to NuGet.org'
-    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
