@@ -106,7 +106,9 @@ namespace ServiceNowTicketValidator
 
         private void HandleOAuth()
         {
-            
+            // TODO:
+            _accessToken = null;
+            throw new NotImplementedException("Need to implement the HandleOAuth method");
         }
 
         protected virtual void Dispose(bool disposing)

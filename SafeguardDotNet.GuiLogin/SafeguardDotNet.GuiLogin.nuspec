@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>$id$</id>
+    <id>OneIdentity.SafeguardDotNet.GuiLogin</id>
     <version>9999.9999.9999</version>
-    <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <title>OneIdentity.SafeguardDotNet.GuiLogin</title>
+    <authors>One Identity LLC</authors>
+    <owners>One Identity LLC</owners>
     <license type="expression">Apache-2.0</license>
     <projectUrl>https://github.com/OneIdentity/SafeguardDotNet</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
     <!-- <icon>Content\images\SafeguardLogo.png</icon> -->
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>$description$</description>
+    <description>GUI Login for One Identity Safeguard Web API .NET SDK</description>
     <releaseNotes>GuiLogin assembly for .NET interactive login.</releaseNotes>
-    <copyright>(c) 2020 One Identity LLC. All rights reserved.</copyright>
+    <copyright>(c) 2021 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
     <dependencies>
       <group targetFramework=".NETFramework4.6.2">
