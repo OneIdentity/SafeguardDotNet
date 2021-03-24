@@ -85,11 +85,7 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'pack'
-    packagesToPack: '**/SafeguardDotNet.csproj'
+    packagesToPack: '**/SafeguardDotNet.csproj;**/SafeguardDotNet.GuiLogin.nuspec'
     versioningScheme: 'off'
-
-- task: NuGetCommand@2
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/SafeguardDotNet.GuiLogin.nuspec'
-    versioningScheme: 'off'
+    includeSymbols: true
+    verbosityPack: 'Detailed'
