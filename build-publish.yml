@@ -27,5 +27,5 @@ jobs:
       - task: NuGetCommand@2
         inputs:
           command: 'custom'
-          arguments: 'push $(Build.ArtifactStagingDirectory)/*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
+          arguments: 'push $(Build.ArtifactStagingDirectory)\*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
         displayName: 'Publishing NuGet packages to NuGet.org'
