@@ -13,10 +13,12 @@ steps:
   displayName: 'Display environment variables'
 
 - task: NuGetToolInstaller@1
+  displayName: 'Install NuGet tools'
 
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
+  displayName: 'Restore NuGet packages'
 
 # - task: AzureKeyVault@1
 #   inputs:
@@ -47,14 +49,15 @@ steps:
 
 - task: NuGetCommand@2
   inputs:
-    command: 'pack'
-    packagesToPack: '**/SafeguardDotNet.csproj;**/SafeguardDotNet.GuiLogin.nuspec'
-    versioningScheme: 'off'
-    configuration: '$(buildConfiguration)'
-    packDestination: '$(Build.ArtifactStagingDirectory)'
-    includeSymbols: true
-    verbosityPack: 'Detailed'
-  displayName: Building NuGet packages
+    command: 'custom'
+    arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
+  displayName: Building SafeguardDotNet NuGet packages
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'custom'
+    arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
+  displayName: Building SafeguardDotNet.GuiLogin NuGet packages
 
 - task: PublishBuildArtifacts@1
   inputs:
