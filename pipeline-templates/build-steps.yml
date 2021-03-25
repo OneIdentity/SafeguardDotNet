@@ -13,10 +13,12 @@ steps:
   displayName: 'Display environment variables'
 
 - task: NuGetToolInstaller@1
+  displayName: 'Install NuGet tools'
 
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
+  displayName: 'Restore NuGet packages'
 
 # - task: AzureKeyVault@1
 #   inputs:
