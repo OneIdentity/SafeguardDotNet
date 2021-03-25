@@ -54,6 +54,7 @@ steps:
     packDestination: '$(Build.ArtifactStagingDirectory)'
     includeSymbols: true
     verbosityPack: 'Detailed'
+    arguments: '-SymbolPackageFormat snupkg'
   displayName: Building NuGet packages
 
 - task: PublishBuildArtifacts@1
