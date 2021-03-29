@@ -47,10 +47,11 @@ steps:
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(solution)'
 
-- task: NuGetCommand@2
+- task: DotNetCoreCLI@2
   inputs:
     command: 'custom'
-    arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet NuGet packages
 
 - task: NuGetCommand@2
