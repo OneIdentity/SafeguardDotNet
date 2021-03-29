@@ -50,7 +50,7 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'custom'
-    arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+    custom: 'pack $(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet NuGet packages
 
 - task: NuGetCommand@2
