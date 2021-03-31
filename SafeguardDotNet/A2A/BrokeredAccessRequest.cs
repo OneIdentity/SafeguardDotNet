@@ -88,10 +88,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
             JsonSerializer serializer)
         {
             var spanstr = (string) reader.Value;
-            var fields = spanstr.Split(':');
-            if (fields.Length < 3)
-                throw new SafeguardDotNetException($"Unexpected timespan value \"{spanstr}\"");
-            return new TimeSpan(int.Parse(fields[0]), int.Parse(fields[1]), int.Parse(fields[2]));
+            if (spanstr != null)
+            {
+                var fields = spanstr.Split(':');
+                if (fields.Length < 3)
+                    throw new SafeguardDotNetException($"Unexpected timespan value \"{spanstr}\"");
+                return new TimeSpan(int.Parse(fields[0]), int.Parse(fields[1]), int.Parse(fields[2]));
+            }
+            return TimeSpan.Zero;
         }
     }
 

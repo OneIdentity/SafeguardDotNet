@@ -61,6 +61,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             _clientCertificate = new CertificateContext(certificateData, certificatePassword);
         }
 
+        // Retaining this constructor in case we need to create from CertificateContext again in the future
+        // ReSharper disable once UnusedMember.Local
         private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,
             bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
@@ -98,7 +100,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     $"Error using client_credentials grant_type with {_clientCertificate}" +
                     $", Error: {response.StatusCode} {response.Content}", response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
-            return jObject.GetValue("access_token").ToString().ToSecureString();
+            return jObject.GetValue("access_token")?.ToString().ToSecureString();
         }
 
         public override object Clone()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -96,7 +97,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                                     response.ErrorMessage);
             if (!response.IsSuccessful)
                 return 0;
-            var remainingStr = response.Headers.ToList().FirstOrDefault(x => x.Name == "X-TokenLifetimeRemaining")?.Value.ToString();
+            var remainingStr = response.Headers.ToList().FirstOrDefault(x => x.Name == "X-TokenLifetimeRemaining")?.Value?.ToString();
             if (remainingStr == null || !int.TryParse(remainingStr, out var remaining))
                 return 10; // Random magic value... the access token was good, but for some reason it didn't return the remaining lifetime
             return remaining;
@@ -123,7 +124,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                         $"Error exchanging RSTS token from {Id} authenticator for Safeguard API access token, Error: " +
                         $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
                 var jObject = JObject.Parse(response.Content);
-                AccessToken = jObject.GetValue("UserToken").ToString().ToSecureString();
+                AccessToken = jObject.GetValue("UserToken")?.ToString().ToSecureString();
             }
         }
 
@@ -165,7 +166,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                         $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
                 var jObject = JObject.Parse(response.Content);
                 var jProviders = (JArray)jObject["Providers"];
-                var knownScopes = jProviders.Select(s => new { Id = s["Id"].ToString(), DisplayName = s["DisplayName"].ToString() });
+                var knownScopes = new List<(string Id, string DisplayName)>();
+                if (jProviders != null)
+                    knownScopes = jProviders.Select(s => (Id: s["Id"].ToString(), DisplayName: s["DisplayName"].ToString())).ToList();
 
                 // 3 step check for determining if the user provided scope is valid:
                 //
@@ -177,15 +180,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 //    - Such a broad check could provide some issues with false matching, however since this
                 //      was in the original code, this check has been left in place.
                 var scope = knownScopes.FirstOrDefault(s => s.Id.EqualsNoCase(provider));
-                if (scope == null)
+                if (scope.Id == null)
                 { 
                     scope = knownScopes.FirstOrDefault(s => s.DisplayName.EqualsNoCase(provider));
 
-                    if (scope == null)
+                    if (scope.DisplayName == null)
                     {
                         scope = knownScopes.FirstOrDefault(s => s.Id.ContainsNoCase(provider));
 
-                        if (scope == null)
+                        if (scope.Id == null)
                         {
                             throw new SafeguardDotNetException(
                             $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
