@@ -6,6 +6,7 @@ using CommandLine;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace SafeguardDotNetA2aTool
 {
@@ -75,7 +76,7 @@ namespace SafeguardDotNetA2aTool
             try
             {
                 var config = new LoggerConfiguration();
-                config.WriteTo.ColoredConsole(outputTemplate: "{Message:lj}{NewLine}{Exception}");
+                config.WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}", theme: AnsiConsoleTheme.Code);
 
                 if (opts.Verbose)
                     config.MinimumLevel.Debug();
@@ -124,7 +125,7 @@ namespace SafeguardDotNetA2aTool
 
         private static void HandleParseError(IEnumerable<Error> errors)
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.Console(theme: AnsiConsoleTheme.Code).CreateLogger();
             Log.Error("Invalid command line options");
             Environment.Exit(1);
         }

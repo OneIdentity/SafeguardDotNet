@@ -5,6 +5,7 @@ using System.Security;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace SafeguardDotNetExceptionTest
 {
@@ -189,7 +190,7 @@ namespace SafeguardDotNetExceptionTest
             try
             {
                 var config = new LoggerConfiguration();
-                config.WriteTo.ColoredConsole(outputTemplate: "{Message:lj}{NewLine}{Exception}");
+                config.WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}", theme: AnsiConsoleTheme.Code);
 
                 if (opts.Verbose)
                     config.MinimumLevel.Debug();
@@ -231,7 +232,7 @@ namespace SafeguardDotNetExceptionTest
 
         private static void HandleParseError(IEnumerable<Error> errors)
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.Console(theme: AnsiConsoleTheme.Code).CreateLogger();
             Log.Error("Invalid command line options");
             Environment.Exit(1);
         }
