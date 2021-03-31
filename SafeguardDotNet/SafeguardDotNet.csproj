@@ -29,6 +29,9 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
+- Per request timeout parameter.
+- Support for streaming API endpoints -- upload (patch) and download (backup or support bundle).
+- Better login window size for GuiLogin.
 - Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
