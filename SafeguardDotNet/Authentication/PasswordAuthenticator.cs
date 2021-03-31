@@ -56,7 +56,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     $"Error using password grant_type with scope {_providerScope}, Error: " +
                     $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
-            return jObject.GetValue("access_token").ToString().ToSecureString();
+            return jObject.GetValue("access_token")?.ToString().ToSecureString();
         }
 
         public override object Clone()

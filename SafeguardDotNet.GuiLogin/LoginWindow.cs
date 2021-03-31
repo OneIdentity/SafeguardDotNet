@@ -69,7 +69,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                     "Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}",
                     response.StatusCode, response.Content);
             var jObject = JObject.Parse(response.Content);
-            return jObject.GetValue("access_token").ToString().ToSecureString();
+            return jObject.GetValue("access_token")?.ToString().ToSecureString();
         }
 
         private static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
@@ -104,23 +104,23 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             {
                 Log.Debug("Posting RSTS access token to login response service");
                 var responseObject = PostLoginResponse(appliance, rstsAccessToken);
-                var statusValue = responseObject.GetValue("Status").ToString();
-                if (statusValue.Equals("Needs2FA"))
+                var statusValue = responseObject.GetValue("Status")?.ToString();
+                if (statusValue != null && statusValue.Equals("Needs2FA"))
                 {
                     Log.Debug("Authentication requires 2FA, continuing with RSTS for secondary authentication");
                     authorizationCode = ShowRstsWindowSecondary(
-                        responseObject.GetValue("PrimaryProviderId").ToString(),
-                        responseObject.GetValue("SecondaryProviderId").ToString());
+                        responseObject.GetValue("PrimaryProviderId")?.ToString(),
+                        responseObject.GetValue("SecondaryProviderId")?.ToString());
                     using (var secondRstsAccessToken = PostAuthorizationCodeFlow(appliance, authorizationCode))
                     {
                         Log.Debug("Posting second RSTS access token to login response service");
                         responseObject = PostLoginResponse(appliance, secondRstsAccessToken);
-                        statusValue = responseObject.GetValue("Status").ToString();
+                        statusValue = responseObject.GetValue("Status")?.ToString();
                     }
                 }
-                if (!statusValue.Equals("Success"))
+                if (statusValue != null && !statusValue.Equals("Success"))
                     throw new SafeguardDotNetException($"Error response status {statusValue} from login response service");
-                using (var accessToken = responseObject.GetValue("UserToken").ToString().ToSecureString())
+                using (var accessToken = responseObject.GetValue("UserToken")?.ToString().ToSecureString())
                     return Safeguard.Connect(appliance, accessToken, DefaultApiVersion, true);
             }
         }

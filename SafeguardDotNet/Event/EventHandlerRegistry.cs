@@ -52,7 +52,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                 var name = jObject["Name"];
                 var body = jObject["Data"];
                 // Work around for bug in A2A events in Safeguard 2.2 and 2.3
-                if (name != null && int.TryParse(name.ToString(), out _))
+                if (name != null && int.TryParse(name.ToString(), out _) && body != null)
                     name = body["EventName"];
                 events.Add((name?.ToString(), body));
                 

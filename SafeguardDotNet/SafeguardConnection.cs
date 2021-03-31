@@ -109,7 +109,7 @@ namespace OneIdentity.SafeguardDotNet
                 foreach (var header in additionalHeaders)
                     request.AddHeader(header.Key, header.Value);
             }
-            if (method == Method.Post || method == Method.Put)
+            if ((method == Method.Post || method == Method.Put) && body != null)
                 request.AddParameter("application/json", body, ParameterType.RequestBody);
             if (parameters != null)
             {
@@ -140,9 +140,9 @@ namespace OneIdentity.SafeguardDotNet
                 Headers = new Dictionary<string, string>(),
                 Body = response.Content
             };
-            if (response.Headers != null)
+            foreach (var header in response.Headers)
             {
-                foreach (var header in response.Headers)
+                if (header.Name != null)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
             LogResponseDetails(fullResponse);
