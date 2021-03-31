@@ -19,7 +19,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             _form = new Form()
             {
                 Text = $"{_appliance} - Safeguard Login",
-                Width = 640,
+                Width = 720,
                 Height = 720,
                 StartPosition = FormStartPosition.CenterParent
             };
