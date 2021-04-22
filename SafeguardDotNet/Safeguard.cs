@@ -313,6 +313,16 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         /// <summary>
+        /// Create a persistent connection to the Safeguard API that automatically renews expired access tokens.
+        /// </summary>
+        /// <param name="connection">Connection to be made persistent</param>
+        /// <returns>Reusable persistent Safeguard API connection</returns>
+        public static ISafeguardConnection Persist(ISafeguardConnection connection)
+        {
+            return new PersistentSafeguardConnection(connection);
+        }
+
+        /// <summary>
         /// This static class provides access to Safeguard Event functionality with persistent event listeners. Persistent
         /// event listeners can handle longer term service outages to reconnect SignalR even after it times out. It is
         /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
