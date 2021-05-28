@@ -58,6 +58,16 @@ namespace OneIdentity.SafeguardDotNet
             TimeSpan? timeout = null);
 
         /// <summary>
+        /// Join a Safeguard for Privileged Sessions and a Safeguard appliance. The Safeguard for
+        /// Privileged Sessions appliance needs to enable clustering and be a central search node.
+        /// </summary>
+        /// <param name="SpsConnection">A connection to the SafeguardForPrivilegedSessions appliance.</param>
+        /// <param name="CertificateChain">The PEM certificate chain of the Safeguard web api.</param>
+        /// <param name="SppAddress">The address of the Safeguard appliance.</param>
+        /// <returns>Response with status code, headers, and body as string.</returns>
+        FullResponse JoinSPS(ISafeguardSessionsConnection SpsConnection, string CertificateChain, string SppAddress);
+
+        /// <summary>
         /// Call a Safeguard API method and get any response as a CSV string. Some Safeguard API
         /// methods will return an empty body. If there is a failure a SafeguardDotNetException
         /// will be thrown.

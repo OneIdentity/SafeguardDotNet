@@ -44,6 +44,13 @@ namespace OneIdentity.SafeguardDotNet
             return _connection.InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout);
         }
 
+        public FullResponse JoinSPS(ISafeguardSessionsConnection SpsConnection, string CertificateChain, string SppAddress)
+        {
+            if (_connection.GetAccessTokenLifetimeRemaining() <= 0)
+                _connection.RefreshAccessToken();
+            return _connection.JoinSPS(SpsConnection, CertificateChain, SppAddress);
+        }
+
         public void LogOut() => _connection.LogOut();
 
         public void RefreshAccessToken() => _connection.RefreshAccessToken();
