@@ -23,7 +23,7 @@ jobs:
           azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
           KeyVaultName: 'SafeguardBuildSecrets'
           SecretsFilter: 'NugetOrgApiKey'
-        displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
+        displayName: 'Get Nuget.Org API key from Sandbox Azure Key Vault'
       - task: NuGetCommand@2
         inputs:
           command: 'custom'
