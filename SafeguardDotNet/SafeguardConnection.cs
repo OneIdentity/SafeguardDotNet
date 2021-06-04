@@ -5,6 +5,8 @@ using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -75,7 +77,7 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body,
-            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders, 
+            IDictionary<string, string> parameters, IDictionary<string, string> additionalHeaders,
             TimeSpan? timeout = null)
         {
             if (_disposed)
@@ -124,7 +126,7 @@ namespace OneIdentity.SafeguardDotNet
 
             var client = GetClientForService(service);
             LogRequestDetails(method, new Uri(client.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
-            
+
             var response = client.Execute(request);
             Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             if (response.ResponseStatus != ResponseStatus.Completed)
@@ -146,7 +148,7 @@ namespace OneIdentity.SafeguardDotNet
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
             LogResponseDetails(fullResponse);
-            
+
             return fullResponse;
         }
 
@@ -160,6 +162,26 @@ namespace OneIdentity.SafeguardDotNet
                 additionalHeaders = new Dictionary<string, string>();
             additionalHeaders.Add("Accept", "text/csv");
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout).Body;
+        }
+
+        public FullResponse JoinSPS(ISafeguardSessionsConnection SpsConnection, string CertificateChain, string SppAddress)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardConnection");
+
+            var request = new JoinRequest
+            {
+                spp = SppAddress,
+                spp_api_token = _authenticationMechanism.GetAccessToken().ToInsecureString(),
+                spp_cert_chain = CertificateChain
+            };
+            var joinBody = JsonConvert.SerializeObject(request);
+
+            Log.Debug("Sending join request.");
+            var joinResponse = SpsConnection.InvokeMethodFull(Method.Get, "cluster/spp", joinBody);
+            LogResponseDetails(joinResponse);
+
+            return joinResponse;
         }
 
         public ISafeguardEventListener GetEventListener()

@@ -4,6 +4,9 @@ You can use these projects for whatever you want, but their main purpose was to
 provide tools for testing SafeguardDotNet code against live Safeguard
 appliances.
 
+
+- `SafeguardSessionsDotNetTool` is useful for calling the basic Safeguard for Privileged Sessions API
+
 - `SafeguardDotNetTool` is useful for calling the basic Safeguard API
 
 - `SafeguardDotNetA2aTool` is specially built for calling Safeguard A2A
