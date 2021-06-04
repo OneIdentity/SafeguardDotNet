@@ -145,16 +145,17 @@ namespace SafeguardDotNetTool
                     }
                 }) : null;
 
-                connection.Streaming.DownloadAsync(opts.Service, opts.RelativeUrl, opts.File, progress: progress, cancellationToken: Cts.Token).Wait();
+                // This is the alternate way to download directly to a file:
+                // connection.Streaming.DownloadAsync(opts.Service, opts.RelativeUrl, opts.File, progress: progress, cancellationToken: Cts.Token).Wait();
 
-                //using (var streamResult = connection.Streaming.DownloadStreamAsync(opts.Service, opts.RelativeUrl, progress: progress, cancellationToken: Cts.Token).Result)
-                //{
-                //    using (var fs = new FileStream(opts.File, FileMode.Create, FileAccess.ReadWrite))
-                //    {
-                //        var downloadStream = streamResult.GetStream().Result;
-                //        downloadStream.CopyToAsync(fs, 81920).Wait();
-                //    }
-                //}
+                using (var streamResult = connection.Streaming.DownloadStreamAsync(opts.Service, opts.RelativeUrl, progress: progress, cancellationToken: Cts.Token).Result)
+                {
+                    using (var fs = new FileStream(opts.File, FileMode.Create, FileAccess.ReadWrite))
+                    {
+                        var downloadStream = streamResult.GetStream().Result;
+                        downloadStream.CopyToAsync(fs, 81920).Wait();
+                    }
+                }
                 return $"Download written to {opts.File}";
             }
             else
