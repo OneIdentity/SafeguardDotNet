@@ -30,42 +30,14 @@ namespace OneIdentity.SafeguardDotNet
 
         public async Task<string> UploadAsync(Service service, string relativeUrl, Stream stream, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
         {
-            if (_isDisposed())
-                throw new ObjectDisposedException("SafeguardConnection");
-            if (string.IsNullOrEmpty(relativeUrl))
-                throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+            PreconditionCheck(relativeUrl);
 
             var token = cancellationToken ?? CancellationToken.None;
-            var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
-            if (parameters != null)
+            var uri = ConfigureUri(service, relativeUrl, parameters);
+
+            using (var request = PrepareStreamingRequest(HttpMethod.Post, uri, null, additionalHeaders, parameters))
             {
-                uri = QueryHelpers.AddQueryString(uri, parameters);
-            }
-
-            using (var request = new HttpRequestMessage(HttpMethod.Post, uri))
-            {
-                if (!_authenticationMechanism.IsAnonymous)
-                {
-                    if (!_authenticationMechanism.HasAccessToken())
-                        throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
-                    // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
-                    // I'm not sure there is anything you can do about it.
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authenticationMechanism.GetAccessToken().ToInsecureString());
-                }
-
-                if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
-                    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                if (additionalHeaders != null)
-                {
-                    foreach (var header in additionalHeaders)
-                        request.Headers.Add(header.Key, header.Value);
-                }
-
-                SafeguardConnection.LogRequestDetails(Method.Post, new Uri(uri), parameters, additionalHeaders);
-
                 EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
-
                 using (var content = new StreamContent(stream, DefaultBufferSize))
                 {
                     request.Content = content;
@@ -87,22 +59,7 @@ namespace OneIdentity.SafeguardDotNet
                     try
                     {
                         var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
-
-                        var fullResponse = new FullResponse
-                        {
-                            Body = await response.Content.ReadAsStringAsync(),
-                            Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
-                            StatusCode = response.StatusCode
-                        };
-
-                        if (!response.IsSuccessStatusCode)
-                            throw new SafeguardDotNetException(
-                                $"Error returned from Safeguard API, Error: {fullResponse.StatusCode} {fullResponse.Body}",
-                                fullResponse.StatusCode, fullResponse.Body);
-
-                        SafeguardConnection.LogResponseDetails(fullResponse);
-
-                        return fullResponse.Body;
+                        return await ValidatePostResponse(response);
                     }
                     finally
                     {
@@ -117,48 +74,14 @@ namespace OneIdentity.SafeguardDotNet
 
         public async Task DownloadAsync(Service service, string relativeUrl, string outputFilePath, string body = null, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
         {
-            if (_isDisposed())
-                throw new ObjectDisposedException("SafeguardConnection");
-            if (string.IsNullOrEmpty(relativeUrl))
-                throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+            PreconditionCheck(relativeUrl);
 
             var token = cancellationToken ?? CancellationToken.None;
-            var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
-            if (parameters != null)
+            var uri = ConfigureUri(service, relativeUrl, parameters);
+
+            using (var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters))
             {
-                uri = QueryHelpers.AddQueryString(uri, parameters);
-            }
-
-            using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
-            {
-                if (!_authenticationMechanism.IsAnonymous)
-                {
-                    if (!_authenticationMechanism.HasAccessToken())
-                        throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
-                    // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
-                    // I'm not sure there is anything you can do about it.
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authenticationMechanism.GetAccessToken().ToInsecureString());
-                }
-
-                if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
-                    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-
-                if (additionalHeaders != null)
-                {
-                    foreach (var header in additionalHeaders)
-                        request.Headers.Add(header.Key, header.Value);
-                }
-
-                SafeguardConnection.LogRequestDetails(Method.Post, new Uri(uri), parameters, additionalHeaders);
-
                 EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
-
-                if(!string.IsNullOrEmpty(body))
-                {
-                    request.Content = new StringContent(body);
-                    request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                }
-
                 if (progress != null)
                 {
                     progressHandlerFunc = (sender, args) =>
@@ -176,26 +99,12 @@ namespace OneIdentity.SafeguardDotNet
                 try
                 {
                     var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
-
-                    using(var fs = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+                    ValidateGetResponse(response);
+                    using (var fs = new FileStream(outputFilePath, FileMode.Create, FileAccess.ReadWrite))
                     {
                         var downloadStream = await response.Content.ReadAsStreamAsync();
                         await downloadStream.CopyToAsync(fs, DefaultBufferSize);
                     }
-                    
-                    var fullResponse = new FullResponse
-                    {
-                        Body = "<stream content>",
-                        Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
-                        StatusCode = response.StatusCode
-                    };
-
-                    if (!response.IsSuccessStatusCode)
-                        throw new SafeguardDotNetException(
-                            $"Error returned from Safeguard API, Error: {fullResponse.StatusCode} {fullResponse.Body}",
-                            fullResponse.StatusCode, fullResponse.Body);
-
-                    SafeguardConnection.LogResponseDetails(fullResponse);
                 }
                 finally
                 {
@@ -205,6 +114,171 @@ namespace OneIdentity.SafeguardDotNet
                     }
                 }
             }
+        }
+
+        public async Task<StreamResponse> DownloadStreamAsync(Service service, string relativeUrl, string body = null, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
+        {
+            PreconditionCheck(relativeUrl);
+
+            var token = cancellationToken ?? CancellationToken.None;
+            var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
+            if (parameters != null)
+            {
+                uri = QueryHelpers.AddQueryString(uri, parameters);
+            }
+
+            using (var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters))
+            {
+                var progressHandlerFunc = ConfigureProgressHandler(progress);
+                try
+                {
+                    var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
+                    ValidateGetResponse(response);
+                    return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
+                }
+                catch(Exception)
+                {
+                    CleanupProgress(progressHandlerFunc);
+                    throw;
+                }
+            }
+        }
+
+        private string ConfigureUri(Service service, string relativeUrl, IDictionary<string,string> parameters)
+        {
+            var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
+            if (parameters != null)
+            {
+                uri = QueryHelpers.AddQueryString(uri, parameters);
+            }
+            return uri;
+        }
+
+        private void PreconditionCheck(string relativeUrl)
+        {
+            if (_isDisposed())
+                throw new ObjectDisposedException("SafeguardConnection");
+            if (string.IsNullOrEmpty(relativeUrl))
+                throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+        }
+
+        private void ValidateGetResponse(HttpResponseMessage response)
+        {
+            var fullResponse = new FullResponse
+            {
+                Body = "<stream content>",
+                Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
+                StatusCode = response.StatusCode
+            };
+
+            // Check for 200 OK here because 204 Accepted doesn't return a stream,
+            // better to fail in that case.
+            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                throw new SafeguardDotNetException(
+                    $"Response does not indicate OK status. Error: {fullResponse.StatusCode} {fullResponse.Body}",
+                    fullResponse.StatusCode, fullResponse.Body);
+
+            SafeguardConnection.LogResponseDetails(fullResponse);
+        }
+
+        private async Task<string> ValidatePostResponse(HttpResponseMessage response)
+        {
+            var fullResponse = new FullResponse
+            {
+                Body = await response.Content.ReadAsStringAsync(),
+                Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
+                StatusCode = response.StatusCode
+            };
+
+            if (!response.IsSuccessStatusCode)
+                throw new SafeguardDotNetException(
+                    $"Error returned from Safeguard API, Error: {fullResponse.StatusCode} {fullResponse.Body}",
+                    fullResponse.StatusCode, fullResponse.Body);
+
+            SafeguardConnection.LogResponseDetails(fullResponse);
+
+            return fullResponse.Body;
+        }
+
+        private void CleanupProgress(EventHandler<HttpProgressEventArgs> progressHandlerFn)
+        {
+            if (progressHandlerFn != null)
+            {
+                _progressMessageHandler.HttpReceiveProgress -= progressHandlerFn;
+            }
+        }
+
+        private HttpRequestMessage PrepareStreamingRequest(HttpMethod method, string uri, string body, IDictionary<string, string> additionalHeaders, IDictionary<string, string> parameters)
+        {
+            var request = new HttpRequestMessage(method, uri);
+            if (!_authenticationMechanism.IsAnonymous)
+            {
+                if (!_authenticationMechanism.HasAccessToken())
+                    throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
+                // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
+                // I'm not sure there is anything you can do about it.
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authenticationMechanism.GetAccessToken().ToInsecureString());
+            }
+
+            if (additionalHeaders != null)
+            {
+                foreach (var header in additionalHeaders)
+                    request.Headers.Add(header.Key, header.Value);
+            }
+
+            var acceptHeaderValue = GetMediaTypeForMethod(method);
+            if (!request.Headers.Accept.Contains(acceptHeaderValue))
+            {
+                request.Headers.Accept.Add(acceptHeaderValue);
+            }
+
+            SafeguardConnection.LogRequestDetails(method == HttpMethod.Get ? Method.Get : Method.Post, new Uri(uri), parameters, additionalHeaders);
+
+            if (method == HttpMethod.Get && !string.IsNullOrEmpty(body))
+            {
+                request.Content = new StringContent(body);
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            }
+
+            return request;
+        }
+
+        private static MediaTypeWithQualityHeaderValue GetMediaTypeForMethod(HttpMethod method)
+        {
+            MediaTypeWithQualityHeaderValue acceptHeaderValue;
+            if (method == HttpMethod.Get)
+            {
+                acceptHeaderValue = new MediaTypeWithQualityHeaderValue("application/octet-stream");
+            }
+            else if (method == HttpMethod.Post)
+            {
+                acceptHeaderValue = new MediaTypeWithQualityHeaderValue("application/json");
+            }
+            else
+            {
+                throw new SafeguardDotNetException($"Streaming not supported for method: {method}");
+            }
+
+            return acceptHeaderValue;
+        }
+
+        private EventHandler<HttpProgressEventArgs> ConfigureProgressHandler(IProgress<TransferProgress> progress)
+        {
+            if (progress != null)
+            {
+                EventHandler<HttpProgressEventArgs> progressHandlerFunc = (sender, args) =>
+                {
+                    var downloadProgress = new TransferProgress
+                    {
+                        BytesTotal = args.TotalBytes.GetValueOrDefault(0),
+                        BytesTransferred = args.BytesTransferred
+                    };
+                    progress.Report(downloadProgress);
+                };
+                _progressMessageHandler.HttpReceiveProgress += progressHandlerFunc;
+                return progressHandlerFunc;
+            }
+            return null;
         }
 
         private HttpClient CreateHttpClient(ProgressMessageHandler progressHandler)
@@ -226,7 +300,6 @@ namespace OneIdentity.SafeguardDotNet
             return client;
         }
 
-        
         public void Dispose()
         {
             Dispose(true);
