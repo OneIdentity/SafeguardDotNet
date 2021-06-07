@@ -166,7 +166,6 @@ namespace OneIdentity.SafeguardDotNet
         {
             var fullResponse = new FullResponse
             {
-                Body = "<stream content>",
                 Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
                 StatusCode = response.StatusCode
             };
