@@ -173,9 +173,12 @@ namespace OneIdentity.SafeguardDotNet
             // Check for 200 OK here because 204 Accepted doesn't return a stream,
             // better to fail in that case.
             if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                fullResponse.Body = response.Content.ReadAsStringAsync().Result;
                 throw new SafeguardDotNetException(
                     $"Response does not indicate OK status. Error: {fullResponse.StatusCode} {fullResponse.Body}",
                     fullResponse.StatusCode, fullResponse.Body);
+            }
 
             SafeguardConnection.LogResponseDetails(fullResponse);
         }
