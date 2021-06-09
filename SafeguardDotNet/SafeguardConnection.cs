@@ -178,7 +178,7 @@ namespace OneIdentity.SafeguardDotNet
             var joinBody = JsonConvert.SerializeObject(request);
 
             Log.Debug("Sending join request.");
-            var joinResponse = SpsConnection.InvokeMethodFull(Method.Get, "cluster/spp", joinBody);
+            var joinResponse = SpsConnection.InvokeMethodFull(Method.Post, "cluster/spp", joinBody);
             LogResponseDetails(joinResponse);
 
             return joinResponse;
