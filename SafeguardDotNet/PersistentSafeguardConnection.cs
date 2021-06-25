@@ -1,13 +1,12 @@
 ﻿using OneIdentity.SafeguardDotNet.Event;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OneIdentity.SafeguardDotNet
 {
-    class PersistentSafeguardConnection : ISafeguardConnection
+    internal class PersistentSafeguardConnection : ISafeguardConnection
     {
-        private ISafeguardConnection _connection;
+        private readonly ISafeguardConnection _connection;
 
         public PersistentSafeguardConnection(ISafeguardConnection connection) => _connection = connection;
 
@@ -44,11 +43,11 @@ namespace OneIdentity.SafeguardDotNet
             return _connection.InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout);
         }
 
-        public FullResponse JoinSPS(ISafeguardSessionsConnection SpsConnection, string CertificateChain, string SppAddress)
+        public FullResponse JoinSps(ISafeguardSessionsConnection spsConnection, string certificateChain, string sppAddress)
         {
             if (_connection.GetAccessTokenLifetimeRemaining() <= 0)
                 _connection.RefreshAccessToken();
-            return _connection.JoinSPS(SpsConnection, CertificateChain, SppAddress);
+            return _connection.JoinSps(spsConnection, certificateChain, sppAddress);
         }
 
         public void LogOut() => _connection.LogOut();
