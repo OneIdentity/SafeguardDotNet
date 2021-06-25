@@ -10,7 +10,7 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public class StreamResponse : IDisposable
     {
-        private bool disposedValue;
+        private bool _disposedValue;
 
         internal StreamResponse(HttpResponseMessage response, Action cleanup)
         {
@@ -39,7 +39,7 @@ namespace OneIdentity.SafeguardDotNet
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -48,7 +48,7 @@ namespace OneIdentity.SafeguardDotNet
                     Cleanup();
                 }
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
         

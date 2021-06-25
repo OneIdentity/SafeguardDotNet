@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using OneIdentity.SafeguardDotNet.Event;
+﻿using System.Collections.Generic;
 using RestSharp;
 using RestSharp.Authenticators;
 using System.Security;
@@ -20,8 +18,8 @@ namespace OneIdentity.SafeguardDotNet
         {
             var spsApiUrl = $"https://{networkAddress}/api";
             _client = new RestClient(spsApiUrl);
-            CookieContainer _cookieJar = new CookieContainer();
-            _client.CookieContainer = _cookieJar;
+            var cookieJar = new CookieContainer();
+            _client.CookieContainer = cookieJar;
 
             Log.Debug("Starting authentication.");
             _client.Authenticator = new HttpBasicAuthenticator(username, password.ToInsecureString());
@@ -36,6 +34,11 @@ namespace OneIdentity.SafeguardDotNet
                     "Error returned when authenticating to sps api, Error: " + $"{response.StatusCode} {response.Content}",
                     response.StatusCode, response.Content);
             Log.Debug("Response content.", response.Content);
+        }
+
+        public string InvokeMethod(Method method, string relativeUrl, string body = null)
+        {
+            return InvokeMethodFull(method, relativeUrl, body).Body;
         }
 
         /// <summary>

@@ -154,6 +154,7 @@ namespace OneIdentity.SafeguardDotNet
             return uri;
         }
 
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
         private void PreconditionCheck(string relativeUrl)
         {
             if (_isDisposed())

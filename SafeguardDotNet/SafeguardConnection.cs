@@ -6,7 +6,6 @@ using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -164,21 +163,21 @@ namespace OneIdentity.SafeguardDotNet
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout).Body;
         }
 
-        public FullResponse JoinSPS(ISafeguardSessionsConnection SpsConnection, string CertificateChain, string SppAddress)
+        public FullResponse JoinSps(ISafeguardSessionsConnection spsConnection, string certificateChain, string sppAddress)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
 
             var request = new JoinRequest
             {
-                spp = SppAddress,
+                spp = sppAddress,
                 spp_api_token = _authenticationMechanism.GetAccessToken().ToInsecureString(),
-                spp_cert_chain = CertificateChain
+                spp_cert_chain = certificateChain
             };
             var joinBody = JsonConvert.SerializeObject(request);
 
             Log.Debug("Sending join request.");
-            var joinResponse = SpsConnection.InvokeMethodFull(Method.Post, "cluster/spp", joinBody);
+            var joinResponse = spsConnection.InvokeMethodFull(Method.Post, "cluster/spp", joinBody);
             LogResponseDetails(joinResponse);
 
             return joinResponse;

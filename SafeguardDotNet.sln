@@ -19,10 +19,20 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetGuiTester", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetExceptionTest", "Test\SafeguardDotNetExceptionTest\SafeguardDotNetExceptionTest.csproj", "{EACEF9A1-0E06-4AF4-9589-12E3F77CB959}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetExceptionTest", "Test\SafeguardDotNetExceptionTest\SafeguardDotNetExceptionTest.csproj", "{EACEF9A1-0E06-4AF4-9589-12E3F77CB959}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E2A99B0B-7037-4FF0-AECD-C3AFAE5B068F} = {E2A99B0B-7037-4FF0-AECD-C3AFAE5B068F}
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9249E337-656D-4970-B45C-7A077C56FA44}"
+	ProjectSection(SolutionItems) = preProject
+		build-publish.yml = build-publish.yml
+		build-test.yml = build-test.yml
+		README.md = README.md
+		versionnumber.ps1 = versionnumber.ps1
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardSessionsDotNetTool", "Test\SafeguardSessionsDotNetTool\SafeguardSessionsDotNetTool.csproj", "{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,6 +72,10 @@ Global
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959}.Release|Any CPU.Build.0 = Release|Any CPU
+		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,6 +87,7 @@ Global
 		{37DC1680-E01E-4D39-8D5B-E2A0D908EB33} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{3298668C-7255-45E9-806C-111ED4DFB800} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D9CB73C2-C8BA-4198-AC5A-583C98326F2D}

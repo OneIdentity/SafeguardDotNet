@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Net.Security;
-using System.Security;
-using OneIdentity.SafeguardDotNet.A2A;
-using OneIdentity.SafeguardDotNet.Authentication;
-using OneIdentity.SafeguardDotNet.Event;
+﻿using System.Security;
 
 namespace OneIdentity.SafeguardDotNet
 {
