@@ -29,7 +29,11 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
-- Bug fixes and dependency updates.</PackageReleaseNotes>
+- Persistent Safeguard Connection class that reconnects after access token timeout.
+- Safeguard Sessions Connection support.
+- Support for SPS to SPP join.
+- Improvements to streaming support.
+- Bug fixes and other improvements.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
