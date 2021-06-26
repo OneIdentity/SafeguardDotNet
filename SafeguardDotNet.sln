@@ -34,6 +34,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardSessionsDotNetTool", "Test\SafeguardSessionsDotNetTool\SafeguardSessionsDotNetTool.csproj", "{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipeline-templates", "pipeline-templates", "{1EB6D64D-7AFB-41DC-B11B-58934D053684}"
+	ProjectSection(SolutionItems) = preProject
+		pipeline-templates\build-steps.yml = pipeline-templates\build-steps.yml
+		pipeline-templates\global-variables.yml = pipeline-templates\global-variables.yml
+		pipeline-templates\job-variables.yml = pipeline-templates\job-variables.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +95,7 @@ Global
 		{3298668C-7255-45E9-806C-111ED4DFB800} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{1EB6D64D-7AFB-41DC-B11B-58934D053684} = {9249E337-656D-4970-B45C-7A077C56FA44}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D9CB73C2-C8BA-4198-AC5A-583C98326F2D}
