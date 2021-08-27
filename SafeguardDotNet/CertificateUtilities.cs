@@ -16,7 +16,7 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     store.Open(OpenFlags.ReadOnly);
                     cert = store.Certificates.OfType<X509Certificate2>()
-                        .FirstOrDefault(x => x.Thumbprint == thumbprint);
+                        .FirstOrDefault(x => string.Equals(x.Thumbprint, thumbprint, StringComparison.OrdinalIgnoreCase));
                 }
                 if (cert == null)
                 {
