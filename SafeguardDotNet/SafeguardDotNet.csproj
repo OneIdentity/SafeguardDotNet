@@ -29,7 +29,8 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
-- Bug fixes and dependency updates.</PackageReleaseNotes>
+- Fixed a bug with certificate authentication using built-in Windows certificate store.
+- Updated dependencies.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
