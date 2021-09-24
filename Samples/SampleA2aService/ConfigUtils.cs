@@ -43,13 +43,13 @@ namespace SampleA2aService
 
         public static void ConfigureLogging()
         {
-            var logConfig = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.ColoredConsole();
+            var logConfig = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console();
             var loggingDirectory = ConfigUtils.ReadSettingFromAppConfigIfPresent("LoggingDirectory");
             if (loggingDirectory != null)
             {
                 if (!Path.IsPathRooted(loggingDirectory))
                     loggingDirectory = Path.Combine(Assembly.GetEntryAssembly().Location, loggingDirectory);
-                logConfig.WriteTo.RollingFile(Path.Combine(loggingDirectory, "SampleA2aService-{Date}.log"),
+                logConfig.WriteTo.File(Path.Combine(loggingDirectory, "SampleA2aService-{Date}.log"),
                     LogEventLevel.Debug);
             }
             Log.Logger = logConfig.CreateLogger();
