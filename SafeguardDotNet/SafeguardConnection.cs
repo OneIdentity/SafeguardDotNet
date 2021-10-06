@@ -17,6 +17,7 @@ namespace OneIdentity.SafeguardDotNet
         private readonly RestClient _coreClient;
         private readonly RestClient _applianceClient;
         private readonly RestClient _notificationClient;
+        private readonly RestClient _managementClient;
 
         public SafeguardConnection(IAuthenticationMechanism authenticationMechanism)
         {
@@ -31,17 +32,22 @@ namespace OneIdentity.SafeguardDotNet
             var safeguardNotificationUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/notification/v{_authenticationMechanism.ApiVersion}";
             _notificationClient = new RestClient(safeguardNotificationUrl);
 
+            var safeguardManagementUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}";
+            _managementClient = new RestClient(safeguardNotificationUrl);
+
             if (authenticationMechanism.IgnoreSsl)
             {
                 _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _applianceClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _notificationClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+                _managementClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
             else if (authenticationMechanism.ValidationCallback != null)
             {
                 _coreClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
                 _applianceClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
                 _notificationClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
+                _managementClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
             }
 
             _lazyStreamingRequest = new Lazy<IStreamingRequest>(() =>
@@ -240,6 +246,8 @@ namespace OneIdentity.SafeguardDotNet
                     return _applianceClient;
                 case Service.Notification:
                     return _notificationClient;
+                case Service.Management:
+                    return _managementClient;
                 case Service.A2A:
                     throw new SafeguardDotNetException(
                         "You must call the A2A service using the A2A specific method, Error: Unsupported operation");

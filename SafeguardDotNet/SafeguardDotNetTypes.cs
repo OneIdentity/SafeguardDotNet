@@ -26,7 +26,13 @@ namespace OneIdentity.SafeguardDotNet
         /// <summary>
         /// The a2a service contains application integration Safeguard operations.  It is called via the Safeguard.A2A class.
         /// </summary>
-        A2A
+        A2A,
+        /// <summary>
+        /// The Management service contains unauthenticated endpoints for disaster-recovery and support operations. On hardware
+        /// it is bound to the MGMT network interface. For on-prem VM it is unavailable except through the Kiosk app. On cloud
+        /// VM it is listening on port 9337 and should be firewalled appropriately to restrict access.
+        /// </summary>
+        Management
     };
 
     /// <summary>
