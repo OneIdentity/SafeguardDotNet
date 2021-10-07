@@ -133,7 +133,7 @@ function Get-StringEscapedBody {
 
     # quoting with the Invoke-Expression is complicated
     # luckily our API will handle single quotes in JSON strings
-    (ConvertTo-Json $Body -Compress).Replace("`"","'")
+    (ConvertTo-Json -Depth 12 $Body -Compress).Replace("`"","'")
 }
 
 $script:ToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetTool")
@@ -151,6 +151,7 @@ $script:CaCert = (Resolve-Path "$($script:CertDir)\IntermediateCA.pem")
 
 $script:TestObj = "SafeguardDotNetTest"
 $script:TestCred = "2309aseflkasdlf209349qauerA"
+$script:CertUser = "SafeguardDotNetCert"
 
 $script:UserThumbprint = (Get-PfxCertificate $script:UserCert).Thumbprint
 $script:RootThumbprint = (Get-PfxCertificate $script:RootCert).Thumbprint
@@ -166,7 +167,7 @@ Invoke-DotNetBuild $script:EventToolDir
 
 
 ### SafeguardDotNetTool Tests
-
+<#
 Write-Host -ForegroundColor Yellow "Testing whether anonymous notification Status endpoint can be reached on Safeguard ($Appliance)..."
 Invoke-DotNetRun $script:ToolDir $null "-a $Appliance -A -x -s Notification -m Get -U Status"
 
@@ -217,33 +218,33 @@ else
     Write-Host "CA cert already exists"
 }
 
-Write-Host -ForegroundColor Yellow "Setting up a cert user (SafeguardDotNetCert)..."
-if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetCert'`" -p"))
+Write-Host -ForegroundColor Yellow "Setting up a cert user ($($script:CertUser))..."
+if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:CertUser)'`" -p"))
 {
     $local:Body = @{
         PrimaryAuthenticationProviderId = -2;
-        UserName = "SafeguardDotNetCert";
+        UserName = "$($script:CertUser)";
         PrimaryAuthenticationIdentity = $script:UserThumbprint
     }
     Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
 }
 else
 {
-    Write-Host "'SafeguardDotNetCert' user already exists"
+    Write-Host "'$($script:CertUser)' user already exists"
 }
 
-Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from PFX file..."
+Write-Host -ForegroundColor Yellow "Testing auth as cert user ($($script:CertUser)) from PFX file..."
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -x -s Core -m Get -U Me -p"
 
-Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from PFX file as data..."
+Write-Host -ForegroundColor Yellow "Testing auth as cert user ($($script:CertUser)) from PFX file as data..."
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -d -x -s Core -m Get -U Me -p"
 
-Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from User Certificate Store..."
+Write-Host -ForegroundColor Yellow "Testing auth as cert user ($($script:CertUser)) from User Certificate Store..."
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -t $($script:UserThumbprint) -x -s Core -m Get -U Me -p"
 Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
 
-Write-Host -ForegroundColor Yellow "Testing auth as cert user (SafeguardDotNetCert) from Computer Certificate Store..."
+Write-Host -ForegroundColor Yellow "Testing auth as cert user ($($script:CertUser)) from Computer Certificate Store..."
 Write-Host -ForegroundColor Magenta "TODO: this requires elevation to install the cert"
 # TODO: this requires elevation to install the cert
 
@@ -282,7 +283,7 @@ else
 Write-Host -ForegroundColor Yellow "Setting up for A2A credential retrieval..."
 if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'$($script:TestObj)'`" -p"))
 {
-    $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'SafeguardDotNetCert'`" -p")
+    $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:CertUser)'`" -p")
     $local:Body = @{
         AppName = "$($script:TestObj)";
         VisibleToCertificateUsers = $true;
@@ -336,3 +337,73 @@ Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval from User C
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -p"
 Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
+
+#>
+### Workflow Test
+
+Write-Host -ForegroundColor Yellow "Setting up entitlement for workflow..."
+if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Roles?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
+{
+    $local:User = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:TestObj)'`" -p")
+    $local:Body = @{
+        Name = "$($script:TestObj)";
+        Description = "test entitlement for SafeguardDotNet test script";
+        Members = @(@{Id = $local:User.Id})
+    }
+    Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U Roles -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "'$($script:TestObj)' entitlement already exists"
+}
+$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Roles?filter=Name%20eq%20'$($script:TestObj)'`" -p")
+
+Write-Host -ForegroundColor Yellow "Setting up policy for workflow..."
+if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"AccessPolicies?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
+{
+    $local:User = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:CertUser)'`" -p")
+    $local:Account = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"AssetAccounts?filter=Name%20eq%20'$($script:TestObj)'`" -p")
+    $local:Body = @{
+        Name = "$($script:TestObj)";
+        Description = "test policy for SafeguardDotNet test script";
+        RoleId = $local:Result.Id;
+        AccessRequestProperties = @{
+            AccessRequestType = "Password";
+            ChangePasswordAfterCheckin = $false;
+            ChangeSshKeyAfterCheckin = $false
+        };
+        ApproverProperties = @{
+            RequireApproval = $true;
+        };
+        ApproverSets = @(
+            @{
+                RequiredApprovers = 1;
+                Approvers = @(@{ Id = $local:User.Id })
+            }
+        );
+        ScopeItems = @(
+            @{
+                ScopeItemType = "Account";
+                Id = $local:Account.Id
+            }
+        )
+    }
+    (Get-StringEscapedBody $local:Body)
+    Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U AccessPolicies -p -b `"$(Get-StringEscapedBody $local:Body)`""
+}
+else
+{
+    Write-Host "'$($script:TestObj)' policy already exists"
+}
+
+Write-Host -ForegroundColor Yellow "Creating access request..."
+$local:Account = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"AssetAccounts?filter=Name%20eq%20'$($script:TestObj)'`" -p")
+$local:Body = @{
+    AccessRequestType = "Password";
+    SystemId = $local:Account.AssetId;
+    AccountId = $local:Account.Id
+}
+$local:Request = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U AccessRequests -p -b `"$(Get-StringEscapedBody $local:Body)`"")
+Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -x -s Core -m Post -U `"AccessRequests/$($local:Request.Id)`/Approve`" -p"
+Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U `"AccessRequests/$($local:Request.Id)`/CheckOutPassword`" -p"
+Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U `"AccessRequests/$($local:Request.Id)`/CheckIn`" -p"
