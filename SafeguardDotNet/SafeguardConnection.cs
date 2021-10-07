@@ -118,6 +118,8 @@ namespace OneIdentity.SafeguardDotNet
             }
             if ((method == Method.Post || method == Method.Put) && body != null)
                 request.AddParameter("application/json", body, ParameterType.RequestBody);
+            else if (method == Method.Post || method == Method.Put) // have to set the Content-type header even if empty body or Safeguard chokes
+                request.AddHeader("Content-type", "application/json");
             if (parameters != null)
             {
                 foreach (var param in parameters)
