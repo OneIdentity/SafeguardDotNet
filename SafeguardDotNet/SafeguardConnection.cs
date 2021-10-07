@@ -34,7 +34,7 @@ namespace OneIdentity.SafeguardDotNet
             _notificationClient = new RestClient(safeguardNotificationUrl);
 
             var safeguardManagementUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}";
-            _managementClient = new RestClient(safeguardNotificationUrl);
+            _managementClient = new RestClient(safeguardManagementUrl);
 
             if (authenticationMechanism.IgnoreSsl)
             {
@@ -58,7 +58,7 @@ namespace OneIdentity.SafeguardDotNet
         }
 
 
-        private Lazy<IStreamingRequest> _lazyStreamingRequest;
+        private readonly Lazy<IStreamingRequest> _lazyStreamingRequest;
         public IStreamingRequest Streaming => _lazyStreamingRequest.Value;
 
         public int GetAccessTokenLifetimeRemaining()
@@ -118,6 +118,8 @@ namespace OneIdentity.SafeguardDotNet
             }
             if ((method == Method.Post || method == Method.Put) && body != null)
                 request.AddParameter("application/json", body, ParameterType.RequestBody);
+            else if (method == Method.Post || method == Method.Put) // have to set the Content-type header even if empty body or Safeguard chokes
+                request.AddHeader("Content-type", "application/json");
             if (parameters != null)
             {
                 foreach (var param in parameters)
