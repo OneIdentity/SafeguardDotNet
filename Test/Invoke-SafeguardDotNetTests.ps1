@@ -167,7 +167,7 @@ Invoke-DotNetBuild $script:EventToolDir
 
 
 ### SafeguardDotNetTool Tests
-<#
+
 Write-Host -ForegroundColor Yellow "Testing whether anonymous notification Status endpoint can be reached on Safeguard ($Appliance)..."
 Invoke-DotNetRun $script:ToolDir $null "-a $Appliance -A -x -s Notification -m Get -U Status"
 
@@ -338,7 +338,7 @@ Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -P
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -p"
 Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
 
-#>
+
 ### Workflow Test
 
 Write-Host -ForegroundColor Yellow "Setting up entitlement for workflow..."
