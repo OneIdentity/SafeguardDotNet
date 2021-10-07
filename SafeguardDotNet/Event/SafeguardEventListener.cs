@@ -99,7 +99,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                 {
                     _signalrConnection.Closed -= _signalrConnection_Closed;
                 }
-                _signalrConnection?.DisposeAsync().Wait();
+                _signalrConnection?.DisposeAsync();
             }
             catch (Exception ex)
             {
