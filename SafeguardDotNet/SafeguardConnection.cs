@@ -34,7 +34,7 @@ namespace OneIdentity.SafeguardDotNet
             _notificationClient = new RestClient(safeguardNotificationUrl);
 
             var safeguardManagementUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}";
-            _managementClient = new RestClient(safeguardNotificationUrl);
+            _managementClient = new RestClient(safeguardManagementUrl);
 
             if (authenticationMechanism.IgnoreSsl)
             {
@@ -58,7 +58,7 @@ namespace OneIdentity.SafeguardDotNet
         }
 
 
-        private Lazy<IStreamingRequest> _lazyStreamingRequest;
+        private readonly Lazy<IStreamingRequest> _lazyStreamingRequest;
         public IStreamingRequest Streaming => _lazyStreamingRequest.Value;
 
         public int GetAccessTokenLifetimeRemaining()
