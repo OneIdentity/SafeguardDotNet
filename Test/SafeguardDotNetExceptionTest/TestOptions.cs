@@ -24,7 +24,7 @@ namespace SafeguardDotNetExceptionTest
             HelpText = "Display verbose debug output")]
         public bool Verbose { get; set; }
 
-        [Option('v', "ApiVersion", Required = false, Default = 2,
+        [Option('v', "ApiVersion", Required = false, Default = 3,
             HelpText = "Version of the Safeguard API to use")]
         public int ApiVersion { get; set; }
 
