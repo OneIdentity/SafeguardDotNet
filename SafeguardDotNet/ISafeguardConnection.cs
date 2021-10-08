@@ -113,6 +113,16 @@ namespace OneIdentity.SafeguardDotNet
         ISafeguardEventListener GetPersistentEventListener();
 
         /// <summary>
+        /// Returns an <see cref="ISafeguardConnection"/> tailored to work with the <see cref="Service.Management"/>
+        /// service. To invoke methods on the Managagement service, call this method first and use the
+        /// returned ISafeguardConnection. Applicable options such as SSL validation will be inherited
+        /// from the original ISafeguardConnection.
+        /// </summary>
+        /// <param name="networkAddress"></param>
+        /// <returns></returns>
+        ISafeguardConnection GetManagementServiceConnection(string networkAddress);
+
+        /// <summary>
         /// Call Safeguard API to invalidate current access token and clear its value from
         /// the connection.  In order to continue using the connection you will need to call
         /// RefreshAccessToken().
