@@ -13,12 +13,12 @@ namespace OneIdentity.SafeguardDotNet
     {
         private bool _disposed;
 
-        private readonly IAuthenticationMechanism _authenticationMechanism;
+        protected readonly IAuthenticationMechanism _authenticationMechanism;
 
         private readonly RestClient _coreClient;
         private readonly RestClient _applianceClient;
         private readonly RestClient _notificationClient;
-        private readonly RestClient _managementClient;
+        
 
         public SafeguardConnection(IAuthenticationMechanism authenticationMechanism)
         {
@@ -33,22 +33,19 @@ namespace OneIdentity.SafeguardDotNet
             var safeguardNotificationUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/notification/v{_authenticationMechanism.ApiVersion}";
             _notificationClient = new RestClient(safeguardNotificationUrl);
 
-            var safeguardManagementUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}";
-            _managementClient = new RestClient(safeguardManagementUrl);
+            
 
             if (authenticationMechanism.IgnoreSsl)
             {
                 _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _applianceClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 _notificationClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                _managementClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
             }
             else if (authenticationMechanism.ValidationCallback != null)
             {
                 _coreClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
                 _applianceClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
                 _notificationClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
-                _managementClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
             }
 
             _lazyStreamingRequest = new Lazy<IStreamingRequest>(() =>
@@ -171,7 +168,7 @@ namespace OneIdentity.SafeguardDotNet
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout).Body;
         }
 
-        public FullResponse JoinSps(ISafeguardSessionsConnection spsConnection, string certificateChain, string sppAddress)
+        public virtual FullResponse JoinSps(ISafeguardSessionsConnection spsConnection, string certificateChain, string sppAddress)
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
@@ -191,7 +188,7 @@ namespace OneIdentity.SafeguardDotNet
             return joinResponse;
         }
 
-        public ISafeguardEventListener GetEventListener()
+        public virtual ISafeguardEventListener GetEventListener()
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
@@ -202,7 +199,7 @@ namespace OneIdentity.SafeguardDotNet
             return eventListener;
         }
 
-        public ISafeguardEventListener GetPersistentEventListener()
+        public virtual ISafeguardEventListener GetPersistentEventListener()
         {
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardConnection");
@@ -214,6 +211,11 @@ namespace OneIdentity.SafeguardDotNet
             }
             throw new SafeguardDotNetException(
                 $"Unable to create persistent event listener from {_authenticationMechanism.GetType()}");
+        }
+
+        public ISafeguardConnection GetManagementServiceConnection(string networkAddress)
+        {
+            return new SafeguardManagementServiceConnection(_authenticationMechanism, networkAddress);
         }
 
         public void LogOut()
@@ -259,7 +261,7 @@ namespace OneIdentity.SafeguardDotNet
                 fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
         }
 
-        private RestClient GetClientForService(Service service)
+        protected virtual RestClient GetClientForService(Service service)
         {
             switch (service)
             {
@@ -269,8 +271,6 @@ namespace OneIdentity.SafeguardDotNet
                     return _applianceClient;
                 case Service.Notification:
                     return _notificationClient;
-                case Service.Management:
-                    return _managementClient;
                 case Service.A2A:
                     throw new SafeguardDotNetException(
                         "You must call the A2A service using the A2A specific method, Error: Unsupported operation");

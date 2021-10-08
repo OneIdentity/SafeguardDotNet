@@ -19,6 +19,11 @@ namespace OneIdentity.SafeguardDotNet
 
         public ISafeguardEventListener GetEventListener() => _connection.GetEventListener();
 
+        public ISafeguardConnection GetManagementServiceConnection(string networkAddress)
+        {
+            return _connection.GetManagementServiceConnection(networkAddress);
+        }
+
         public ISafeguardEventListener GetPersistentEventListener() => _connection.GetPersistentEventListener();
 
         public string InvokeMethod(Service service, Method method, string relativeUrl, string body = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
