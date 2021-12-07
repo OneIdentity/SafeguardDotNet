@@ -41,6 +41,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipeline-templates", "pipel
 		pipeline-templates\job-variables.yml = pipeline-templates\job-variables.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNet.BrowserLogin", "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj", "{2D04109D-5127-4DE2-8CB6-7CFBAA751946}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,10 @@ Global
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
