@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -20,8 +21,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
             _appliance = appliance;
         }
 
-        public string AccessToken { get; set; }
-        public string Error { get; set; }
+        public SecureString AccessToken { get; set; }
 
         public bool Show(string primaryProviderId = "", string secondaryProviderId = "", string username = "",
             int port = 8400)
@@ -87,7 +87,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
 
                         var fullResponse =
                             "HTTP/1.1 200 OK\r\n\r\n<html><head><title>Authentication Complete</title></head><body><h2>Authentication complete.</h2>" +
-                            "<p>You can return to PowerShell.</p><p>Feel free to close this browser tab.</p></body></html>\r\n";
+                            "<p>You can return to your application.</p><p>Feel free to close this browser tab.</p></body></html>\r\n";
                         var response = Encoding.ASCII.GetBytes(fullResponse);
                         await networkStream.WriteAsync(response, 0, response.Length, source.Token);
                         await networkStream.FlushAsync(source.Token);
@@ -101,11 +101,11 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                     innerTask.Wait(source.Token);
                     if (!innerTask.IsFaulted && innerTask.Result != null)
                         AccessToken = HttpUtility.ParseQueryString(ExtractUriFromHttpRequest(innerTask.Result))
-                            .Get("oauth");
+                            .Get("oauth").ToSecureString();
                     else if (innerTask.Result != null)
-                        Error = innerTask.Result;
+                        throw new SafeguardDotNetException(innerTask.Result);
                     else
-                        Error = "No HTTP redirect";
+                        throw new SafeguardDotNetException("No HTTP redirect");
                 }
                 return true;
             }

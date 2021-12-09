@@ -43,6 +43,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipeline-templates", "pipel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNet.BrowserLogin", "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj", "{2D04109D-5127-4DE2-8CB6-7CFBAA751946}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetBrowserLoginTester", "Test\SafeguardDotNetBrowserLoginTester\SafeguardDotNetBrowserLoginTester.csproj", "{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,10 @@ Global
 		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D04109D-5127-4DE2-8CB6-7CFBAA751946}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,6 +108,7 @@ Global
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{1EB6D64D-7AFB-41DC-B11B-58934D053684} = {9249E337-656D-4970-B45C-7A077C56FA44}
+		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D9CB73C2-C8BA-4198-AC5A-583C98326F2D}
