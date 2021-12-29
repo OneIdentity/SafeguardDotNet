@@ -1,4 +1,5 @@
 ﻿using OneIdentity.SafeguardDotNet.Event;
+using OneIdentity.SafeguardDotNet.Sps;
 using System;
 using System.Collections.Generic;
 

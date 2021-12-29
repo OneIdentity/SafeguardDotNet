@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Security;
+using RestSharp;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -71,6 +76,112 @@ namespace OneIdentity.SafeguardDotNet
                     throw new SafeguardDotNetException("Unknown Safeguard REST method",
                         new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
             }
+        }
+
+        public static HttpMethod ConvertToHttpMethod(this RestSharp.Method thisMethod)
+        {
+            switch (thisMethod)
+            {
+                case RestSharp.Method.POST:
+                    return HttpMethod.Post;
+                case RestSharp.Method.GET:
+                    return HttpMethod.Get;
+                case RestSharp.Method.PUT:
+                    return HttpMethod.Put;
+                case RestSharp.Method.DELETE:
+                    return HttpMethod.Delete;
+                default:
+                    throw new SafeguardDotNetException("Unknown RestSharp method",
+                        new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
+            }
+        }
+
+        public static HttpMethod ConvertToHttpMethod(this Method thisMethod)
+        {
+            switch (thisMethod)
+            {
+                case Method.Post:
+                    return HttpMethod.Post;
+                case Method.Get:
+                    return HttpMethod.Get;
+                case Method.Put:
+                    return HttpMethod.Put;
+                case Method.Delete:
+                    return HttpMethod.Delete;
+                default:
+                    throw new SafeguardDotNetException("Unknown Safeguard REST method",
+                        new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
+            }
+        }
+
+        public static void LogResponseDetails(this FullResponse fullResponse)
+        {
+            if (fullResponse is null)
+            {
+                Log.Debug("LogResponseDetails: fullResponse is null!");
+                return;
+            }
+
+            Log.Debug($"Response status code: {fullResponse.StatusCode}");
+
+            Log.Debug("  Response headers: {ResponseHeaders}",
+                fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
+
+            Log.Debug("  Body size: {ResponseBodySize}", fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
+        }
+
+        public static void LogResponseDetails(this IRestResponse restResponse)
+        {
+            if (restResponse is null)
+            {
+                Log.Debug("LogResponseDetails: restResponse is null!");
+                return;
+            }
+
+            var fullResponse = new FullResponse
+            {
+                StatusCode = restResponse.StatusCode,
+                Headers = new Dictionary<string, string>(),
+                Body = restResponse.Content
+            };
+
+            fullResponse.LogResponseDetails();
+        }
+
+        public static void LogRequestDetails(this RestClient restClient, RestRequest restRequest, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
+        {
+            if (restRequest is null)
+            {
+                Log.Debug("LogRequestDetails: restRequest is null!");
+                return;
+            }
+
+            LogRequestDetails(restRequest.Method.ConvertToHttpMethod(), $"{restClient.BaseUrl}/{restRequest.Resource}");
+        }
+
+        public static void LogRequestDetails(this HttpRequestMessage requestMessage, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
+        {
+            if (requestMessage is null)
+            {
+                Log.Debug("LogRequestDetails: requestMessage is null!");
+                return;
+            }
+            
+            LogRequestDetails(requestMessage.Method, requestMessage.RequestUri.ToString());
+        }
+
+        private static void LogRequestDetails(HttpMethod method, string uri, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
+        {
+            Log.Debug($"Invoking method: {method.ToString().ToUpper()} {uri}");
+
+            Log.Debug("  Query parameters: {QueryParameters}",
+                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
+                    .TrimEnd('&') ?? "None");
+
+            Log.Debug("  Additional headers: {AdditionalHeaders}",
+                additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
+                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
         }
     }
 }

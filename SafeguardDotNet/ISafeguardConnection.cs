@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using OneIdentity.SafeguardDotNet.Event;
+using OneIdentity.SafeguardDotNet.Sps;
 
 namespace OneIdentity.SafeguardDotNet
 {

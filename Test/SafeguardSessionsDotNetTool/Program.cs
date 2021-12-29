@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
+using OneIdentity.SafeguardDotNet.Sps;
 
 namespace SafeguardSessionsDotNetTool
 {
