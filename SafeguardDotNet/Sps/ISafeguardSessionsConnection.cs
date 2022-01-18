@@ -1,9 +1,11 @@
-﻿namespace OneIdentity.SafeguardDotNet
+﻿using System;
+
+namespace OneIdentity.SafeguardDotNet.Sps
 {
     /// <summary>
     /// This is the reusable connection interface that can be used to call SPS API.
     /// </summary>
-    public interface ISafeguardSessionsConnection
+    public interface ISafeguardSessionsConnection : IDisposable
     {
         /// <summary>
         /// Call a Safeguard for Privileged Sessions API method and get any response as a string.
@@ -25,5 +27,10 @@
         /// <param name="body">Request body to pass to the method.</param>
         /// <returns>Response with status code, headers, and body as string.</returns>
         FullResponse InvokeMethodFull(Method method, string relativeUrl, string body = null);
+
+        /// <summary>
+        /// Provides support for HTTP streaming requests
+        /// </summary>
+        ISpsStreamingRequest Streaming { get; }
     }
 }

@@ -181,7 +181,7 @@ namespace OneIdentity.SafeguardDotNet
                     fullResponse.StatusCode, fullResponse.Body);
             }
 
-            SafeguardConnection.LogResponseDetails(fullResponse);
+            fullResponse.LogResponseDetails();
         }
 
         private async Task<string> ValidatePostResponse(HttpResponseMessage response)
@@ -198,7 +198,7 @@ namespace OneIdentity.SafeguardDotNet
                     $"Error returned from Safeguard API, Error: {fullResponse.StatusCode} {fullResponse.Body}",
                     fullResponse.StatusCode, fullResponse.Body);
 
-            SafeguardConnection.LogResponseDetails(fullResponse);
+            fullResponse.LogResponseDetails();
 
             return fullResponse.Body;
         }
@@ -235,7 +235,7 @@ namespace OneIdentity.SafeguardDotNet
                 request.Headers.Accept.Add(acceptHeaderValue);
             }
 
-            SafeguardConnection.LogRequestDetails(method == HttpMethod.Get ? Method.Get : Method.Post, new Uri(uri), parameters, additionalHeaders);
+            request.LogRequestDetails(parameters, additionalHeaders);
 
             if (method == HttpMethod.Get && !string.IsNullOrEmpty(body))
             {

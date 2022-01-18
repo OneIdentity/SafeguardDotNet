@@ -6,6 +6,7 @@ using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
 using Serilog;
 using Newtonsoft.Json;
+using OneIdentity.SafeguardDotNet.Sps;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -129,7 +130,7 @@ namespace OneIdentity.SafeguardDotNet
             }
 
             var client = GetClientForService(service);
-            LogRequestDetails(method, new Uri(client.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
+            client.LogRequestDetails(request, parameters, additionalHeaders);
 
             var response = client.Execute(request);
             Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
@@ -151,7 +152,8 @@ namespace OneIdentity.SafeguardDotNet
                 if (header.Name != null)
                     fullResponse.Headers.Add(header.Name, header.Value?.ToString());
             }
-            LogResponseDetails(fullResponse);
+            
+            fullResponse.LogResponseDetails();
 
             return fullResponse;
         }
@@ -183,7 +185,8 @@ namespace OneIdentity.SafeguardDotNet
 
             Log.Debug("Sending join request.");
             var joinResponse = spsConnection.InvokeMethodFull(Method.Post, "cluster/spp", joinBody);
-            LogResponseDetails(joinResponse);
+
+            joinResponse.LogResponseDetails();
 
             return joinResponse;
         }
@@ -235,30 +238,6 @@ namespace OneIdentity.SafeguardDotNet
             }
             _authenticationMechanism.ClearAccessToken();
             Log.Debug("Cleared access token");
-        }
-
-        internal static void LogRequestDetails(Method method, Uri uri, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null)
-        {
-            Log.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
-                uri);
-                //client.BaseUrl + $"/{relativeUrl}");
-            Log.Debug("  Query parameters: {QueryParameters}",
-                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
-                    .TrimEnd('&') ?? "None");
-            Log.Debug("  Additional headers: {AdditionalHeaders}",
-                additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
-        }
-
-        internal static void LogResponseDetails(FullResponse fullResponse)
-        {
-            Log.Debug("Response status code: {StatusCode}", fullResponse.StatusCode);
-            Log.Debug("  Response headers: {ResponseHeaders}",
-                fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
-            Log.Debug("  Body size: {ResponseBodySize}",
-                fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
         }
 
         protected virtual RestClient GetClientForService(Service service)

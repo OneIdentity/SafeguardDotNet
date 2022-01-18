@@ -1,5 +1,6 @@
 ﻿using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
+using OneIdentity.SafeguardDotNet.Sps;
 using RestSharp;
 using System;
 using System.Collections.Generic;

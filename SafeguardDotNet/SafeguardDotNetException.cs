@@ -46,6 +46,12 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     ErrorMessage = messageVal.ToString();
                 }
+
+                // Sps provides an "error" json object containing details
+                if (responseObj.TryGetValue("error", StringComparison.OrdinalIgnoreCase, out var errorVal))
+                {
+                    ErrorMessage = errorVal.ToString();
+                }
             }
         }
 
