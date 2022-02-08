@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>OneIdentity.SafeguardDotNet.BrowserLogin</RootNamespace>
+    <PackageId>OneIdentity.SafeguardDotNet.BrowserLogin</PackageId>
+    <Authors>One Identity LLC</Authors>
+    <Copyright>(c) 2021 One Identity LLC. All rights reserved.</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
+    <PackageIcon>Content\images\SafeguardLogo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
+    <Version>9999.9999.9999</Version>
+    <Description>Browser Login for One Identity Safeguard Web API .NET SDK</Description>
+    <AssemblyVersion>9999.9999.9999.9999</AssemblyVersion>
+    <FileVersion>9999.9999.9999.9999</FileVersion>
+    <AssemblyName>OneIdentity.SafeguardDotNet.BrowserLogin</AssemblyName>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
+    <PackageReleaseNotes>
+      Browser Login for One Identity Safeguard Web API .NET SDK
+
+      Allows custom application to use the Safeguard Web API by authenticating to
+      Safeguard using the default system browser.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\SafeguardLogo.png" Link="SafeguardLogo.png" Pack="true" PackagePath="Content\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="2.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SafeguardDotNet\SafeguardDotNet.csproj" />
+  </ItemGroup>
+
+</Project>
