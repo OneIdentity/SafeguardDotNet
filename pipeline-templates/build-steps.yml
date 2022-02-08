@@ -54,6 +54,13 @@ steps:
     arguments: '$(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet NuGet packages
 
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+  displayName: Building SafeguardDotNet NuGet packages
+
 - task: NuGetCommand@2
   inputs:
     command: 'custom'
