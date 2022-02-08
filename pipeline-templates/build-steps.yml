@@ -59,7 +59,7 @@ steps:
     command: 'custom'
     custom: 'pack'
     arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
-  displayName: Building SafeguardDotNet NuGet packages
+  displayName: Building SafeguardDotNet.BrowserLogin NuGet packages
 
 - task: NuGetCommand@2
   inputs:
