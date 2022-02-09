@@ -29,7 +29,11 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
-- Bug fixes and dependency updates.</PackageReleaseNotes>
+- Update to use SignalR Client v5
+- Fix bug when POST with empty body
+- Upload streaming for SPS
+- Added support for new SafeguardDotNet.BrowserLogin feature
+- Additional bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
