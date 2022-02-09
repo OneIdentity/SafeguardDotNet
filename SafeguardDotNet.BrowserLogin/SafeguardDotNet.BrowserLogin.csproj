@@ -5,7 +5,7 @@
     <RootNamespace>OneIdentity.SafeguardDotNet.BrowserLogin</RootNamespace>
     <PackageId>OneIdentity.SafeguardDotNet.BrowserLogin</PackageId>
     <Authors>One Identity LLC</Authors>
-    <Copyright>(c) 2021 One Identity LLC. All rights reserved.</Copyright>
+    <Copyright>(c) 2022 One Identity LLC. All rights reserved.</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
