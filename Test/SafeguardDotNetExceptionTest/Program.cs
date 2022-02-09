@@ -91,7 +91,7 @@ namespace SafeguardDotNetExceptionTest
             Console.WriteLine("Test connect with unknown user");
             try
             {
-                using var connection = Safeguard.Connect(appliance, "local", "thisisnevergonnabethere", "a".ToSecureString(), ignoreSsl:true);
+                using var connection = Safeguard.Connect(appliance, "local", "thisisnevergonnabethere", "a".ToSecureString(), ignoreSsl: true);
                 throw new Exception("Unknown user did not throw an exception");
             }
             catch (SafeguardDotNetException ex)
@@ -102,7 +102,7 @@ namespace SafeguardDotNetExceptionTest
                     throw;
                 if (ex.ErrorCode != null)
                     throw;
-                if (ex.ErrorMessage != null)
+                if (ex.ErrorMessage != "invalid_request" && ex.ErrorMessage != null)
                     throw;
             }
 
@@ -120,7 +120,7 @@ namespace SafeguardDotNetExceptionTest
                     throw;
                 if (ex.ErrorCode != null)
                     throw;
-                if (ex.ErrorMessage != null)
+                if (ex.ErrorMessage != "invalid_request" && ex.ErrorMessage != null)
                     throw;
             }
         }
