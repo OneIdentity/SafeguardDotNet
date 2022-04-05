@@ -150,9 +150,11 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 throw new SafeguardDotNetException(
                     "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
                     response.StatusCode, response.Content);
-            var json = JToken.Parse(response.Content);
+            var raw = string.IsNullOrEmpty(response.Content)
+                ? response.Content
+                : JToken.Parse(response.Content).ToString();
             Log.Information("Successfully retrieved A2A password.");
-            return json.Root.ToString().ToSecureString();
+            return raw.ToSecureString();
         }
 
         public SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh)
