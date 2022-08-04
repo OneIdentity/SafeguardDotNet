@@ -77,6 +77,67 @@ namespace OneIdentity.SafeguardDotNet.Sps
             }
         }
 
+        public async Task<StreamResponse> DownloadStreamAsync(string relativeUrl, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
+        {
+            PreconditionCheck(relativeUrl);
+
+            var token = cancellationToken ?? CancellationToken.None;
+
+            // Ideally we'd authenticate when creating the http client, but this way we don't have to worry about token lifetime issues.
+            await Authenticate(token);
+
+            using (var request = PrepareStreamingRequest(HttpMethod.Get, relativeUrl, parameters, additionalHeaders))
+            {
+                var progressHandlerFunc = ConfigureProgressHandler(progress);
+                try
+                {
+                    var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseContentRead, token);//.Result;
+                    ValidateGetResponse(response);
+                    return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
+                }
+                catch (Exception)
+                {
+                    CleanupProgress(progressHandlerFunc);
+                    throw;
+                }
+            }
+        }
+
+        private void PreconditionCheck(string relativeUrl)
+        {
+            if (_isDisposed())
+                throw new ObjectDisposedException("SpsConnection");
+            if (string.IsNullOrEmpty(relativeUrl))
+                throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+        }
+
+        private EventHandler<HttpProgressEventArgs> ConfigureProgressHandler(IProgress<TransferProgress> progress)
+        {
+            if (progress != null)
+            {
+                EventHandler<HttpProgressEventArgs> progressHandlerFunc = (sender, args) =>
+                {
+                    var downloadProgress = new TransferProgress
+                    {
+                        BytesTotal = args.TotalBytes.GetValueOrDefault(0),
+                        BytesTransferred = args.BytesTransferred
+                    };
+                    progress.Report(downloadProgress);
+                };
+                _progressMessageHandler.HttpReceiveProgress += progressHandlerFunc;
+                return progressHandlerFunc;
+            }
+            return null;
+        }
+
+        private void CleanupProgress(EventHandler<HttpProgressEventArgs> progressHandlerFn)
+        {
+            if (progressHandlerFn != null)
+            {
+                _progressMessageHandler.HttpReceiveProgress -= progressHandlerFn;
+            }
+        }
+
         private HttpClient CreateHttpClient(ProgressMessageHandler progressHandler)
         {
             var httpClientHandler = new HttpClientHandler();
@@ -140,6 +201,27 @@ namespace OneIdentity.SafeguardDotNet.Sps
             }
 
             return uri;
+        }
+
+        private void ValidateGetResponse(HttpResponseMessage response)
+        {
+            var fullResponse = new FullResponse
+            {
+                Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
+                StatusCode = response.StatusCode
+            };
+
+            // Check for 200 OK here because 204 Accepted doesn't return a stream,
+            // better to fail in that case.
+            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                fullResponse.Body = response.Content.ReadAsStringAsync().Result;
+                throw new SafeguardDotNetException(
+                    $"Response does not indicate OK status. Error: {fullResponse.StatusCode} {fullResponse.Body}",
+                    fullResponse.StatusCode, fullResponse.Body);
+            }
+
+            fullResponse.LogResponseDetails();
         }
 
         private async Task<string> ValidatePostResponse(HttpResponseMessage response)
