@@ -29,6 +29,10 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
+- Default API changed to v4 for 7.0.
+  - You may use the v3 API by passing the API version when connecting,
+  - You may also pass in a v3 API parameter when creating an A2A context.
+- Support to download stream payload from SPS.
 - Bug fixes and dependency updates.</PackageReleaseNotes>
   </PropertyGroup>
 
