@@ -148,7 +148,7 @@ namespace SafeguardDotNetExceptionTest
             Console.WriteLine("Test catching one for bad request no filter");
             try
             {
-                connection.InvokeMethod(Service.Core, Method.Get, "Me/RequestableAssets", 
+                connection.InvokeMethod(Service.Core, Method.Get, "Me/AccessRequestAssets", 
                     parameters: new Dictionary<string, string>(){["filter"] = "This eq 'broken'"});
                 throw new Exception("Bad filter did not throw an exception");
             }
