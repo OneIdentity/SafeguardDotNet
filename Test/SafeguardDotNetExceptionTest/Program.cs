@@ -52,7 +52,10 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
+                // RestSharp will now return two different error messages on Windows for an invalid host.
                 if (!string.Equals(ex.Message,
+                    "Unable to anonymously connect to bad.dns.name, Error: The requested name is valid, but no data of the requested type was found. The requested name is valid, but no data of the requested type was found.")
+                    && !string.Equals(ex.Message,
                     "Unable to anonymously connect to bad.dns.name, Error: No such host is known. No such host is known.")
                 )
                     throw;
@@ -74,7 +77,10 @@ namespace SafeguardDotNetExceptionTest
             }
             catch (SafeguardDotNetException ex)
             {
+                // RestSharp will now return two different error messages on Windows for an invalid host.
                 if (!string.Equals(ex.Message,
+                    "Unable to connect to RSTS to find identity provider scopes, Error: The requested name is valid, but no data of the requested type was found. The requested name is valid, but no data of the requested type was found.")
+                    && !string.Equals(ex.Message,
                     "Unable to connect to RSTS to find identity provider scopes, Error: No such host is known. No such host is known.")
                 )
                     throw;
@@ -148,7 +154,7 @@ namespace SafeguardDotNetExceptionTest
             Console.WriteLine("Test catching one for bad request no filter");
             try
             {
-                connection.InvokeMethod(Service.Core, Method.Get, "Me/AccessRequestAssets", 
+                connection.InvokeMethod(Service.Core, Method.Get, "Me/AccessRequestAssets",
                     parameters: new Dictionary<string, string>(){["filter"] = "This eq 'broken'"});
                 throw new Exception("Bad filter did not throw an exception");
             }

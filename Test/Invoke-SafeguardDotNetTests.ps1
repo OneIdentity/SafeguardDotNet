@@ -178,11 +178,11 @@ Write-Host -ForegroundColor Yellow "Testing SafeguardDotNetExceptions against Sa
 Invoke-DotNetRun $script:ExceptionTestDir "Admin123" "-a $Appliance -u Admin -x -p"
 
 Write-Host -ForegroundColor Yellow "Setting up a test user ($($script:TestObj))..."
-if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:TestObj)'`" -p"))
+if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
 {
     $local:Body = @{
-        PrimaryAuthenticationProviderId = -1;
-        UserName = "$($script:TestObj)";
+        PrimaryAuthenticationProvider = @{ Id = -1 };
+        Name = "$($script:TestObj)";
         AdminRoles = @('GlobalAdmin','Auditor','AssetAdmin','ApplianceAdmin','PolicyAdmin','UserAdmin','HelpdeskAdmin','OperationsAdmin')
     }
     $local:Result = (Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`"")
@@ -219,12 +219,14 @@ else
 }
 
 Write-Host -ForegroundColor Yellow "Setting up a cert user ($($script:CertUser))..."
-if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:CertUser)'`" -p"))
+if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:CertUser)'`" -p"))
 {
     $local:Body = @{
-        PrimaryAuthenticationProviderId = -2;
-        UserName = "$($script:CertUser)";
-        PrimaryAuthenticationIdentity = $script:UserThumbprint
+        PrimaryAuthenticationProvider = @{
+            Id = -2;
+            Identity = $script:UserThumbprint
+        };
+        Name = "$($script:CertUser)"
     }
     Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`""
 }
@@ -269,7 +271,7 @@ if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u
 {
     $local:Body = @{
         Name = "$($script:TestObj)";
-        AssetId = $local:Result.Id
+        Asset = @{ Id = $local:Result.Id }
     }
     $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U `"AssetAccounts`" -p -b `"$(Get-StringEscapedBody $local:Body)`"")
     $local:Result
@@ -283,7 +285,7 @@ else
 Write-Host -ForegroundColor Yellow "Setting up for A2A credential retrieval..."
 if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"A2ARegistrations?filter=AppName%20eq%20'$($script:TestObj)'`" -p"))
 {
-    $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:CertUser)'`" -p")
+    $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:CertUser)'`" -p")
     $local:Body = @{
         AppName = "$($script:TestObj)";
         VisibleToCertificateUsers = $true;
@@ -344,7 +346,7 @@ Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
 Write-Host -ForegroundColor Yellow "Setting up entitlement for workflow..."
 if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Roles?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
 {
-    $local:User = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:TestObj)'`" -p")
+    $local:User = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:TestObj)'`" -p")
     $local:Body = @{
         Name = "$($script:TestObj)";
         Description = "test entitlement for SafeguardDotNet test script";
@@ -361,7 +363,7 @@ $local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Applianc
 Write-Host -ForegroundColor Yellow "Setting up policy for workflow..."
 if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"AccessPolicies?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
 {
-    $local:User = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=UserName%20eq%20'$($script:CertUser)'`" -p")
+    $local:User = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:CertUser)'`" -p")
     $local:Account = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"AssetAccounts?filter=Name%20eq%20'$($script:TestObj)'`" -p")
     $local:Body = @{
         Name = "$($script:TestObj)";
