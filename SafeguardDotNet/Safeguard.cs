@@ -12,7 +12,7 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public static class Safeguard
     {
-        private const int DefaultApiVersion = 3;
+        private const int DefaultApiVersion = 4;
 
         private static SafeguardConnection GetConnection(IAuthenticationMechanism authenticationMechanism)
         {
