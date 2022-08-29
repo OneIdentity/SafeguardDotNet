@@ -308,7 +308,6 @@ if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u
         throw "Couldn't find asset account $($script:TestObj) to create A2A account retrieval"
     }
     $local:Body = @{
-        SystemId = $local:Result.AssetId;
         AccountId = $local:Result.Id
     }
     Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U `"A2ARegistrations/$($local:A2aId)/RetrievableAccounts`" -p -b `"$(Get-StringEscapedBody $local:Body)`""
@@ -402,7 +401,7 @@ Write-Host -ForegroundColor Yellow "Creating access request..."
 $local:Account = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"AssetAccounts?filter=Name%20eq%20'$($script:TestObj)'`" -p")
 $local:Body = @{
     AccessRequestType = "Password";
-    SystemId = $local:Account.AssetId;
+    AssetId = $local:Account.Asset.Id;
     AccountId = $local:Account.Id
 }
 $local:Request = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U AccessRequests -p -b `"$(Get-StringEscapedBody $local:Body)`"")
