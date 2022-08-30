@@ -24,6 +24,11 @@ SafeguardDotNet will use v4 API by default starting with version 7.0. It is
 possible to continue using the v3 API by passing in the apiVersion parameter
 when creating a connection or A2A context.
 
+Safeguard for Privileged Passwords 7.X hosts both the v3 and v4 APIs. New coding
+projects should target the v4 API, and existing projects can be migrated over time.
+Notification will be given to customers many releases in advance of any plans to
+remove the v3 API. There are currently no plans to remove the v3 API.
+
 ```C#
 // Use v3 instead of v4
 var connection = Safeguard.Connect("safeguard.sample.corp", "local", "Admin", password, 3);
