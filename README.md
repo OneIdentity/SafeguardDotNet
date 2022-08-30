@@ -22,7 +22,10 @@ One Identity open source projects are supported through [One Identity GitHub iss
 
 SafeguardDotNet will use v4 API by default starting with version 7.0. It is
 possible to continue using the v3 API by passing in the apiVersion parameter
-when creating a connection or A2A context.
+when creating a connection or A2A context. Safeguard 7.X hosts both the v3 and
+v4 APIs. New coding projects should target the v4 API, and existing projects can
+be migrated over time. Notification will be given many releases in advance if
+the v3 API is planed for removal. There are currently no plans to remove the v3 API.
 
 ```C#
 // Use v3 instead of v4
