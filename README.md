@@ -214,7 +214,7 @@ This will add the latest OneIdentity.SafeguardDotNet NuGet package into your pro
 If you encounter this error:
 ![Visual Studio Code](data/error401.png)
 
-Add this file under your project root directory: [nuget.config](data/nuget.config) and rerun the previous command.
+Add this file ([nuget.config](data/nuget.config)) under your project root directory and rerun the previous command.
 
 Run:
 ```PowerShell
