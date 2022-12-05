@@ -64,7 +64,7 @@ function Invoke-DotNetRun {
                 # sometimes dotnet run adds weird debug output strings
                 # we just want the string with the JSON in it
                 $local:Output | ForEach-Object {
-                    if ($_ -match "Error" -or $_ -match "Exception")
+                    if ($_ -match "Error" -or $_ -match "Exception:")
                     {
                         throw $local:Output
                     }
