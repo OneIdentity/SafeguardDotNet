@@ -16,3 +16,7 @@ appliances.
 - `SafeguardDotNetEventTool` is for listening for events in via Safeguard API or Safeguard A2A
 
 - `SafeguardDotNetGuiTester` is for testing the SafeguardDotNet.GuiLogin component
+
+
+
+The `Invoke-SafeguardDotNetTests.ps1` powershell script runs various tests against a Safeguard appliance

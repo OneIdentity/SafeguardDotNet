@@ -56,7 +56,7 @@ namespace SafeguardDotNetExceptionTest
                 if (!string.Equals(ex.Message,
                     "Unable to anonymously connect to bad.dns.name, Error: The requested name is valid, but no data of the requested type was found. The requested name is valid, but no data of the requested type was found.")
                     && !string.Equals(ex.Message,
-                    "Unable to anonymously connect to bad.dns.name, Error: No such host is known. No such host is known.")
+                    "Unable to anonymously connect to bad.dns.name, Error: No such host is known. (bad.dns.name:443)")
                 )
                     throw;
                 if (ex.HttpStatusCode != null)
@@ -81,7 +81,7 @@ namespace SafeguardDotNetExceptionTest
                 if (!string.Equals(ex.Message,
                     "Unable to connect to RSTS to find identity provider scopes, Error: The requested name is valid, but no data of the requested type was found. The requested name is valid, but no data of the requested type was found.")
                     && !string.Equals(ex.Message,
-                    "Unable to connect to RSTS to find identity provider scopes, Error: No such host is known. No such host is known.")
+                    "Unable to connect to RSTS to find identity provider scopes, Error: No such host is known. (bad.dns.name:443)")
                 )
                     throw;
                 if (ex.HttpStatusCode != null)
