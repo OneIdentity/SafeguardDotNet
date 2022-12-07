@@ -23,10 +23,6 @@
     <PackageReleaseNotes>One Identity Safeguard Web API .NET SDK
 
 Provides an easy way to connect to Safeguard and call the Safeguard API.
-- Password and client certificate authentication
-- A2A API support, including access request broker
-- Real-time event notifications
-- Persistent event listeners that reconnect even after an appliance goes offline
 
 Updates:
 - Bug fixes and dependency updates.</PackageReleaseNotes>
