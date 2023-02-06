@@ -182,6 +182,47 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return json.Root.ToString().ToSecureString();
         }
 
+        public IList<ApiKeySecret> RetrieveApiKeySecret(SecureString apiKey)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+
+            var list = new List<ApiKeySecret>();
+
+            var request = new RestRequest("Credentials", RestSharp.Method.GET)
+                .AddParameter("type", "ApiKey", ParameterType.QueryString)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
+            var response = _a2AClient.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
+            if (!response.IsSuccessful)
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
+            var json = JToken.Parse(response.Content);
+            Log.Information("Successfully retrieved A2A API key.");
+            var apiKeySecretsJson = JArray.Parse(response.Content);
+            dynamic apiKeySecrets = apiKeySecretsJson;
+            foreach (var apiKeySecret in apiKeySecrets)
+            {
+                list.Add(new ApiKeySecret
+                {
+                    Id = apiKeySecret.Id,
+                    Name = apiKeySecret.Name,
+                    Description = apiKeySecret.Description,
+                    ClientId = apiKeySecret.ClientId,
+                    ClientSecret = ((string)apiKeySecret.ClientSecret).ToSecureString(),
+                    ClientSecretId = apiKeySecret.ClientSecretId
+                });
+            }
+
+            return list;
+        }
+
         public ISafeguardEventListener GetA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
