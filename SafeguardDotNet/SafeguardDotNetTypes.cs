@@ -76,6 +76,30 @@ namespace OneIdentity.SafeguardDotNet
     }
 
     /// <summary>
+    /// A class representing an API key secret.
+    /// </summary>
+    public class ApiKeySecret : IDisposable
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string ClientId { get; set; }
+        public SecureString ClientSecret { get; set; }
+        public string ClientSecretId { get; set; }
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        public void Dispose()
+        {
+            ClientSecret?.Dispose();
+            ClientSecret = null;
+        }
+    }
+
+
+    /// <summary>
     /// A class representing the asset accounts that can be used with A2A credential retrieval.
     /// </summary>
     public class A2ARetrievableAccount : IDisposable

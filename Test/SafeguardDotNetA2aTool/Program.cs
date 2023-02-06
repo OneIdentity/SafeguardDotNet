@@ -107,6 +107,12 @@ namespace SafeguardDotNetA2aTool
                             using (var responseBody = context.RetrievePrivateKey(opts.ApiKey.ToSecureString(), opts.KeyFormat))
                                 Log.Information(responseBody.ToInsecureString());
                         }
+                        else if (opts.ApiKeySecret)
+                        {
+                            var responseBody = context.RetrieveApiKeySecret(opts.ApiKey.ToSecureString());
+                            foreach (var obj in responseBody)
+                                Log.Information(obj.ToString());
+                        }
                         else
                         {
                             using (var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString()))

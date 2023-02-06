@@ -42,8 +42,12 @@ namespace SafeguardDotNetA2aTool
         public string ApiKey { get; set; }
 
         [Option('K', "PrivateKey", Required = false, Default = false,
-            HelpText = "Request private key rather than password")]
+            HelpText = "Request SSH private key rather than password")]
         public bool PrivateKey { get; set; }
+
+        [Option('P', "ApiKeySecret", Required = false, Default = false,
+            HelpText = "Request API key secret rather than password")]
+        public bool ApiKeySecret { get; set; }
 
         [Option('R', "RetrievableAccounts", Required = false, Default = false,
             HelpText = "Display retrievable account information")]
