@@ -234,6 +234,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 _clientCertificate, apiKey, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
+            eventListener.RegisterEventHandler("AccountApiKeySecretUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
@@ -249,6 +250,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
                 apiKeys, _ignoreSsl, _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
+            eventListener.RegisterEventHandler("AccountApiKeySecretUpdated", handler);
             Log.Debug("Event listener successfully created for Safeguard A2A context.");
             return eventListener;
         }
