@@ -12,10 +12,14 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
         private static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
         {
             var safeguardCoreUrl = $"https://{appliance}/service/core/v{DefaultApiVersion}";
-            var coreClient = new RestClient(safeguardCoreUrl);
-            // The client would have already ignored certificate validation manually in the browser
-            coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.POST)
+            var coreClient = new RestClient(safeguardCoreUrl,
+                options =>
+                {
+                    // The client would have already ignored certificate validation manually in the browser
+                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                });
+            
+            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")
                 .AddJsonBody(new
@@ -23,8 +27,8 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                     StsAccessToken = rstsAccessToken.ToInsecureString()
                 });
             var response = coreClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(

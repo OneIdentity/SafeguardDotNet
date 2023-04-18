@@ -47,10 +47,14 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
         private static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode)
         {
             var safeguardRstsUrl = $"https://{appliance}/RSTS";
-            var rstsClient = new RestClient(safeguardRstsUrl);
-            // The client would have already ignored certificate validation manually in the browser
-            rstsClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            var request = new RestRequest("oauth2/token", RestSharp.Method.POST)
+            var rstsClient = new RestClient(safeguardRstsUrl,
+                options =>
+                {
+                    // The client would have already ignored certificate validation manually in the browser
+                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                });
+
+            var request = new RestRequest("oauth2/token", RestSharp.Method.Post)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")
                 .AddJsonBody(new
@@ -62,7 +66,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                 });
             var response = rstsClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to RSTS service {rstsClient.BaseUrl}, Error: " +
+                throw new SafeguardDotNetException($"Unable to connect to RSTS service {rstsClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
@@ -75,10 +79,13 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
         private static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
         {
             var safeguardCoreUrl = $"https://{appliance}/service/core/v{DefaultApiVersion}";
-            var coreClient = new RestClient(safeguardCoreUrl);
-            // The client would have already ignored certificate validation manually in the browser
-            coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.POST)
+            var coreClient = new RestClient(safeguardCoreUrl,
+                options =>
+                {
+                    // The client would have already ignored certificate validation manually in the browser
+                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                });
+            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")
                 .AddJsonBody(new
@@ -87,7 +94,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                 });
             var response = coreClient.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.BaseUrl}, Error: " +
+                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(

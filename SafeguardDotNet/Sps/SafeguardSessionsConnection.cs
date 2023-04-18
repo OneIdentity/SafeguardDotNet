@@ -27,28 +27,28 @@ namespace OneIdentity.SafeguardDotNet.Sps
         {
             _authenticator = authenticator;
 
-            _client = new RestClient($"https://{_authenticator.NetworkAddress}/api")
+            _client = new RestClient($"https://{_authenticator.NetworkAddress}/api",
+            options => 
             {
-                CookieContainer = new CookieContainer(),
-                Authenticator = new HttpBasicAuthenticator(_authenticator.UserName, _authenticator.Password.ToInsecureString()),
-            };
+                options.CookieContainer = new CookieContainer();
+                options.Authenticator = new HttpBasicAuthenticator(_authenticator.UserName, _authenticator.Password.ToInsecureString());
+                if (_authenticator.IgnoreSsl)
+                {
+                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                }
+            });
 
-            if (_authenticator.IgnoreSsl)
-            {
-                _client.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            }
-
-            var authRequest = new RestRequest("authentication", RestSharp.Method.GET);
+            var authRequest = new RestRequest("authentication", RestSharp.Method.Get);
 
             _client.LogRequestDetails(authRequest);
 
-            var response = _client.Get(new RestRequest("authentication", RestSharp.Method.GET));
+            var response = _client.Get(new RestRequest("authentication", RestSharp.Method.Get));
 
             response.LogResponseDetails();
 
             if (!response.IsSuccessful)
             {
-                throw new SafeguardDotNetException($"Error returned when authenticating to {_client.BaseUrl} sps api.", response.StatusCode, response.Content);
+                throw new SafeguardDotNetException($"Error returned when authenticating to {_client.Options.BaseUrl} sps api.", response.StatusCode, response.Content);
             }
 
             _lazyStreamingRequest = new Lazy<ISpsStreamingRequest>(() =>
@@ -83,14 +83,14 @@ namespace OneIdentity.SafeguardDotNet.Sps
 
             response.LogResponseDetails();
 
-            if (response.ResponseStatus != ResponseStatus.Completed)
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
             {
-                throw new SafeguardDotNetException($"Unable to connect to web service {_client.BaseUrl}, Error: {response.ErrorMessage}");
+                throw new SafeguardDotNetException($"Unable to connect to web service {_client.Options.BaseUrl}, Error: {response.ErrorMessage}");
             }
 
             if (!response.IsSuccessful)
             {
-                throw new SafeguardDotNetException($"Error returned from {_client.BaseUrl} sps api", response.StatusCode, response.Content);
+                throw new SafeguardDotNetException($"Error returned from {_client.Options.BaseUrl} sps api", response.StatusCode, response.Content);
             }
 
             return new FullResponse

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet", "SafeguardDotNet\SafeguardDotNet.csproj", "{E2A99B0B-7037-4FF0-AECD-C3AFAE5B068F}"
 EndProject
@@ -41,9 +41,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipeline-templates", "pipel
 		pipeline-templates\job-variables.yml = pipeline-templates\job-variables.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNet.BrowserLogin", "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj", "{2D04109D-5127-4DE2-8CB6-7CFBAA751946}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet.BrowserLogin", "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj", "{2D04109D-5127-4DE2-8CB6-7CFBAA751946}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetBrowserLoginTester", "Test\SafeguardDotNetBrowserLoginTester\SafeguardDotNetBrowserLoginTester.csproj", "{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetBrowserLoginTester", "Test\SafeguardDotNetBrowserLoginTester\SafeguardDotNetBrowserLoginTester.csproj", "{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{867EB36D-7893-444D-900D-29733E8E2636}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleA2aService", "Samples\SampleA2aService\SampleA2aService.csproj", "{0149D659-78E3-476B-81F1-A80BDFA6F8A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceNowTicketValidator", "Samples\ServiceNowTicketValidator\ServiceNowTicketValidator.csproj", "{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,6 +101,14 @@ Global
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,6 +123,8 @@ Global
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{1EB6D64D-7AFB-41DC-B11B-58934D053684} = {9249E337-656D-4970-B45C-7A077C56FA44}
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{0149D659-78E3-476B-81F1-A80BDFA6F8A9} = {867EB36D-7893-444D-900D-29733E8E2636}
+		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607} = {867EB36D-7893-444D-900D-29733E8E2636}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D9CB73C2-C8BA-4198-AC5A-583C98326F2D}

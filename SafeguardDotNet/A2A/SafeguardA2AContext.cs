@@ -29,31 +29,28 @@ namespace OneIdentity.SafeguardDotNet.A2A
         {
             _networkAddress = networkAddress;
             _apiVersion = apiVersion;
+            _ignoreSsl = ignoreSsl;
+            _validationCallback = _ignoreSsl ? null : validationCallback;
+            _clientCertificate = clientCertificate.Clone();
 
             var safeguardA2AUrl = $"https://{_networkAddress}/service/a2a/v{_apiVersion}";
-            _a2AClient = new RestClient(safeguardA2AUrl);
+            _a2AClient = CreateRestClient(safeguardA2AUrl);
 
             var safeguardCoreUrl = $"https://{_networkAddress}/service/core/v{_apiVersion}";
-            _coreClient = new RestClient(safeguardCoreUrl);
+            _coreClient = CreateRestClient(safeguardCoreUrl);
+        }
 
-            if (ignoreSsl)
-            {
-                _ignoreSsl = true;
-                _validationCallback = null;
-                _a2AClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            }
-            else if (validationCallback != null)
-            {
-                _ignoreSsl = false;
-                _validationCallback = validationCallback;
-                _a2AClient.RemoteCertificateValidationCallback += validationCallback;
-                _coreClient.RemoteCertificateValidationCallback += validationCallback;
-            }
+        private RestClient CreateRestClient(string baseUrl)
+        {
+            return new RestClient(baseUrl,
+                options =>
+                {
+                    options.RemoteCertificateValidationCallback = _ignoreSsl 
+                    ? (sender, certificate, chain, errors) => true
+                    : (_validationCallback ?? options.RemoteCertificateValidationCallback);
 
-            _clientCertificate = clientCertificate.Clone();
-            _a2AClient.ClientCertificates = new X509Certificate2Collection() {_clientCertificate.Certificate};
-            _coreClient.ClientCertificates = new X509Certificate2Collection() {_clientCertificate.Certificate};
+                    options.ClientCertificates = new X509Certificate2Collection() { _clientCertificate.Certificate };
+                });
         }
 
         public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : 
@@ -80,11 +77,11 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
             var list = new List<A2ARetrievableAccount>();
 
-            var request = new RestRequest("A2ARegistrations", RestSharp.Method.GET)
+            var request = new RestRequest("A2ARegistrations", RestSharp.Method.Get)
                 .AddHeader("Accept", "application/json");
             var response = _coreClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
@@ -99,7 +96,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
                     .AddHeader("Accept", "application/json");
                 var retrievalResponse = _coreClient.Execute(retrievalRequest);
                 if (retrievalResponse.ResponseStatus != ResponseStatus.Completed)
-                    throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.BaseUrl}, Error: " +
+                    throw new SafeguardDotNetException($"Unable to connect to web service {_coreClient.Options.BaseUrl}, Error: " +
                                                        retrievalResponse.ErrorMessage);
                 if (!retrievalResponse.IsSuccessful)
                     throw new SafeguardDotNetException(
@@ -138,13 +135,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (apiKey == null)
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
 
-            var request = new RestRequest("Credentials", RestSharp.Method.GET)
+            var request = new RestRequest("Credentials", RestSharp.Method.Get)
                 .AddParameter("type", "Password", ParameterType.QueryString)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
             var response = _a2AClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
@@ -164,14 +161,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (apiKey == null)
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
 
-            var request = new RestRequest("Credentials", RestSharp.Method.GET)
+            var request = new RestRequest("Credentials", RestSharp.Method.Get)
                 .AddParameter("type", "PrivateKey", ParameterType.QueryString)
                 .AddParameter("keyFormat", keyFormat.ToString(), ParameterType.QueryString)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
             var response = _a2AClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
@@ -191,13 +188,13 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
             var list = new List<ApiKeySecret>();
 
-            var request = new RestRequest("Credentials", RestSharp.Method.GET)
+            var request = new RestRequest("Credentials", RestSharp.Method.Get)
                 .AddParameter("type", "ApiKey", ParameterType.QueryString)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
             var response = _a2AClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
@@ -289,14 +286,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (accessRequest.AssetId == null && accessRequest.AssetName == null)
                 throw new SafeguardDotNetException("You must specify an asset to create an access request for");
 
-            var request = new RestRequest("AccessRequests", RestSharp.Method.POST)
+            var request = new RestRequest("AccessRequests", RestSharp.Method.Post)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
             var body = JsonConvert.SerializeObject(accessRequest);
             request.AddParameter("application/json", body, ParameterType.RequestBody);
             var response = _a2AClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(

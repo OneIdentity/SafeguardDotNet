@@ -6,8 +6,6 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 {
     internal class AccessTokenAuthenticator : AuthenticatorBase
     {
-        private bool _disposed;
-
         public AccessTokenAuthenticator(string networkAddress, SecureString accessToken,
             int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
@@ -26,14 +24,6 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public override object Clone()
         {
             throw new SafeguardDotNetException("Access token authenticators are not cloneable");
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (_disposed || !disposing)
-                return;
-            base.Dispose(true);
-            _disposed = true;
         }
     }
 }

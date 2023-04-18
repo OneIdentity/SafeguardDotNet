@@ -16,16 +16,7 @@ namespace OneIdentity.SafeguardDotNet
             : base(new ManagementServiceAuthenticator(parentAuthenticationMechanism, networkAddress))
         {
             var safeguardManagementUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}";
-            _managementClient = new RestClient(safeguardManagementUrl);
-
-            if (_authenticationMechanism.IgnoreSsl)
-            {
-                _managementClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            }
-            else if (_authenticationMechanism.ValidationCallback != null)
-            {
-                _managementClient.RemoteCertificateValidationCallback += _authenticationMechanism.ValidationCallback;
-            }
+            _managementClient = CreateRestClient(safeguardManagementUrl);
         }
 
         public override FullResponse JoinSps(ISafeguardSessionsConnection spsConnection, string certificateChain, string sppAddress)

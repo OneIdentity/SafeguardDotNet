@@ -65,13 +65,13 @@ namespace OneIdentity.SafeguardDotNet
             switch (thisMethod)
             {
                 case Method.Post:
-                    return RestSharp.Method.POST;
+                    return RestSharp.Method.Post;
                 case Method.Get:
-                    return RestSharp.Method.GET;
+                    return RestSharp.Method.Get;
                 case Method.Put:
-                    return RestSharp.Method.PUT;
+                    return RestSharp.Method.Put;
                 case Method.Delete:
-                    return RestSharp.Method.DELETE;
+                    return RestSharp.Method.Delete;
                 default:
                     throw new SafeguardDotNetException("Unknown Safeguard REST method",
                         new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
@@ -82,13 +82,13 @@ namespace OneIdentity.SafeguardDotNet
         {
             switch (thisMethod)
             {
-                case RestSharp.Method.POST:
+                case RestSharp.Method.Post:
                     return HttpMethod.Post;
-                case RestSharp.Method.GET:
+                case RestSharp.Method.Get:
                     return HttpMethod.Get;
-                case RestSharp.Method.PUT:
+                case RestSharp.Method.Put:
                     return HttpMethod.Put;
-                case RestSharp.Method.DELETE:
+                case RestSharp.Method.Delete:
                     return HttpMethod.Delete;
                 default:
                     throw new SafeguardDotNetException("Unknown RestSharp method",
@@ -131,7 +131,7 @@ namespace OneIdentity.SafeguardDotNet
             Log.Debug("  Body size: {ResponseBodySize}", fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
         }
 
-        public static void LogResponseDetails(this IRestResponse restResponse)
+        public static void LogResponseDetails(this RestResponse restResponse)
         {
             if (restResponse is null)
             {
@@ -157,7 +157,7 @@ namespace OneIdentity.SafeguardDotNet
                 return;
             }
 
-            LogRequestDetails(restRequest.Method.ConvertToHttpMethod(), $"{restClient.BaseUrl}/{restRequest.Resource}");
+            LogRequestDetails(restRequest.Method.ConvertToHttpMethod(), $"{restClient.Options.BaseUrl}/{restRequest.Resource}");
         }
 
         public static void LogRequestDetails(this HttpRequestMessage requestMessage, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
