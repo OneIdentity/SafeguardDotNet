@@ -7,6 +7,8 @@ using RestSharp;
 using Serilog;
 using Newtonsoft.Json;
 using OneIdentity.SafeguardDotNet.Sps;
+using Microsoft.Extensions.Options;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -26,28 +28,13 @@ namespace OneIdentity.SafeguardDotNet
             _authenticationMechanism = authenticationMechanism;
 
             var safeguardCoreUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/core/v{_authenticationMechanism.ApiVersion}";
-            _coreClient = new RestClient(safeguardCoreUrl);
+            _coreClient = CreateRestClient(safeguardCoreUrl);
 
             var safeguardApplianceUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/appliance/v{_authenticationMechanism.ApiVersion}";
-            _applianceClient = new RestClient(safeguardApplianceUrl);
+            _applianceClient = CreateRestClient(safeguardApplianceUrl);
 
             var safeguardNotificationUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/notification/v{_authenticationMechanism.ApiVersion}";
-            _notificationClient = new RestClient(safeguardNotificationUrl);
-
-            
-
-            if (authenticationMechanism.IgnoreSsl)
-            {
-                _coreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                _applianceClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                _notificationClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            }
-            else if (authenticationMechanism.ValidationCallback != null)
-            {
-                _coreClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
-                _applianceClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
-                _notificationClient.RemoteCertificateValidationCallback += authenticationMechanism.ValidationCallback;
-            }
+            _notificationClient = CreateRestClient(safeguardNotificationUrl);
 
             _lazyStreamingRequest = new Lazy<IStreamingRequest>(() =>
             {
@@ -134,8 +121,8 @@ namespace OneIdentity.SafeguardDotNet
 
             var response = client.Execute(request);
             Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {client.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {client.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
@@ -150,7 +137,19 @@ namespace OneIdentity.SafeguardDotNet
             foreach (var header in response.Headers)
             {
                 if (header.Name != null)
-                    fullResponse.Headers.Add(header.Name, header.Value?.ToString());
+                {
+                    if (fullResponse.Headers.ContainsKey(header.Name))
+                    {
+                        if (!string.IsNullOrEmpty(header?.Value.ToString()))
+                        {
+                            fullResponse.Headers[header.Name] = string.Join(", ", fullResponse.Headers[header.Name], header.Value.ToString());
+                        }
+                    }
+                    else
+                    {
+                        fullResponse.Headers.Add(header.Name, header.Value?.ToString());
+                    }
+                }
             }
             
             fullResponse.LogResponseDetails();
@@ -256,6 +255,16 @@ namespace OneIdentity.SafeguardDotNet
                 default:
                     throw new SafeguardDotNetException("Unknown or unsupported service specified");
             }
+        }
+        protected RestClient CreateRestClient(string baseUrl)
+        {
+            return new RestClient(baseUrl,
+                options =>
+                {
+                    options.RemoteCertificateValidationCallback = _authenticationMechanism.IgnoreSsl
+                    ? (sender, certificate, chain, errors) => true
+                    : (_authenticationMechanism.ValidationCallback ?? options.RemoteCertificateValidationCallback);
+                });
         }
 
         public void Dispose()

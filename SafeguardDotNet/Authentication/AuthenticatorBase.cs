@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using Serilog;
@@ -22,31 +24,22 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         protected RestClient RstsClient;
         protected RestClient CoreClient;
 
-        protected AuthenticatorBase(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
+        protected readonly CertificateContext ClientCertificate;
+
+        protected AuthenticatorBase(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, CertificateContext clientCertificate = null)
         {
             NetworkAddress = networkAddress;
             ApiVersion = apiVersion;
+            IgnoreSsl = ignoreSsl;
+            ValidationCallback = validationCallback;
+            ClientCertificate = clientCertificate;
 
             SafeguardRstsUrl = $"https://{NetworkAddress}/RSTS";
-            RstsClient = new RestClient(SafeguardRstsUrl);
+            RstsClient = CreateRestClient(SafeguardRstsUrl);
 
             SafeguardCoreUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
-            CoreClient = new RestClient(SafeguardCoreUrl);
-
-            if (ignoreSsl)
-            {
-                IgnoreSsl = true;
-                ValidationCallback = null;
-                RstsClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                CoreClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-            } 
-            else if (validationCallback != null)
-            {
-                IgnoreSsl = false;
-                ValidationCallback = validationCallback;
-                RstsClient.RemoteCertificateValidationCallback += validationCallback;
-                CoreClient.RemoteCertificateValidationCallback += validationCallback;
-            }
+            CoreClient = CreateRestClient(SafeguardCoreUrl);
+            ClientCertificate = clientCertificate;
         }
 
         public abstract string Id { get; }
@@ -60,6 +53,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         public RemoteCertificateValidationCallback ValidationCallback { get; }
 
         public virtual bool IsAnonymous => false;
+
+        protected bool IsDisposed => _disposed;
 
         public bool HasAccessToken()
         {
@@ -85,19 +80,19 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new ObjectDisposedException("AuthenticatorBase");
             if (!HasAccessToken())
                 return 0;
-            var request = new RestRequest("LoginMessage", RestSharp.Method.GET)
+            var request = new RestRequest("LoginMessage", RestSharp.Method.Get)
                 .AddHeader("Accept", "application/json")
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
                 .AddHeader("Authorization", $"Bearer {AccessToken.ToInsecureString()}")
                 .AddHeader("X-TokenLifetimeRemaining", "");
             var response = CoreClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.Options.BaseUrl}, Error: " +
                                     response.ErrorMessage);
             if (!response.IsSuccessful)
                 return 0;
-            var remainingStr = response.Headers.ToList().FirstOrDefault(x => x.Name == "X-TokenLifetimeRemaining")?.Value?.ToString();
+            var remainingStr = response.Headers.FirstOrDefault(x => x.Name == "X-TokenLifetimeRemaining")?.Value?.ToString();
             if (remainingStr == null || !int.TryParse(remainingStr, out var remaining))
                 return 10; // Random magic value... the access token was good, but for some reason it didn't return the remaining lifetime
             return remaining;
@@ -109,15 +104,15 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new ObjectDisposedException("AuthenticatorBase");
             using (var rStsToken = GetRstsTokenInternal())
             {
-                var request = new RestRequest("Token/LoginResponse", RestSharp.Method.POST)
+                var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
                     .AddHeader("Accept", "application/json")
                     .AddHeader("Content-type", "application/json")
                     // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                     // I'm not sure there is anything you can do about it.
                     .AddJsonBody(new { StsAccessToken = rStsToken.ToInsecureString() });
                 var response = CoreClient.Execute(request);
-                if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.BaseUrl}, Error: " +
+                if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                    throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.Options.BaseUrl}, Error: " +
                                                        response.ErrorMessage);
                 if (!response.IsSuccessful)
                     throw new SafeguardDotNetException(
@@ -132,10 +127,10 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
             try
             {
-                IRestResponse response;
+                RestResponse response;
                 try
                 {
-                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.POST)
+                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.Post)
                         .AddHeader("Accept", "application/json")
                         .AddHeader("Content-type", "application/x-www-form-urlencoded")
                         .AddParameter("response_type", "token", ParameterType.QueryString)
@@ -147,7 +142,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 catch (WebException)
                 {
                     Log.Debug("Caught exception with POST to find identity provider scopes, trying GET");
-                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.GET)
+                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.Get)
                         .AddHeader("Accept", "application/json")
                         .AddHeader("Content-type", "application/x-www-form-urlencoded")
                         .AddParameter("response_type", "token", ParameterType.QueryString)
@@ -211,6 +206,22 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected abstract SecureString GetRstsTokenInternal();
 
+        protected RestClient CreateRestClient(string baseUrl)
+        {
+            return new RestClient(baseUrl,
+                options =>
+                {
+                    options.RemoteCertificateValidationCallback = IgnoreSsl
+                    ? (sender, certificate, chain, errors) => true
+                    : (ValidationCallback ?? options.RemoteCertificateValidationCallback);
+
+                    if (ClientCertificate != null)
+                    {
+                        options.ClientCertificates = new X509CertificateCollection { ClientCertificate.Certificate };
+                    }
+                });
+        }
+
         public abstract object Clone();
 
         public void Dispose()
@@ -221,14 +232,13 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposed || !disposing)
-                return;
-            try
+            if (!_disposed)
             {
-               ClearAccessToken();
-            }
-            finally
-            {
+                if (disposing)
+                {
+                    ClearAccessToken();
+                }
+
                 _disposed = true;
             }
         }

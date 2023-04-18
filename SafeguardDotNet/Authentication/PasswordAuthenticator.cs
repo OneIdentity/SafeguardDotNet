@@ -35,7 +35,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new ObjectDisposedException("PasswordAuthenticator");
             if (_providerScope == null)
                 _providerScope = ResolveProviderToScope(_provider);
-            var request = new RestRequest("oauth2/token", RestSharp.Method.POST)
+            var request = new RestRequest("oauth2/token", RestSharp.Method.Post)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Content-type", "application/json")
                 .AddJsonBody(new
@@ -48,8 +48,8 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     scope = _providerScope
                 });
             var response = RstsClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.BaseUrl}, Error: " +
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.Options.BaseUrl}, Error: " +
                                                    response.ErrorMessage);
             if (!response.IsSuccessful)
                 throw new SafeguardDotNetException(
