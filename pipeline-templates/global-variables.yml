@@ -2,4 +2,4 @@ variables:
   - name: semanticVersion
     value: '7.2.0'
   - name: isPrerelease
-    value: ${{ true }}
+    value: ${{ false }}
