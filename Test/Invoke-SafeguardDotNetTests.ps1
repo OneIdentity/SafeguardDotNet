@@ -1,6 +1,10 @@
 Param(
     [Parameter(Mandatory=$true, Position=0)]
-    [string]$Appliance
+    [string]$Appliance,
+    [Parameter(Mandatory=$false, Position=1)]
+    [string]$AdminUserName = "admin",
+    [Parameter(Mandatory=$false, Position=2)]
+    [string]$AdminPassword = "Admin123"
 )
 
 $ErrorActionPreference = "Stop"
@@ -172,22 +176,22 @@ Write-Host -ForegroundColor Yellow "Testing whether anonymous notification Statu
 Invoke-DotNetRun $script:ToolDir $null "-a $Appliance -A -x -s Notification -m Get -U Status"
 
 Write-Host -ForegroundColor Yellow "Testing whether can connect to Safeguard ($Appliance) as bootstrap admin..."
-Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U Me -p"
+Invoke-DotNetRun $script:ToolDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -s Core -m Get -U Me -p"
 
 Write-Host -ForegroundColor Yellow "Testing SafeguardDotNetExceptions against Safeguard ($Appliance)..."
-Invoke-DotNetRun $script:ExceptionTestDir "Admin123" "-a $Appliance -u Admin -x -p"
+Invoke-DotNetRun $script:ExceptionTestDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -p"
 
 Write-Host -ForegroundColor Yellow "Setting up a test user ($($script:TestObj))..."
-if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
+if (-not (Test-ReturnsSuccess $script:ToolDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:TestObj)'`" -p"))
 {
     $local:Body = @{
         PrimaryAuthenticationProvider = @{ Id = -1 };
         Name = "$($script:TestObj)";
         AdminRoles = @('GlobalAdmin','Auditor','AssetAdmin','ApplianceAdmin','PolicyAdmin','UserAdmin','HelpdeskAdmin','OperationsAdmin')
     }
-    $local:Result = (Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`"")
+    $local:Result = (Invoke-DotNetRun $script:ToolDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -s Core -m Post -U Users -p -b `"$(Get-StringEscapedBody $local:Body)`"")
     $local:Result
-    Invoke-DotNetRun $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Put -U Users/$($local:Result.Id)/Password -p -b `"'$($script:TestCred)'`""
+    Invoke-DotNetRun $script:ToolDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -s Core -m Put -U Users/$($local:Result.Id)/Password -p -b `"'$($script:TestCred)'`""
 }
 else
 {
@@ -195,7 +199,7 @@ else
 }
 
 Write-Host -ForegroundColor Yellow "Setting up a cert trust chain..."
-if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"TrustedCertificates?filter=Thumbprint%20eq%20'$($script:RootThumbprint)'`" -p"))
+if (-not (Test-ReturnsSuccess $script:ToolDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -s Core -m Get -U `"TrustedCertificates?filter=Thumbprint%20eq%20'$($script:RootThumbprint)'`" -p"))
 {
     $local:Body = @{
         Base64CertificateData = [string](Get-Content -Raw $script:RootCert)
@@ -206,7 +210,7 @@ else
 {
     Write-Host "Root cert already exists"
 }
-if (-not (Test-ReturnsSuccess $script:ToolDir "Admin123" "-a $Appliance -u Admin -x -s Core -m Get -U `"TrustedCertificates?filter=Thumbprint%20eq%20'$($script:CaThumbprint)'`" -p"))
+if (-not (Test-ReturnsSuccess $script:ToolDir $AdminPassword "-a $Appliance -u $($AdminUserName) -x -s Core -m Get -U `"TrustedCertificates?filter=Thumbprint%20eq%20'$($script:CaThumbprint)'`" -p"))
 {
     $local:Body = @{
         Base64CertificateData = [string](Get-Content -Raw $script:CaCert)
