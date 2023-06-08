@@ -18,6 +18,14 @@ One Identity Safeguard Web API C# SDK
 
 One Identity open source projects are supported through [One Identity GitHub issues](https://github.com/OneIdentity/SafeguardDotNet/issues) and the [One Identity Community](https://www.oneidentity.com/community/). This includes all scripts, plugins, SDKs, modules, code snippets or other solutions. For assistance with any One Identity GitHub project, please raise a new Issue on the [One Identity GitHub project](https://github.com/OneIdentity/SafeguardDotNet/issues) page. You may also visit the [One Identity Community](https://www.oneidentity.com/community/) to ask questions.  Requests for assistance made through official One Identity Support will be referred back to GitHub and the One Identity Community forums where those requests can benefit all users.
 
+## Known Issues
+
+SafeguardDotNet 7.3
+
+- In some cases, SignalR does not respect the certificate validation callback function or the IgnoreSsl parameter when getting a persistent or non-persistent A2A event listener.
+  - When calling ```GetPersistentA2AEventListener()``` or ```GetA2AEventListener()``` with a certificate validation callback or the ```IgnoreSsl``` parameter set to 'true', SignalR fails to validate the client certificate.
+  - **Workaround** - Make sure that the Safeguard for Privileged Passwords appliance SSL/TLS Certificate has been properly configured with a valid certificate and that the certificate is trusted by the client. <https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/7.3/administration-guide/33#TOPIC-2015719>
+
 ## Default API Update
 
 SafeguardDotNet will use v4 API by default starting with version 7.0. It is
