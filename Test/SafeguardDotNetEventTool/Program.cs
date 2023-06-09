@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Security;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using CommandLine;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
@@ -45,6 +47,33 @@ namespace SafeguardDotNetEventTool
             return readFromStdin ? Console.ReadLine().ToSecureString() : PromptForSecret("Password");
         }
 
+        public static bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
+
+        private static List<SecureString> ReadAllApiKeys(ToolOptions opts, SecureString password)
+        {
+            var bytes = File.ReadAllBytes(opts.CertificateFile);
+            using (var context = Safeguard.A2A.GetContext(opts.Appliance, bytes, password, CertificateValidationCallback, opts.ApiVersion))
+            {
+                return ReadAllApiKeys(context);
+            }
+        }
+
+        private static List<SecureString> ReadAllApiKeys(ISafeguardA2AContext context)
+        {
+            var apiKeys = new List<SecureString>();
+            var responseBody = context.GetRetrievableAccounts();
+            foreach (var obj in responseBody)
+            {
+                Log.Information(obj.ToString());
+                apiKeys.Add(obj.ApiKey);
+            }
+
+            return apiKeys;
+        }
+
         private static ISafeguardEventListener CreatePersistentListener(ToolOptions opts)
         {
             if (!string.IsNullOrEmpty(opts.ApiKey))
@@ -59,9 +88,26 @@ namespace SafeguardDotNetEventTool
                     if (opts.CertificateAsData)
                     {
                         var bytes = File.ReadAllBytes(opts.CertificateFile);
+
+                        if (opts.ApiKey.Equals("?"))
+                        {
+                            var apiKeys = ReadAllApiKeys(opts, password);
+                            if (opts.UseCertValidation)
+                            {
+                                return Safeguard.A2A.Event.GetPersistentA2AEventListener(apiKeys, A2AHandler, 
+                                    opts.Appliance, bytes, password, CertificateValidationCallback, opts.ApiVersion);
+                            }
+
+                            return Safeguard.A2A.Event.GetPersistentA2AEventListener(apiKeys, A2AHandler, 
+                                opts.Appliance, bytes, password, opts.ApiVersion, opts.Insecure);
+                        }
+
                         if (!opts.ApiKey.Contains(','))
+                        {
                             return Safeguard.A2A.Event.GetPersistentA2AEventListener(opts.ApiKey.ToSecureString(),
                                 A2AHandler, opts.Appliance, bytes, password, opts.ApiVersion, opts.Insecure);
+                        }
+
                         return Safeguard.A2A.Event.GetPersistentA2AEventListener(
                             opts.ApiKey.Split(',').Select(k => k.ToSecureString()), A2AHandler, opts.Appliance,
                             bytes, password, opts.ApiVersion, opts.Insecure);
@@ -124,8 +170,15 @@ namespace SafeguardDotNetEventTool
             if (!string.IsNullOrEmpty(opts.CertificateFile))
             {
                 var password = HandlePassword(opts.ReadPassword);
-                context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion,
-                    opts.Insecure);
+                if (opts.UseCertValidation)
+                {
+                    var bytes = File.ReadAllBytes(opts.CertificateFile);
+                    context = Safeguard.A2A.GetContext(opts.Appliance, bytes, password, CertificateValidationCallback, opts.ApiVersion);
+                }
+                else
+                {
+                    context = Safeguard.A2A.GetContext(opts.Appliance, opts.CertificateFile, password, opts.ApiVersion, opts.Insecure);
+                }
             }
             else if (!string.IsNullOrEmpty(opts.Thumbprint))
             {
@@ -146,8 +199,15 @@ namespace SafeguardDotNetEventTool
                 {
                     Log.Information("Received A2AHandler Event: {EventBody}", body);
                 }
+                if (opts.ApiKey.Equals("?"))
+                {
+                    var apiKeys = ReadAllApiKeys(context);
+                    return context.GetA2AEventListener(apiKeys, A2AHandler);
+                }
+
                 if (!opts.ApiKey.Contains(','))
                     return context.GetA2AEventListener(opts.ApiKey.ToSecureString(), A2AHandler);
+
                 return context.GetA2AEventListener(opts.ApiKey.Split(',').Select(k => k.ToSecureString()), A2AHandler);
             }
         }

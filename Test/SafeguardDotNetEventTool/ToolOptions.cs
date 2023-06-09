@@ -55,5 +55,9 @@ namespace SafeguardDotNetEventTool
         [Option('P', "Persistent", Required = false,
             HelpText = "Use persistent listeners")]
         public bool Persistent { get; set; }
+
+        [Option('U', "UseCertValidation", Required = false, Default = null,
+            HelpText = "Use Certificate Validation Callback")]
+        public bool UseCertValidation { get; set; }
     }
 }
