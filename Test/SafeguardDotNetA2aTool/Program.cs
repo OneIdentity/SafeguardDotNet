@@ -104,8 +104,17 @@ namespace SafeguardDotNetA2aTool
                         }
                         if (opts.PrivateKey)
                         {
-                            using (var responseBody = context.RetrievePrivateKey(opts.ApiKey.ToSecureString(), opts.KeyFormat))
-                                Log.Information(responseBody.ToInsecureString());
+                            if (opts.PrivateKeyFile != null)
+                            {
+                                var privateKey = File.ReadAllText(opts.PrivateKeyFile);
+                                var password = HandlePassword(opts.ReadPassword);
+                                context.SetPrivateKey(opts.ApiKey.ToSecureString(), privateKey.ToSecureString(), password, opts.KeyFormat);
+                            }
+                            else
+                            {
+                                using (var responseBody = context.RetrievePrivateKey(opts.ApiKey.ToSecureString(), opts.KeyFormat))
+                                    Log.Information(responseBody.ToInsecureString());
+                            }
                         }
                         else if (opts.ApiKeySecret)
                         {
@@ -115,8 +124,16 @@ namespace SafeguardDotNetA2aTool
                         }
                         else
                         {
-                            using (var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString()))
-                                Log.Information(responseBody.ToInsecureString());
+                            if (opts.NewPassword)
+                            {
+                                var password = HandlePassword(opts.ReadPassword);
+                                context.SetPassword(opts.ApiKey.ToSecureString(), password);
+                            }
+                            else
+                            {
+                                using (var responseBody = context.RetrievePassword(opts.ApiKey.ToSecureString()))
+                                    Log.Information(responseBody.ToInsecureString());
+                            }
                         }
                     }
                 }

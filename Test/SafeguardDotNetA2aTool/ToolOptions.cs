@@ -42,12 +42,20 @@ namespace SafeguardDotNetA2aTool
         public string ApiKey { get; set; }
 
         [Option('K', "PrivateKey", Required = false, Default = false,
-            HelpText = "Request SSH private key rather than password")]
+            HelpText = "Retrieves or sets the SSH private key rather than password (see -PrivateKeyFile)")]
         public bool PrivateKey { get; set; }
 
         [Option('P', "ApiKeySecret", Required = false, Default = false,
             HelpText = "Request API key secret rather than password")]
         public bool ApiKeySecret { get; set; }
+
+        [Option('M', "PrivateKeyFile", Required = false, Default = null,
+            HelpText = "If specified, sets the SSH private key")]
+        public string PrivateKeyFile { get; set; }
+
+        [Option('N', "NewPassword", Required = false, Default = false,
+            HelpText = "If specified, sets the password")]
+        public bool NewPassword { get; set; }
 
         [Option('R', "RetrievableAccounts", Required = false, Default = false,
             HelpText = "Display retrievable account information")]

@@ -154,6 +154,31 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return raw.ToSecureString();
         }
 
+        public void SetPassword(SecureString apiKey, SecureString password)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            if (password == null)
+                throw new ArgumentException("Parameter may not be null", nameof(password));
+
+            var request = new RestRequest("Credentials/Password", RestSharp.Method.Put)
+                .AddParameter("application/json", $"\"{password.ToInsecureString()}\"", ParameterType.RequestBody)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
+            var response = _a2AClient.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.Options.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
+            if (!response.IsSuccessful)
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
+            Log.Information("Successfully set A2A password.");
+            return;
+        }
+
         public SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh)
         {
             if (_disposed)
@@ -177,6 +202,41 @@ namespace OneIdentity.SafeguardDotNet.A2A
             var json = JToken.Parse(response.Content);
             Log.Information("Successfully retrieved A2A private key.");
             return json.Root.ToString().ToSecureString();
+        }
+
+        public void SetPrivateKey(SecureString apiKey, SecureString privateKey, SecureString password, KeyFormat keyFormat = KeyFormat.OpenSsh)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("SafeguardA2AContext");
+            if (apiKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            if (privateKey == null)
+                throw new ArgumentException("Parameter may not be null", nameof(privateKey));
+            if (password == null)
+                throw new ArgumentException("Parameter may not be null", nameof(password));
+
+            var sshKey = new SshKey()
+            {
+                Passphrase = password.ToInsecureString(),
+                PrivateKey = privateKey.ToInsecureString()
+            };
+            var body = JsonConvert.SerializeObject(sshKey);
+
+            var request = new RestRequest("Credentials/SshKey", RestSharp.Method.Put)
+                .AddParameter("application/json", body, ParameterType.RequestBody)
+                .AddParameter("keyFormat", keyFormat.ToString(), ParameterType.QueryString)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
+            var response = _a2AClient.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+                throw new SafeguardDotNetException($"Unable to connect to web service {_a2AClient.Options.BaseUrl}, Error: " +
+                                                   response.ErrorMessage);
+            if (!response.IsSuccessful)
+                throw new SafeguardDotNetException(
+                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
+                    response.StatusCode, response.Content);
+            Log.Information("Successfully set A2A private key.");
+            return;
         }
 
         public IList<ApiKeySecret> RetrieveApiKeySecret(SecureString apiKey)

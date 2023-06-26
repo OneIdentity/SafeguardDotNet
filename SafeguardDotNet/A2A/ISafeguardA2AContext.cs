@@ -26,12 +26,30 @@ namespace OneIdentity.SafeguardDotNet.A2A
         SecureString RetrievePassword(SecureString apiKey);
 
         /// <summary>
+        /// Sets a password using Safeguard A2A.
+        /// </summary>
+        /// <param name="apiKey">API key corresponding to the configured account.</param>
+        /// <param name="password">Password to set.</param>
+        /// <returns></returns>
+        void SetPassword(SecureString apiKey, SecureString password);
+
+        /// <summary>
         /// Retrieves an SSH private key using Safeguard A2A.
         /// </summary>
         /// <param name="apiKey">API key corresponding to the configured account.</param>
         /// <param name="keyFormat">Format to use when returning private key.</param>
         /// <returns>The SSH private key.</returns>
         SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh);
+
+        /// <summary>
+        /// Sets an SSH private key using Safeguard A2A.
+        /// </summary>
+        /// <param name="apiKey">API key corresponding to the configured account.</param>
+        /// <param name="privateKey">Private key to set.</param>
+        /// <param name="password">Password associated with the private key.</param>
+        /// <param name="keyFormat">Format to use when returning private key.</param>
+        /// <returns>The SSH private key.</returns>
+        void SetPrivateKey(SecureString apiKey, SecureString privateKey, SecureString password, KeyFormat keyFormat = KeyFormat.OpenSsh);
 
         /// <summary>
         /// Retrieves an API key secret using Safeguard A2A.
