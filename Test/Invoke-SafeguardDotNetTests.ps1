@@ -97,7 +97,15 @@ function Invoke-DotNetRun {
             }
             elseif ($local:Output)
             {
-                $local:Obj = (ConvertFrom-Json $local:Output)
+                try
+                {
+                    $local:Obj = (ConvertFrom-Json $local:Output)
+                }
+                catch
+                {
+                    $local:Obj = $local:Output
+                }
+
                 $local:Obj
             }
             # Crappy conditionals should have detected anything but empty output by here
@@ -293,6 +301,7 @@ if (-not (Test-ReturnsSuccess $script:ToolDir $script:TestCred "-a $Appliance -u
     $local:Body = @{
         AppName = "$($script:TestObj)";
         VisibleToCertificateUsers = $true;
+        BidirectionalEnabled = $true;
         Description = "test a2a registration for SafeguardDotNet test script";
         CertificateUserId = $local:Result.Id
     }
@@ -341,6 +350,22 @@ Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -c $($script:UserPfx) 
 Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval from User Certificate Store..."
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -p"
+
+Write-Host -ForegroundColor Yellow "Elevate cert user privileges ($($script:CertUser))..."
+$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:CertUser)'`" -p")
+$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users/$($local:Result.Id)`" -p")
+$local:Result.AdminRoles = @('AssetAdmin','PolicyAdmin')
+$local:Body = $(Get-StringEscapedBody $($local:Result | ConvertTo-Json | ConvertFrom-Json -AsHashTable))
+$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Put -U `"Users/$($local:Result.Id)`" -p -b `"$local:Body`"")
+
+Write-Host -ForegroundColor Yellow "Calling A2A credential put from User Certificate Store..."
+Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -N -p"
+
+Write-Host -ForegroundColor Yellow "Revert elevated cert user privileges ($($script:CertUser))..."
+$local:Result.AdminRoles = @()
+$local:Body = $(Get-StringEscapedBody $($local:Result | ConvertTo-Json | ConvertFrom-Json -AsHashTable))
+$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Put -U `"Users/$($local:Result.Id)`" -p -b `"$local:Body`"")
+
 Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
 
 
