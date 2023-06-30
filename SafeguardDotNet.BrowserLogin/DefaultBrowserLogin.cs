@@ -1,57 +1,46 @@
-﻿using System.Security;
-using Newtonsoft.Json.Linq;
-using RestSharp;
+﻿using System;
 using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.BrowserLogin
 {
     public static class DefaultBrowserLogin
     {
-        private const int DefaultApiVersion = 3;
+        private const int DefaultApiVersion = 4;
+        private const string RedirectUri = "urn:InstalledApplication";
 
-        private static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
-        {
-            var safeguardCoreUrl = $"https://{appliance}/service/core/v{DefaultApiVersion}";
-            var coreClient = new RestClient(safeguardCoreUrl,
-                options =>
-                {
-                    // The client would have already ignored certificate validation manually in the browser
-                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
-                });
-            
-            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
-                .AddHeader("Accept", "application/json")
-                .AddHeader("Content-type", "application/json")
-                .AddJsonBody(new
-                {
-                    StsAccessToken = rstsAccessToken.ToInsecureString()
-                });
-            var response = coreClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
-                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.Options.BaseUrl}, Error: " +
-                                                   response.ErrorMessage);
-            if (!response.IsSuccessful)
-                throw new SafeguardDotNetException(
-                    "Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}",
-                    response.StatusCode, response.Content);
-            return JObject.Parse(response.Content);
-        }
-
-        public static ISafeguardConnection Connect(string appliance, string primaryProviderId = "", string secondaryProviderId = "", string username = "", int port = 8400)
+        public static ISafeguardConnection Connect(string appliance, string username = "", int port = 8400)
         {
             Log.Debug("Calling RSTS for primary authentication");
-            var te = new TokenExtractor(appliance);
-            if (te.Show(primaryProviderId, secondaryProviderId, username, port))
+
+            var tokenExtractor = new TokenExtractor(appliance);
+
+            if (tokenExtractor.Show(username, port))
             {
-                if (string.IsNullOrEmpty(te.AccessToken?.ToInsecureString()))
-                    throw new SafeguardDotNetException("Unable to obtain access token from redirect");
-                Log.Debug("Posting second RSTS access token to login response service");
-                var responseObject = PostLoginResponse(appliance, te.AccessToken);
-                var statusValue = responseObject.GetValue("Status")?.ToString();
-                if (statusValue != null && !statusValue.Equals("Success"))
-                    throw new SafeguardDotNetException($"Error response status {statusValue} from login response service");
-                using (var accessToken = responseObject.GetValue("UserToken")?.ToString().ToSecureString())
-                    return Safeguard.Connect(appliance, accessToken, DefaultApiVersion, true);
+                if (string.IsNullOrEmpty(tokenExtractor.AuthorizationCode))
+                {
+                    throw new SafeguardDotNetException("Unable to obtain authorization code");
+                }
+
+                Log.Debug("Posting RSTS access code to login response service");
+
+                using (var rstsAccessToken = Safeguard.PostAuthorizationCodeFlow(appliance, new Tuple<string, string>(tokenExtractor.AuthorizationCode, tokenExtractor.CodeVerifier), RedirectUri))
+                {
+                    Log.Debug("Posting RSTS access token to login response service");
+
+                    var responseObject = Safeguard.PostLoginResponse(appliance, rstsAccessToken);
+
+                    var statusValue = responseObject.GetValue("Status")?.ToString();
+
+                    if (statusValue != null && !statusValue.Equals("Success"))
+                    {
+                        throw new SafeguardDotNetException($"Error response status {statusValue} from login response service");
+                    }
+
+                    using (var accessToken = responseObject.GetValue("UserToken")?.ToString().ToSecureString())
+                    {
+                        return Safeguard.Connect(appliance, accessToken, DefaultApiVersion, true);
+                    }
+                }
             }
 
             throw new SafeguardDotNetException("Unable to correctly manipulate the browser for Safeguard login");

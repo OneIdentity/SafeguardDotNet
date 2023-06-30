@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -13,7 +12,6 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
 {
     internal class TokenExtractor
     {
-        private const string ClientId = "00000000-0000-0000-0000-000000000000";
         private readonly string _appliance;
 
         public TokenExtractor(string appliance)
@@ -21,20 +19,18 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
             _appliance = appliance;
         }
 
-        public SecureString AccessToken { get; set; }
+        public string AuthorizationCode { get; set; }
+        public string CodeVerifier { get; set; }
 
-        public bool Show(string primaryProviderId = "", string secondaryProviderId = "", string username = "",
-            int port = 8400)
+        public bool Show(string username = "", int port = 8400)
         {
+            CodeVerifier = Safeguard.OAuthCodeVerifier();
+
             var tcpListener = new TcpListener(IPAddress.Loopback, port);
             tcpListener.Start();
             var redirectUri = "urn:InstalledApplicationTcpListener";
-            var accessTokenUri =
-                $"https://{_appliance}/RSTS/Login?response_type=token&client_id={ClientId}&redirect_uri={redirectUri}&port={port}";
-            if (!string.IsNullOrEmpty(primaryProviderId))
-                redirectUri += $"&primaryProviderId={HttpUtility.UrlEncode(primaryProviderId)}";
-            if (!string.IsNullOrEmpty(secondaryProviderId))
-                redirectUri += $"&secondaryProviderid={HttpUtility.UrlEncode(secondaryProviderId)}";
+            var accessTokenUri = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge={Safeguard.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={redirectUri}&port={port}";
+           
             if (!string.IsNullOrEmpty(username))
                 redirectUri += $"&login_hint={HttpUtility.UrlEncode(username)}";
             try
@@ -48,8 +44,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     accessTokenUri = accessTokenUri.Replace("&", "^&");
-                    Process.Start(new ProcessStartInfo("cmd", "/c start " + accessTokenUri)
-                        { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo("cmd", "/c start " + accessTokenUri) { CreateNoWindow = true });
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
@@ -79,8 +74,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                         var sb = new StringBuilder();
                         do
                         {
-                            var numberOfBytesRead = await networkStream
-                                .ReadAsync(readBuffer, 0, readBuffer.Length, source.Token).ConfigureAwait(false);
+                            var numberOfBytesRead = await networkStream.ReadAsync(readBuffer, 0, readBuffer.Length, source.Token).ConfigureAwait(false);
                             var s = Encoding.ASCII.GetString(readBuffer, 0, numberOfBytesRead);
                             sb.Append(s);
                         } while (networkStream.DataAvailable);
@@ -94,18 +88,26 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                         return sb.ToString();
                     }
                 }, source.Token);
+
                 listenTask.Wait(source.Token);
+
                 var innerTask = listenTask.Result;
                 if (innerTask != null)
                 {
                     innerTask.Wait(source.Token);
+
                     if (!innerTask.IsFaulted && innerTask.Result != null)
-                        AccessToken = HttpUtility.ParseQueryString(ExtractUriFromHttpRequest(innerTask.Result))
-                            .Get("oauth").ToSecureString();
+                    {
+                        AuthorizationCode = HttpUtility.ParseQueryString(ExtractUriFromHttpRequest(innerTask.Result)).Get("oauth");
+                    }
                     else if (innerTask.Result != null)
+                    {
                         throw new SafeguardDotNetException(innerTask.Result);
+                    }
                     else
+                    {
                         throw new SafeguardDotNetException("No HTTP redirect");
+                    }
                 }
                 return true;
             }

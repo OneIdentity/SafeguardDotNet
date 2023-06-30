@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using System.Windows.Forms;
+using Microsoft.Web.WebView2.WinForms;
+using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.GuiLogin
 {
     internal class RstsWindow
     {
-        private const string ClientId = "00000000-0000-0000-0000-000000000000";
         private const string RedirectUri = "urn:InstalledApplication";
         private readonly string _appliance;
         private readonly Form _form;
-        private readonly WebBrowser _browser;
+        private readonly WebView2 _browser;
+
+        public string AuthorizationCode { get; set; }
+        public string CodeVerifier { get; set; }
 
         public RstsWindow(string appliance)
         {
@@ -23,34 +28,52 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                 Height = 720,
                 StartPosition = FormStartPosition.CenterParent
             };
-            _browser = new WebBrowser() { Dock = DockStyle.Fill, AllowNavigation = true };
+
+            _browser = new WebView2() { Dock = DockStyle.Fill };
             _form.Controls.Add(_browser);
-            _browser.DocumentTitleChanged += (sender, args) => {
-                var b = (WebBrowser)sender;
-                if (Regex.IsMatch(b.DocumentTitle, "error=[^&]*|code=[^&]*"))
-                {
-                    AuthorizationCode = b.DocumentTitle.Substring(5);
-                    _form.DialogResult = DialogResult.OK;
-                    _form.Hide();
-                }
-            };
+
+            _form.Load += async (s, e) => await InitializeAsync();
         }
-        public string AuthorizationCode { get; set; }
-        public bool Show(string primaryProviderId = "", string secondaryProviderId = "")
+
+        public async Task InitializeAsync()
+        {
+            _browser.CoreWebView2InitializationCompleted += CoreWebView2InitializationCompleted;
+
+            await _browser.EnsureCoreWebView2Async(null);
+            
+            Log.Debug("WebView2 Runtime version: " + _browser.CoreWebView2.Environment.BrowserVersionString);
+        }
+
+        private void CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
+        {
+            CodeVerifier = Safeguard.OAuthCodeVerifier();
+
+            var url = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge={Safeguard.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={HttpUtility.UrlEncode(RedirectUri)}";
+
+            _browser.Stop();
+            _browser.CoreWebView2.DocumentTitleChanged += CoreWebView2_DocumentTitleChanged;
+            _browser.CoreWebView2.Navigate(url);
+        }
+
+        private void CoreWebView2_DocumentTitleChanged(object sender, object e)
+        {
+            var b = sender as Microsoft.Web.WebView2.Core.CoreWebView2;
+
+            if (Regex.IsMatch(b.DocumentTitle, "error=[^&]*|code=[^&]*"))
+            {
+                AuthorizationCode = b.DocumentTitle.Substring(5);
+            }
+            if (AuthorizationCode != null)
+            {
+                _form.DialogResult = DialogResult.OK;
+                _form.Hide();
+            }
+        }
+
+        public bool Show()
         {
             try
             {
-                string url;
-                if (!string.IsNullOrEmpty(primaryProviderId) && !string.IsNullOrEmpty(secondaryProviderId))
-                    url = string.Format(
-                        "https://{0}/RSTS/Login?response_type=code&client_id={1}&redirect_uri={2}&primaryproviderid={3}&secondaryproviderid={4}",
-                        _appliance, ClientId, HttpUtility.UrlEncode(RedirectUri),
-                        HttpUtility.UrlEncode(primaryProviderId), HttpUtility.UrlEncode(secondaryProviderId));
-                else
-                    url = string.Format("https://{0}/RSTS/Login?response_type=code&client_id={1}&redirect_uri={2}",
-                        _appliance, ClientId, HttpUtility.UrlEncode(RedirectUri));
-                _browser.Stop();
-                _browser.Navigate(url);
                 return _form.ShowDialog() == DialogResult.OK;
             }
             catch (Exception e)
