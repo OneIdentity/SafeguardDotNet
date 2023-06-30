@@ -32,7 +32,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
             var accessTokenUri = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge={Safeguard.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={redirectUri}&port={port}";
            
             if (!string.IsNullOrEmpty(username))
-                redirectUri += $"&login_hint={HttpUtility.UrlEncode(username)}";
+                redirectUri += $"&login_hint={Uri.EscapeDataString(username)}";
             try
             {
                 var psi = new ProcessStartInfo { FileName = accessTokenUri, UseShellExecute = true };
@@ -44,7 +44,8 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     accessTokenUri = accessTokenUri.Replace("&", "^&");
-                    Process.Start(new ProcessStartInfo("cmd", "/c start " + accessTokenUri) { CreateNoWindow = true });
+                    //Process.Start(new ProcessStartInfo("cmd", "/c start " + accessTokenUri) { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo(accessTokenUri) { CreateNoWindow = true });
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {

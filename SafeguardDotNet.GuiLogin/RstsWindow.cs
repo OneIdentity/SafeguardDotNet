@@ -48,7 +48,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
         {
             CodeVerifier = Safeguard.OAuthCodeVerifier();
 
-            var url = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge={Safeguard.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={HttpUtility.UrlEncode(RedirectUri)}";
+            var url = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge={Safeguard.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={Uri.EscapeDataString(RedirectUri)}";
 
             _browser.Stop();
             _browser.CoreWebView2.DocumentTitleChanged += CoreWebView2_DocumentTitleChanged;
@@ -59,7 +59,11 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
         {
             var b = sender as Microsoft.Web.WebView2.Core.CoreWebView2;
 
-            if (Regex.IsMatch(b.DocumentTitle, "error=[^&]*|code=[^&]*"))
+            if (Regex.IsMatch(b.DocumentTitle, "error=[^&]*"))
+            {
+                throw new SafeguardDotNetException(b.DocumentTitle.Substring(6));
+            }
+            if (Regex.IsMatch(b.DocumentTitle, "code=[^&]*"))
             {
                 AuthorizationCode = b.DocumentTitle.Substring(5);
             }

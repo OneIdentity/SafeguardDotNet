@@ -1,5 +1,4 @@
-﻿using System;
-using Serilog;
+﻿using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.BrowserLogin
 {
@@ -21,19 +20,19 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                     throw new SafeguardDotNetException("Unable to obtain authorization code");
                 }
 
-                Log.Debug("Posting RSTS access code to login response service");
+                Log.Debug("Redeeming RSTS authorization code");
 
-                using (var rstsAccessToken = Safeguard.PostAuthorizationCodeFlow(appliance, new Tuple<string, string>(tokenExtractor.AuthorizationCode, tokenExtractor.CodeVerifier), RedirectUri))
+                using (var rstsAccessToken = Safeguard.PostAuthorizationCodeFlow(appliance, tokenExtractor.AuthorizationCode, tokenExtractor.CodeVerifier, RedirectUri))
                 {
-                    Log.Debug("Posting RSTS access token to login response service");
+                    Log.Debug("Exchanging RSTS access token");
 
                     var responseObject = Safeguard.PostLoginResponse(appliance, rstsAccessToken);
 
                     var statusValue = responseObject.GetValue("Status")?.ToString();
 
-                    if (statusValue != null && !statusValue.Equals("Success"))
+                    if (string.IsNullOrEmpty(statusValue) || statusValue != "Success")
                     {
-                        throw new SafeguardDotNetException($"Error response status {statusValue} from login response service");
+                        throw new SafeguardDotNetException($"Error response status {statusValue} from RSTS");
                     }
 
                     using (var accessToken = responseObject.GetValue("UserToken")?.ToString().ToSecureString())

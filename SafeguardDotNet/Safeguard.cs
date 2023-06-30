@@ -936,7 +936,7 @@ namespace OneIdentity.SafeguardDotNet
             }
         }
 
-        public static SecureString PostAuthorizationCodeFlow(string appliance, Tuple<string, string> authorizationCode, string RedirectUri)
+        public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string RedirectUri)
         {
             var safeguardRstsUrl = $"https://{appliance}/RSTS";
             var rstsClient = new RestClient(safeguardRstsUrl,
@@ -953,8 +953,8 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     grant_type = "authorization_code",
                     redirect_uri = RedirectUri,
-                    code = authorizationCode.Item1,
-                    code_verifier = authorizationCode.Item2
+                    code = authorizationCode,
+                    code_verifier = codeVerifier
                 });
 
             var response = rstsClient.Execute(request);
