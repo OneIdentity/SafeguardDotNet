@@ -44,8 +44,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     accessTokenUri = accessTokenUri.Replace("&", "^&");
-                    //Process.Start(new ProcessStartInfo("cmd", "/c start " + accessTokenUri) { CreateNoWindow = true });
-                    Process.Start(new ProcessStartInfo(accessTokenUri) { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo(accessTokenUri));
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
