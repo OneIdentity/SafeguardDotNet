@@ -133,7 +133,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                     throw new SafeguardDotNetException(
-                        "Unable to connect to Core to find identity provider scopes, Error: " +
+                        "Unable to connect to RSTS to find identity provider scopes, Error: " +
                         response.ErrorMessage);
                 if (!response.IsSuccessful)
                     throw new SafeguardDotNetException(
