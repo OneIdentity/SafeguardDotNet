@@ -16,17 +16,16 @@
     <copyright>(c) 2023 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
     <dependencies>
-      <group targetFramework=".NETFramework4.6.2">
-        <dependency id="Newtonsoft.Json" version="(12.0.3, )" />
-        <dependency id="RestSharp" version="(106.10.1, )" />
-        <dependency id="Serilog" version="(2.9.0, )" />
+      <group targetFramework=".NETFramework4.7.2">
+        <dependency id="Newtonsoft.Json" version="(13.0.3, )" />
+        <dependency id="Serilog" version="(3.0.1, )" />
       </group>
     </dependencies>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.6.2" />
-      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.6.2" />
-      <frameworkAssembly assemblyName="System.Web" targetFramework=".NETFramework4.6.2" />
-      <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework=".NETFramework4.6.2" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.7.2" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.7.2" />
+      <frameworkAssembly assemblyName="System.Web" targetFramework=".NETFramework4.7.2" />
+      <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework=".NETFramework4.7.2" />
     </frameworkAssemblies>
   </metadata>
   <!--

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
 using Serilog;
