@@ -351,20 +351,8 @@ Write-Host -ForegroundColor Yellow "Calling A2A credential retrieval from User C
 Import-PfxCertificate $script:UserPfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -AsPlainText 'a' -Force)
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -p"
 
-Write-Host -ForegroundColor Yellow "Elevate cert user privileges ($($script:CertUser))..."
-$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users?filter=Name%20eq%20'$($script:CertUser)'`" -p")
-$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Get -U `"Users/$($local:Result.Id)`" -p")
-$local:Result.AdminRoles = @('AssetAdmin','PolicyAdmin')
-$local:Body = $(Get-StringEscapedBody $($local:Result | ConvertTo-Json | ConvertFrom-Json -AsHashTable))
-$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Put -U `"Users/$($local:Result.Id)`" -p -b `"$local:Body`"")
-
 Write-Host -ForegroundColor Yellow "Calling A2A credential put from User Certificate Store..."
 Invoke-DotNetRun $script:A2aToolDir "a" "-a $Appliance -x -t $($script:UserThumbprint) -A `"$($script:A2aCrApiKey)`" -N -p"
-
-Write-Host -ForegroundColor Yellow "Revert elevated cert user privileges ($($script:CertUser))..."
-$local:Result.AdminRoles = @()
-$local:Body = $(Get-StringEscapedBody $($local:Result | ConvertTo-Json | ConvertFrom-Json -AsHashTable))
-$local:Result = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Put -U `"Users/$($local:Result.Id)`" -p -b `"$local:Body`"")
 
 Remove-Item "Cert:\CurrentUser\My\$($script:UserThumbprint)"
 
