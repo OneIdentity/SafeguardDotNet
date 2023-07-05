@@ -1,9 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Security;
 using System.Security;
+using System.Security.Cryptography;
+using System.Text;
+using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
+using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -929,6 +934,110 @@ namespace OneIdentity.SafeguardDotNet
                             false, validationCallback), apiKeys, handler);
                 }
             }
+        }
+
+        public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string RedirectUri)
+        {
+            var safeguardRstsUrl = $"https://{appliance}/RSTS";
+            var rstsClient = new RestClient(safeguardRstsUrl,
+                options =>
+                {
+                    // The client would have already ignored certificate validation manually in the browser
+                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                });
+
+            var request = new RestRequest("oauth2/token", RestSharp.Method.Post)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Content-type", "application/json")
+                .AddJsonBody(new
+                {
+                    grant_type = "authorization_code",
+                    redirect_uri = RedirectUri,
+                    code = authorizationCode,
+                    code_verifier = codeVerifier
+                });
+
+            var response = rstsClient.Execute(request);
+
+            if (response.ResponseStatus != ResponseStatus.Completed)
+            {
+                throw new SafeguardDotNetException($"Unable to connect to RSTS service {rstsClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
+            }
+
+            if (!response.IsSuccessful)
+            {
+                throw new SafeguardDotNetException("Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
+            }
+
+            var jObject = JObject.Parse(response.Content);
+            return jObject.GetValue("access_token")?.ToString().ToSecureString();
+        }
+
+        public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
+        {
+            var safeguardCoreUrl = $"https://{appliance}/service/core/v{DefaultApiVersion}";
+
+            var coreClient = new RestClient(safeguardCoreUrl,
+                options =>
+                {
+                    // The client would have already ignored certificate validation manually in the browser
+                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                });
+
+            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
+                .AddHeader("Accept", "application/json")
+                .AddHeader("Content-type", "application/json")
+                .AddJsonBody(new
+                {
+                    StsAccessToken = rstsAccessToken.ToInsecureString()
+                });
+
+            var response = coreClient.Execute(request);
+
+            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+            {
+                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
+            }
+
+            if (!response.IsSuccessful)
+            {
+                throw new SafeguardDotNetException("Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
+            }
+
+            return JObject.Parse(response.Content);
+        }
+
+        public static string OAuthCodeVerifier()
+        {
+            var bytes = new byte[60];
+            RandomNumberGenerator.Create().GetBytes(bytes);
+            return ToBase64Url(bytes);
+        }
+
+        public static string OAuthCodeChallenge(string codeVerifier)
+        {
+            using (var sha = SHA256.Create())
+            {
+                var hash = sha.ComputeHash(Encoding.ASCII.GetBytes(codeVerifier));
+
+                return ToBase64Url(hash);
+            }
+        }
+
+        // https://172.21.21.1/RSTS/Login?
+        // response_type=code&
+        // redirect_uri=https%3a%2f%2flocalhost%3a7035%2f%3fserver%3d172.21.21.1%26auth%3dresume&
+        // code_challenge=Ullteua8nkpbqkCUpKSxqPfTqrZvZfnmpV3YTGEPUfQ&
+        // code_challenge_method=S256&
+        // state=w5mtmJUPPMhHEW-qo4PyyX4pGDsevgTN2QNRC0aWiaxd8weEQdgiHoieLe4NDeuAkL63Q6-ipG1nIOwY
+
+        /// <summary>Creates a Base64 string with the trailing equal signs removed and any plus signs replaced with
+        /// minus signs and any forward slashes replaced with underscores.</summary>
+        /// <param name="data">Any byte array to be Base64 encoded.</param>
+        /// <returns>A special Base64 string that is URL safe. Used in JWTs, OAuth2.0 and other things.</returns>
+        public static string ToBase64Url(byte[] data)
+        {
+            return Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
     }
 }

@@ -51,7 +51,7 @@ namespace ServiceNowTicketValidator
                 EnsureRestClient();
                 var request =
                     new RestRequest($"api/now/table/incident?sysparm_query=number%3D{ticketNumber}&sysparm_limit=1",
-                        Method.GET);
+                        Method.Get);
                 HandleHeaders(ref request);
                 var response = _restClient.Execute<ServiceNowResult<ServiceNowIncident>>(request);
                 return response?.Data?.result?.FirstOrDefault();
@@ -96,11 +96,14 @@ namespace ServiceNowTicketValidator
 
         private RestClient GetRestClient()
         {
-            var restClient = _restClient ?? new RestClient(_applicationUrl);
-            if (UseBasicAuth)
-                restClient.Authenticator = new HttpBasicAuthenticator(_userName, _password.ToInsecureString());
-            else
-                HandleOAuth();
+            var restClient = _restClient ?? new RestClient(_applicationUrl, options =>
+            {
+                if (UseBasicAuth)
+                    options.Authenticator = new HttpBasicAuthenticator(_userName, _password.ToInsecureString());
+                else
+                    HandleOAuth();
+            });
+
             return restClient;
         }
 

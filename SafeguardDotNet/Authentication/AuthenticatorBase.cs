@@ -127,29 +127,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
             try
             {
-                RestResponse response;
-                try
-                {
-                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.Post)
-                        .AddHeader("Accept", "application/json")
-                        .AddHeader("Content-type", "application/x-www-form-urlencoded")
-                        .AddParameter("response_type", "token", ParameterType.QueryString)
-                        .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
-                        .AddParameter("loginRequestStep", 1, ParameterType.QueryString)
-                        .AddJsonBody("RelayState=");
-                    response = RstsClient.Execute(request);
-                }
-                catch (WebException)
-                {
-                    Log.Debug("Caught exception with POST to find identity provider scopes, trying GET");
-                    var request = new RestRequest("UserLogin/LoginController", RestSharp.Method.Get)
-                        .AddHeader("Accept", "application/json")
-                        .AddHeader("Content-type", "application/x-www-form-urlencoded")
-                        .AddParameter("response_type", "token", ParameterType.QueryString)
-                        .AddParameter("redirect_uri", "urn:InstalledApplication", ParameterType.QueryString)
-                        .AddParameter("loginRequestStep", 1, ParameterType.QueryString);
-                    response = RstsClient.Execute(request);
-                }
+                var request = new RestRequest("AuthenticationProviders", RestSharp.Method.Get)
+                    .AddHeader("Accept", "application/json");
+                RestResponse response = CoreClient.Execute(request);
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                     throw new SafeguardDotNetException(
@@ -159,40 +139,39 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                     throw new SafeguardDotNetException(
                         "Error requesting identity provider scopes from RSTS, Error: " +
                         $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-                var jObject = JObject.Parse(response.Content);
-                var jProviders = (JArray)jObject["Providers"];
-                var knownScopes = new List<(string Id, string DisplayName)>();
+                var jProviders = JArray.Parse(response.Content);
+                var knownScopes = new List<(string RstsProviderId, string Name, string RstsProviderScope)>();
                 if (jProviders != null)
-                    knownScopes = jProviders.Select(s => (Id: s["Id"].ToString(), DisplayName: s["DisplayName"].ToString())).ToList();
+                    knownScopes = jProviders.Select(s => (Id: s["RstsProviderId"].ToString(), Name: s["Name"].ToString(), Scope: s["RstsProviderScope"].ToString())).ToList();
 
                 // 3 step check for determining if the user provided scope is valid:
                 //
                 // 1. User value == RSTSProviderId
-                // 2. User value == Identity Provider Display Name.
+                // 2. User value == Identity Provider Name.
                 //    - This allows the caller to specify the domain name for AD.
                 // 3. User Value is contained in RSTSProviderId.
                 //    - This allows the caller to specify the provider Id rather than the full RSTSProviderId.
                 //    - Such a broad check could provide some issues with false matching, however since this
                 //      was in the original code, this check has been left in place.
-                var scope = knownScopes.FirstOrDefault(s => s.Id.EqualsNoCase(provider));
-                if (scope.Id == null)
-                { 
-                    scope = knownScopes.FirstOrDefault(s => s.DisplayName.EqualsNoCase(provider));
+                var scope = knownScopes.FirstOrDefault(s => s.RstsProviderId.EqualsNoCase(provider));
+                if (scope.RstsProviderId == null)
+                {
+                    scope = knownScopes.FirstOrDefault(s => s.Name.EqualsNoCase(provider));
 
-                    if (scope.DisplayName == null)
+                    if (scope.Name == null)
                     {
-                        scope = knownScopes.FirstOrDefault(s => s.Id.ContainsNoCase(provider));
+                        scope = knownScopes.FirstOrDefault(s => s.RstsProviderId.ContainsNoCase(provider));
 
-                        if (scope.Id == null)
+                        if (scope.RstsProviderId == null)
                         {
                             throw new SafeguardDotNetException(
                             $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
                         }
                     }
-                        
+
                 }
 
-                return $"rsts:sts:primaryproviderid:{scope.Id}";
+                return scope.RstsProviderScope;
             }
             catch (SafeguardDotNetException)
             {
