@@ -59,5 +59,9 @@ namespace SafeguardDotNetEventTool
         [Option('U', "UseCertValidation", Required = false, Default = null,
             HelpText = "Use Certificate Validation Callback")]
         public bool UseCertValidation { get; set; }
+
+        [Option('S', "UseEventListenerStateCallback", Required = false, Default = null,
+            HelpText = "Use the event listener state callback")]
+        public bool UseEventListenerStateCallback { get; set; }
     }
 }

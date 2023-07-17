@@ -6,6 +6,7 @@ using System.Net.Security;
 using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using OneIdentity.SafeguardDotNet.A2A;
 using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Event
@@ -26,6 +27,7 @@ namespace OneIdentity.SafeguardDotNet.Event
 
         private EventHandlerRegistry _eventHandlerRegistry;
         private DisconnectHandler _disconnectHandler = () => throw new SafeguardEventListenerDisconnectedException();
+        private SafeguardEventListenerStateCallback _eventListenerStateCallback;
 
         private bool _isStarted;
         private HubConnection _signalrConnection;
@@ -88,7 +90,23 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (!_isStarted)
                 return;
             Log.Warning("SignalR disconnect detected, calling handler...");
+            CallEventListenerStateCallback(SafeguardEventListenerState.Disconnected);
             _disconnectHandler();
+        }
+
+        private void CallEventListenerStateCallback(SafeguardEventListenerState newState)
+        {
+            if (_eventListenerStateCallback != null)
+            {
+                try
+                {
+                    _eventListenerStateCallback(newState);
+                }
+                catch
+                {
+                    // Just in case the user's callback function throws an exception.
+                }
+            }
         }
 
         private void CleanupConnection()
@@ -116,6 +134,11 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (_disposed)
                 throw new ObjectDisposedException("SafeguardEventListener");
             _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
+        }
+
+        public void SetEventListenerStateCallback(SafeguardEventListenerStateCallback eventListenerStateCallback)
+        {
+            _eventListenerStateCallback = eventListenerStateCallback;
         }
 
         public void Start()
@@ -176,6 +199,7 @@ namespace OneIdentity.SafeguardDotNet.Event
 
                 _signalrConnection.StartAsync().Wait();
                 _isStarted = true;
+                CallEventListenerStateCallback(SafeguardEventListenerState.Connected);
             }
             catch (Exception ex)
             {

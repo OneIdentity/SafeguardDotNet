@@ -52,6 +52,11 @@ namespace SafeguardDotNetEventTool
             return true;
         }
 
+        private static void EventListenerStateCallback(SafeguardEventListenerState newState)
+        {
+            Log.Information($"The new event listener state is: {newState}");
+        }
+
         private static List<SecureString> ReadAllApiKeys(ToolOptions opts, SecureString password)
         {
             var bytes = File.ReadAllBytes(opts.CertificateFile);
@@ -280,17 +285,29 @@ namespace SafeguardDotNetEventTool
                 if (opts.Persistent)
                 {
                     using (var listener = CreatePersistentListener(opts))
+                    {
+                        if (opts.UseEventListenerStateCallback)
+                            listener.SetEventListenerStateCallback(EventListenerStateCallback);
                         RunListener(listener);
+                    }
                 }
                 else if (!string.IsNullOrEmpty(opts.ApiKey))
                 {
                     using (var listener = CreateA2AListener(opts))
+                    {
+                        if (opts.UseEventListenerStateCallback)
+                            listener.SetEventListenerStateCallback(EventListenerStateCallback);
                         RunListener(listener);
+                    }
                 }
                 else
                 {
                     using (var listener = CreateEventListener(opts))
+                    {
+                        if (opts.UseEventListenerStateCallback)
+                            listener.SetEventListenerStateCallback(EventListenerStateCallback);
                         RunListener(listener);
+                    }
                 }
             }
             catch (Exception ex)
