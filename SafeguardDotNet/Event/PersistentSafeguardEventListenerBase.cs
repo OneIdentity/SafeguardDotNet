@@ -11,6 +11,7 @@ namespace OneIdentity.SafeguardDotNet.Event
 
         private SafeguardEventListener _eventListener;
         private readonly EventHandlerRegistry _eventHandlerRegistry;
+        private SafeguardEventListenerStateCallback _eventListenerStateCallback;
 
         private Task _reconnectTask;
         private CancellationTokenSource _reconnectCancel;
@@ -25,6 +26,11 @@ namespace OneIdentity.SafeguardDotNet.Event
             if (_disposed)
                 throw new ObjectDisposedException("PersistentSafeguardEventListener");
             _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
+        }
+
+        public void SetEventListenerStateCallback(SafeguardEventListenerStateCallback eventListenerStateCallback)
+        {
+            _eventListenerStateCallback = eventListenerStateCallback;
         }
 
         protected abstract SafeguardEventListener ReconnectEventListener();
@@ -44,6 +50,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                         Log.Debug("Attempting to connect and start internal event listener.");
                         _eventListener = ReconnectEventListener();
                         _eventListener.SetEventHandlerRegistry(_eventHandlerRegistry);
+                        _eventListener.SetEventListenerStateCallback(_eventListenerStateCallback);
                         _eventListener.Start();
                         _eventListener.SetDisconnectHandler(PersistentReconnectAndStart);
                         break;

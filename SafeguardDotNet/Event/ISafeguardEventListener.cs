@@ -1,4 +1,5 @@
 ﻿using System;
+using OneIdentity.SafeguardDotNet.A2A;
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
@@ -9,6 +10,12 @@ namespace OneIdentity.SafeguardDotNet.Event
     /// <param name="eventName">Name of the event.</param>
     /// <param name="eventBody">JSON string containing event data.</param>
     public delegate void SafeguardEventHandler(string eventName, string eventBody);
+
+    /// <summary>
+    /// A callback that will be called whenever the event listener connection state Changes.
+    /// </summary>
+    /// <param name="eventListenerState">New connection state of the event listener.</param>
+    public delegate void SafeguardEventListenerStateCallback(SafeguardEventListenerState eventListenerState);
 
     /// <summary>
     /// This is an event listener interface that will allow you to be notified each time something
@@ -25,6 +32,13 @@ namespace OneIdentity.SafeguardDotNet.Event
         /// <param name="eventName">Name of the event.</param>
         /// <param name="handler">Callback method.</param>
         void RegisterEventHandler(string eventName, SafeguardEventHandler handler);
+
+        /// <summary>
+        /// Set an event listener callback that will be called each time the connection
+        /// state changes of the event listener.
+        /// </summary>
+        /// <param name="eventListenerStateCallback">Callback method.</param>
+        void SetEventListenerStateCallback(SafeguardEventListenerStateCallback eventListenerStateCallback);
 
         /// <summary>
         /// Start listening for Safeguard events in a background thread.
