@@ -160,6 +160,18 @@ namespace OneIdentity.SafeguardDotNet.Event
                                 ? $"A2A {_apiKey.ToInsecureString()}"
                                 : $"A2A {string.Join(" ", _apiKeys.Select(apiKey => apiKey.ToInsecureString()))}");
                         options.ClientCertificates.Add(_clientCertificate.Certificate);
+
+                        // Moving to SignalR 7.0.x and above, caused the connection to move to HTTP/2 rather than 1.1.  HTTP/2 does
+                        //  not support SSL renegotiation which is required by the HttpSys web host being using in SPP. Setting 
+                        //  UseDefaultCredentials = true, forces the connection back to HTTP/1.1 which allows SSL renegotiation.
+                        //
+                        // Addition Information:
+                        // https://learn.microsoft.com/en-us/aspnet/core/security/authentication/certauth?view=aspnetcore-6.0#renegotiation
+                        // Part of the SignalR 7.x release was to "upgrade" to using HTTP/2 instead of HTTP/1.1.
+                        // https://github.com/dotnet/aspnetcore/commit/9c8ad7359a07748135d2e144ace41ce956b3365a#diff-e5214ac6828c579117d0cff7efecfbfa79d03d7f96fc2b09f174dd28f67f349dL465
+                        // In the SignalR 7.0.7 version, some logic was added that forces the HTTP version back down to 1.1
+                        // https://github.com/dotnet/aspnetcore/blob/v7.0.7/src/SignalR/clients/csharp/Http.Connections.Client/src/HttpConnection.cs#L581
+                        options.UseDefaultCredentials = true;
                     }
 
                     options.HttpMessageHandlerFactory = (message) =>
