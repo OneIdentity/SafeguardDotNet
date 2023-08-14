@@ -2,6 +2,7 @@
 using OneIdentity.SafeguardDotNet.Sps;
 using System;
 using System.Collections.Generic;
+using System.Security;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -11,7 +12,6 @@ namespace OneIdentity.SafeguardDotNet
 
         public PersistentSafeguardConnection(ISafeguardConnection connection) => _connection = connection;
 
-
         public IStreamingRequest Streaming => _connection.Streaming;
 
         public void Dispose() => _connection.Dispose();
@@ -19,6 +19,8 @@ namespace OneIdentity.SafeguardDotNet
         public int GetAccessTokenLifetimeRemaining() => _connection.GetAccessTokenLifetimeRemaining();
 
         public ISafeguardEventListener GetEventListener() => _connection.GetEventListener();
+
+        public SecureString GetAccessToken() => _connection.GetAccessToken();
 
         public ISafeguardConnection GetManagementServiceConnection(string networkAddress)
         {

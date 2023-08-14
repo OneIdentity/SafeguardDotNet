@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security;
 using OneIdentity.SafeguardDotNet.Event;
 using OneIdentity.SafeguardDotNet.Sps;
 
@@ -129,5 +130,12 @@ namespace OneIdentity.SafeguardDotNet
         /// RefreshAccessToken().
         /// </summary>
         void LogOut();
+
+        /// <summary>
+        /// Returns a <see cref="SecureString"/> of the current access token which the caller can pass to other Safeguard
+        /// methods, such as adding cluster members. Access the token value using .ToInsecureString() on the results.
+        /// </summary>
+        /// <returns>The current access token</returns>
+        SecureString GetAccessToken();
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
 using RestSharp;
@@ -22,6 +23,7 @@ namespace OneIdentity.SafeguardDotNet
         private readonly RestClient _applianceClient;
         private readonly RestClient _notificationClient;
         
+        public SecureString GetAccessToken() => _authenticationMechanism.GetAccessToken();
 
         public SafeguardConnection(IAuthenticationMechanism authenticationMechanism)
         {
