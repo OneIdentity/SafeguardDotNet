@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using RestSharp;
 using RestSharp.Authenticators;
-using System.Security;
 using System.Net;
-using Serilog;
 using System;
+using System.Net.Http;
 
 namespace OneIdentity.SafeguardDotNet.Sps
 {
@@ -36,6 +35,14 @@ namespace OneIdentity.SafeguardDotNet.Sps
                 {
                     options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                 }
+
+                options.ConfigureMessageHandler = h =>
+                {
+                    var handler = (HttpClientHandler)h;
+                    handler.CookieContainer = options.CookieContainer;
+                    handler.UseCookies = true;
+                    return handler;
+                };
             });
 
             var authRequest = new RestRequest("authentication", RestSharp.Method.Get);
