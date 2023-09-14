@@ -4,7 +4,13 @@ Param(
     [Parameter(Mandatory=$false, Position=1)]
     [string]$AdminUserName = "admin",
     [Parameter(Mandatory=$false, Position=2)]
-    [string]$AdminPassword = "Admin123"
+    [string]$AdminPassword = "Admin123",
+    [Parameter(Mandatory=$false, Position=3)]
+    [string]$SpsAppliance,
+    [Parameter(Mandatory=$false, Position=4)]
+    [string]$SpsUser = "admin",
+    [Parameter(Mandatory=$false, Position=5)]
+    [string]$SpsPassword
 )
 
 $ErrorActionPreference = "Stop"
@@ -137,6 +143,14 @@ function Test-ReturnsSuccess {
     }
 }
 
+function Should-RunSpsTests {
+    if ($SpsAppliance -and $SpsUser -and $SpsPassword)
+    {
+        $true
+    }
+    $false
+}
+
 function Get-StringEscapedBody {
     Param(
         [Parameter(Mandatory=$true, Position=0)]
@@ -153,6 +167,7 @@ $script:ExceptionTestDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetException
 $script:A2aToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetA2aTool")
 $script:AccessRequestBrokerToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetAccessRequestBrokerTool")
 $script:EventToolDir = (Resolve-Path "$PSScriptRoot\SafeguardDotNetEventTool")
+$script:SessionsToolDir = (Resolve-Path "$PSScriptRoot\SafeguardSessionsDotNetTool")
 
 $script:TestDataDir = (Resolve-Path "$PSScriptRoot\TestData")
 $script:CertDir = (Resolve-Path "$($script:TestDataDir)\CERTS")
@@ -425,3 +440,10 @@ $local:Request = (Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Applian
 Invoke-DotNetRun $script:ToolDir "a" "-a $Appliance -c $($script:UserPfx) -x -s Core -m Post -U `"AccessRequests/$($local:Request.Id)`/Approve`" -p"
 Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U `"AccessRequests/$($local:Request.Id)`/CheckOutPassword`" -p"
 Invoke-DotNetRun $script:ToolDir $script:TestCred "-a $Appliance -u $script:TestObj -x -s Core -m Post -U `"AccessRequests/$($local:Request.Id)`/CheckIn`" -p"
+
+### SafeguardSessionsDotNetTool Tests
+
+if (Should-RunSpsTests) {
+    Write-Host -ForegroundColor Yellow "Test logging into SPS..."
+    Invoke-DotNetRun $script:SessionsToolDir -Command "-a $SpsAppliance -k -u $($SpsUser) -p $($SpsPassword) -m Get -U `"firmware`/slots`" "
+}
