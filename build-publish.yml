@@ -18,9 +18,9 @@ jobs:
       vmImage: 'windows-latest'
     steps:
       - template: pipeline-templates/build-steps.yml
-      - task: AzureKeyVault@1
+      - task: AzureKeyVault@2
         inputs:
-          azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+          azureSubscription: 'SafeguardOpenSource'
           KeyVaultName: 'SafeguardBuildSecrets'
           SecretsFilter: 'NugetOrgApiKey'
         displayName: 'Get Nuget.Org API key from Sandbox Azure Key Vault'
