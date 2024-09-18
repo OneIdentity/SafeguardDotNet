@@ -114,8 +114,7 @@ namespace OneIdentity.SafeguardDotNet
             }
             if (timeout.HasValue)
             {
-                request.Timeout = (timeout.Value.TotalMilliseconds > int.MaxValue)
-                    ? int.MaxValue : (int)timeout.Value.TotalMilliseconds;
+                request.Timeout = timeout.Value;
             }
 
             var client = GetClientForService(service);
