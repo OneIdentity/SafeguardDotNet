@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("One Identity LLC")]
 [assembly: AssemblyProduct("OneIdentity.SafeguardDotNet.GuiLogin")]
-[assembly: AssemblyCopyright("Copyright © 2023 One Identity LLC. All rights reserved.")]
+[assembly: AssemblyCopyright("Copyright © 2024 One Identity LLC. All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
