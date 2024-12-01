@@ -163,8 +163,10 @@ namespace OneIdentity.SafeguardDotNet.A2A
             if (password == null)
                 throw new ArgumentException("Parameter may not be null", nameof(password));
 
+            var data = JsonConvert.SerializeObject(password.ToInsecureString());
+
             var request = new RestRequest("Credentials/Password", RestSharp.Method.Put)
-                .AddParameter("application/json", $"\"{password.ToInsecureString()}\"", ParameterType.RequestBody)
+                .AddParameter("application/json", data, ParameterType.RequestBody)
                 .AddHeader("Accept", "application/json")
                 .AddHeader("Authorization", $"A2A {apiKey.ToInsecureString()}");
             var response = _a2AClient.Execute(request);
