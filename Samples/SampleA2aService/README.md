@@ -52,7 +52,7 @@ On the machine where you will run the service:
     <appSettings>
         <add key="SafeguardAddress" value="<your network address>" />
         <add key="SafeguardClientCertificateThumbprint" value="ec1c1c5862471c27925b9c7180eb4facf8398c58" />
-        <add key="SafeguardApiVersion" value="2" />
+        <add key="SafeguardApiVersion" value="4" />
         <add key="SafeguardIgnoreSsl" value="true" />
         <add key="LoggingDirectory" value="Logs" />
     </appSettings>
