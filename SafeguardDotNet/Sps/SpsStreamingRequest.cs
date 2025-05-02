@@ -7,8 +7,6 @@ using System.Net.Http.Handlers;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.WebUtilities;
-using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet.Sps
 {
@@ -194,13 +192,7 @@ namespace OneIdentity.SafeguardDotNet.Sps
 
         private string ConfigureUri(string relativeUrl, IDictionary<string, string> parameters = null)
         {
-            var uri = $"https://{_authenticator.NetworkAddress}/api/{relativeUrl}";
-            if (parameters != null)
-            {
-                uri = QueryHelpers.AddQueryString(uri, parameters);
-            }
-
-            return uri;
+            return SafeguardConnection.AddQueryParameters($"https://{_authenticator.NetworkAddress}/api/{relativeUrl}", parameters);
         }
 
         private void ValidateGetResponse(HttpResponseMessage response)

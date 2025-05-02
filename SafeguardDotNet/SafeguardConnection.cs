@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security;
 using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
-using RestSharp;
 using Serilog;
 using Newtonsoft.Json;
 using OneIdentity.SafeguardDotNet.Sps;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography.X509Certificates;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -19,24 +19,40 @@ namespace OneIdentity.SafeguardDotNet
 
         protected readonly IAuthenticationMechanism _authenticationMechanism;
 
-        private readonly RestClient _coreClient;
-        private readonly RestClient _applianceClient;
-        private readonly RestClient _notificationClient;
-        
+        private readonly Uri _coreUrl;
+        private readonly Uri _applianceUrl;
+        private readonly Uri _notificationUrl;
+        private readonly HttpClient _http;
+
+        private HttpClient CreateHttpClient()
+        {
+            var handler = new HttpClientHandler();
+
+            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+
+            if (_authenticationMechanism.IgnoreSsl)
+            {
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            }
+            else if (_authenticationMechanism.ValidationCallback != null)
+            {
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => _authenticationMechanism.ValidationCallback(message, cert, chain, errors);
+            }
+
+            return new HttpClient(handler);
+        }
+
         public SecureString GetAccessToken() => _authenticationMechanism.GetAccessToken();
 
         public SafeguardConnection(IAuthenticationMechanism authenticationMechanism)
         {
             _authenticationMechanism = authenticationMechanism;
 
-            var safeguardCoreUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/core/v{_authenticationMechanism.ApiVersion}";
-            _coreClient = CreateRestClient(safeguardCoreUrl);
+            _coreUrl = new Uri($"https://{_authenticationMechanism.NetworkAddress}/service/core/v{_authenticationMechanism.ApiVersion}/", UriKind.Absolute);
+            _applianceUrl = new Uri($"https://{_authenticationMechanism.NetworkAddress}/service/appliance/v{_authenticationMechanism.ApiVersion}/", UriKind.Absolute);
+            _notificationUrl = new Uri($"https://{_authenticationMechanism.NetworkAddress}/service/notification/v{_authenticationMechanism.ApiVersion}/", UriKind.Absolute);
 
-            var safeguardApplianceUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/appliance/v{_authenticationMechanism.ApiVersion}";
-            _applianceClient = CreateRestClient(safeguardApplianceUrl);
-
-            var safeguardNotificationUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/notification/v{_authenticationMechanism.ApiVersion}";
-            _notificationClient = CreateRestClient(safeguardNotificationUrl);
+            _http = CreateHttpClient();
 
             _lazyStreamingRequest = new Lazy<IStreamingRequest>(() =>
             {
@@ -77,6 +93,15 @@ namespace OneIdentity.SafeguardDotNet
             return InvokeMethodFull(service, method, relativeUrl, body, parameters, additionalHeaders, timeout).Body;
         }
 
+        /// <summary>Make a call to the Safeguard API.</summary>
+        /// <param name="service">Which of the Safeguard API service end points to call.</param>
+        /// <param name="method">The HTTP method used to make the API request.</param>
+        /// <param name="relativeUrl">The relative portion of the URL to the API. Do not include a leading forward slash.</param>
+        /// <param name="body">The body data of the request, if required.</param>
+        /// <param name="parameters">Additional query string parameters to be added to the URL.</param>
+        /// <param name="additionalHeaders">Additional HTTP headers to be added to the request.</param>
+        /// <param name="timeout">Override the default request timeout of 100 seconds.</param>
+        /// <returns>The HTTP response data.</returns>
         public FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
             string body = null, IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
@@ -86,76 +111,94 @@ namespace OneIdentity.SafeguardDotNet
             if (string.IsNullOrEmpty(relativeUrl))
                 throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
 
-            var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod());
+            // There is one use case where an application incorrectly passed in a relativeUrl value with a leading forward
+            // slash. The Uri class treats that as absolute, completely removing any existing path segments on the base URL.
+            // RestSharp sanitized this, so we'll have to do the same.
+            if (relativeUrl[0] == '/')
+            {
+                relativeUrl = relativeUrl.Substring(1);
+            }
+
+            relativeUrl = AddQueryParameters(relativeUrl, parameters);
+
+            var req = new HttpRequestMessage
+            {
+                Method = method.ConvertToHttpMethod(),
+                RequestUri = new Uri(GetClientForService(service), relativeUrl),
+            };
+
             if (!_authenticationMechanism.IsAnonymous)
             {
                 if (!_authenticationMechanism.HasAccessToken())
                     throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
-                request.AddHeader("Authorization",
+                req.Headers.Add("Authorization",
                     $"Bearer {_authenticationMechanism.GetAccessToken().ToInsecureString()}");
             }
+
             if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
-                request.AddHeader("Accept", "application/json"); // Assume JSON unless specified
+                req.Headers.Add("Accept", "application/json"); // Assume JSON unless specified
+
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)
-                    request.AddHeader(header.Key, header.Value);
+                    req.Headers.Add(header.Key, header.Value);
             }
+
             if ((method == Method.Post || method == Method.Put) && body != null)
-                request.AddParameter("application/json", body, ParameterType.RequestBody);
-            else if (method == Method.Post || method == Method.Put) // have to set the Content-type header even if empty body or Safeguard chokes
-                request.AddHeader("Content-type", "application/json");
-            if (parameters != null)
-            {
-                foreach (var param in parameters)
-                    request.AddParameter(param.Key, param.Value, ParameterType.QueryString);
-            }
-            if (timeout.HasValue)
-            {
-                request.Timeout = timeout.Value;
-            }
+                req.Content = new StringContent(body ?? string.Empty, Encoding.UTF8, "application/json");
 
-            var client = GetClientForService(service);
-            client.LogRequestDetails(request, parameters, additionalHeaders);
+            var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(100)); // 100 seconds is the default timeout.
 
-            var response = client.Execute(request);
+            req.LogRequestDetails(parameters, additionalHeaders);
             Log.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
-                throw new SafeguardDotNetException($"Unable to connect to web service {client.Options.BaseUrl}, Error: " +
-                                                   response.ErrorMessage);
-            if (!response.IsSuccessful)
-                throw new SafeguardDotNetException(
-                    "Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}",
-                    response.StatusCode, response.Content);
-            var fullResponse = new FullResponse
+
+            try
             {
-                StatusCode = response.StatusCode,
-                Headers = new Dictionary<string, string>(),
-                Body = response.Content
-            };
-            foreach (var header in response.Headers)
-            {
-                if (header.Name != null)
+                var res = _http.SendAsync(req, cts.Token).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!res.IsSuccessStatusCode)
                 {
-                    if (fullResponse.Headers.ContainsKey(header.Name))
+                    throw new SafeguardDotNetException($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}", res.StatusCode, msg);
+                }
+
+                var fullResponse = new FullResponse
+                {
+                    StatusCode = res.StatusCode,
+                    Headers = new Dictionary<string, string>(),
+                    Body = msg
+                };
+
+                foreach (var header in res.Headers)
+                {
+                    if (fullResponse.Headers.ContainsKey(header.Key))
                     {
-                        if (!string.IsNullOrEmpty(header?.Value.ToString()))
+                        if (!string.IsNullOrEmpty(header.Value.ToString()))
                         {
-                            fullResponse.Headers[header.Name] = string.Join(", ", fullResponse.Headers[header.Name], header.Value.ToString());
+                            fullResponse.Headers[header.Key] = string.Join(", ", fullResponse.Headers[header.Key], string.Join(", ", header.Value));
                         }
                     }
                     else
                     {
-                        fullResponse.Headers.Add(header.Name, header.Value?.ToString());
+                        fullResponse.Headers.Add(header.Key, string.Join(", ", header.Value));
                     }
                 }
-            }
-            
-            fullResponse.LogResponseDetails();
 
-            return fullResponse;
+                fullResponse.LogResponseDetails();
+
+                return fullResponse;
+            }
+            catch (TaskCanceledException)
+            {
+                throw new SafeguardDotNetException($"Request timeout to {req.RequestUri}.");
+            }
+            finally
+            {
+                req.Dispose();
+                cts.Dispose();
+            }
         }
 
         public string InvokeMethodCsv(Service service, Method method, string relativeUrl,
@@ -240,32 +283,22 @@ namespace OneIdentity.SafeguardDotNet
             Log.Debug("Cleared access token");
         }
 
-        protected virtual RestClient GetClientForService(Service service)
+        protected virtual Uri GetClientForService(Service service)
         {
             switch (service)
             {
                 case Service.Core:
-                    return _coreClient;
+                    return _coreUrl;
                 case Service.Appliance:
-                    return _applianceClient;
+                    return _applianceUrl;
                 case Service.Notification:
-                    return _notificationClient;
+                    return _notificationUrl;
                 case Service.A2A:
                     throw new SafeguardDotNetException(
                         "You must call the A2A service using the A2A specific method, Error: Unsupported operation");
                 default:
                     throw new SafeguardDotNetException("Unknown or unsupported service specified");
             }
-        }
-        protected RestClient CreateRestClient(string baseUrl)
-        {
-            return new RestClient(baseUrl,
-                options =>
-                {
-                    options.RemoteCertificateValidationCallback = _authenticationMechanism.IgnoreSsl
-                    ? (sender, certificate, chain, errors) => true
-                    : (_authenticationMechanism.ValidationCallback ?? options.RemoteCertificateValidationCallback);
-                });
         }
 
         public void Dispose()
@@ -281,6 +314,7 @@ namespace OneIdentity.SafeguardDotNet
             try
             {
                 _authenticationMechanism?.Dispose();
+                _http?.Dispose();
                 if (_lazyStreamingRequest.IsValueCreated)
                     Streaming.Dispose();
             }
@@ -293,6 +327,35 @@ namespace OneIdentity.SafeguardDotNet
         public object Clone()
         {
             return new SafeguardConnection(_authenticationMechanism.Clone() as IAuthenticationMechanism);
+        }
+
+        public static string AddQueryParameters(string url, IDictionary<string, string> parameters)
+        {
+            if (parameters == null || parameters.Count == 0)
+            {
+                return url;
+            }
+
+            var sb = new StringBuilder(url ?? string.Empty);
+
+            // Try to be compensating with an existing Url, if it were to be passed in with an existing query string.
+            if (!url.Contains("?"))
+            {
+                sb.Append("?");
+            }
+            else if (!url.EndsWith("&"))
+            {
+                sb.Append("&");
+            }
+
+            foreach (var item in parameters)
+            {
+                sb.Append($"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value)}&");
+            }
+
+            sb.Length -= 1; // Remove the last '&' character.
+
+            return sb.ToString();
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security;
-using RestSharp;
 using Serilog;
 
 namespace OneIdentity.SafeguardDotNet
@@ -60,42 +59,6 @@ namespace OneIdentity.SafeguardDotNet
             return string.Equals(thisString, otherString, StringComparison.OrdinalIgnoreCase);
         }
 
-        public static RestSharp.Method ConvertToRestSharpMethod(this Method thisMethod)
-        {
-            switch (thisMethod)
-            {
-                case Method.Post:
-                    return RestSharp.Method.Post;
-                case Method.Get:
-                    return RestSharp.Method.Get;
-                case Method.Put:
-                    return RestSharp.Method.Put;
-                case Method.Delete:
-                    return RestSharp.Method.Delete;
-                default:
-                    throw new SafeguardDotNetException("Unknown Safeguard REST method",
-                        new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
-            }
-        }
-
-        public static HttpMethod ConvertToHttpMethod(this RestSharp.Method thisMethod)
-        {
-            switch (thisMethod)
-            {
-                case RestSharp.Method.Post:
-                    return HttpMethod.Post;
-                case RestSharp.Method.Get:
-                    return HttpMethod.Get;
-                case RestSharp.Method.Put:
-                    return HttpMethod.Put;
-                case RestSharp.Method.Delete:
-                    return HttpMethod.Delete;
-                default:
-                    throw new SafeguardDotNetException("Unknown RestSharp method",
-                        new ArgumentOutOfRangeException(nameof(thisMethod), thisMethod, null));
-            }
-        }
-
         public static HttpMethod ConvertToHttpMethod(this Method thisMethod)
         {
             switch (thisMethod)
@@ -131,35 +94,6 @@ namespace OneIdentity.SafeguardDotNet
             Log.Debug("  Body size: {ResponseBodySize}", fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
         }
 
-        public static void LogResponseDetails(this RestResponse restResponse)
-        {
-            if (restResponse is null)
-            {
-                Log.Debug("LogResponseDetails: restResponse is null!");
-                return;
-            }
-
-            var fullResponse = new FullResponse
-            {
-                StatusCode = restResponse.StatusCode,
-                Headers = new Dictionary<string, string>(),
-                Body = restResponse.Content
-            };
-
-            fullResponse.LogResponseDetails();
-        }
-
-        public static void LogRequestDetails(this RestClient restClient, RestRequest restRequest, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
-        {
-            if (restRequest is null)
-            {
-                Log.Debug("LogRequestDetails: restRequest is null!");
-                return;
-            }
-
-            LogRequestDetails(restRequest.Method.ConvertToHttpMethod(), $"{restClient.Options.BaseUrl}/{restRequest.Resource}");
-        }
-
         public static void LogRequestDetails(this HttpRequestMessage requestMessage, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
         {
             if (requestMessage is null)
@@ -168,7 +102,7 @@ namespace OneIdentity.SafeguardDotNet
                 return;
             }
             
-            LogRequestDetails(requestMessage.Method, requestMessage.RequestUri.ToString());
+            LogRequestDetails(requestMessage.Method, requestMessage.RequestUri.ToString(), parameters, additionalHeaders);
         }
 
         private static void LogRequestDetails(HttpMethod method, string uri, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)

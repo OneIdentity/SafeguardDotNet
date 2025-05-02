@@ -100,7 +100,7 @@ namespace SafeguardDotNetA2aTool
                         if (opts.RetrievableAccounts)
                         {
                             var accounts = context.GetRetrievableAccounts();
-                            Log.Information(ObjectDumper.Dump(accounts));
+                            Log.Information(System.Text.Json.JsonSerializer.Serialize(accounts));
                         }
                         if (opts.PrivateKey)
                         {
