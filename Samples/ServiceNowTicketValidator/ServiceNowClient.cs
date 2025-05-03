@@ -1,60 +1,55 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security;
+using System.Text;
+using Newtonsoft.Json;
 using OneIdentity.SafeguardDotNet;
-using RestSharp;
-using RestSharp.Authenticators;
 using Serilog;
 using ServiceNowTicketValidator.DTOs;
-using Method = RestSharp.Method;
 
 namespace ServiceNowTicketValidator
 {
     internal class ServiceNowClient : IDisposable
     {
-        private const string TokenAuthUriFormat = "{0}/oauth_token.do";
         private const string IncidentByTicketNumberFormat = "api/now/table/incident?sysparm_query=number%3D{0}&sysparm_limit=1";
 
-        private readonly string _applicationUrl;
-        private readonly SecureString _clientSecret;
+        private readonly Uri _applicationUrl;
         private readonly string _userName;
         private readonly SecureString _password;
-        private ServiceNowToken _accessToken;
-        private RestClient _restClient;
+        private HttpClient _restClient;
 
         public ServiceNowClient(string applicationUrl, SecureString clientSecret, string userName,
             SecureString password)
         {
-            _applicationUrl = applicationUrl;
-            _clientSecret = clientSecret?.Copy();
+            _applicationUrl = new Uri(applicationUrl, UriKind.Absolute);
             _userName = userName;
             _password = password.Copy();
-        }
 
-        private void EnsureRestClient()
-        {
-            if (_restClient == null || _accessToken == null || _accessToken.Expired)
-                _restClient = GetRestClient();
-        }
+            if (clientSecret != null && clientSecret.Length != 0)
+            {
+                throw new NotImplementedException("Only basic authentication with a username and password is supported in this example. Do not specify a client secret. OAuth authentication is not implemented.");
+            }
 
-        private void HandleHeaders(ref RestRequest request)
-        {
-            request.AddHeader("Accept", "application/json");
-            if (!UseBasicAuth)
-                request.AddHeader("Authorization", $"Bearer {_accessToken.access_token}");
+            CreateHttpClient();
         }
 
         public ServiceNowIncident GetIncident(string ticketNumber)
         {
+            var url = string.Format(IncidentByTicketNumberFormat, Uri.EscapeDataString(ticketNumber));
+            var req = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(_applicationUrl, url),
+            };
+
             try
             {
-                EnsureRestClient();
-                var request =
-                    new RestRequest($"api/now/table/incident?sysparm_query=number%3D{ticketNumber}&sysparm_limit=1",
-                        Method.Get);
-                HandleHeaders(ref request);
-                var response = _restClient.Execute<ServiceNowResult<ServiceNowIncident>>(request);
-                return response?.Data?.result?.FirstOrDefault();
+                var res = _restClient.SendAsync(req).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                return JsonConvert.DeserializeObject<ServiceNowResult<ServiceNowIncident>>(msg)?.result?.FirstOrDefault();
             }
             catch (Exception ex)
             {
@@ -65,14 +60,19 @@ namespace ServiceNowTicketValidator
 
         private T FollowLink<T>(string linkUrl) where T : class
         {
+            var relativeUrl = new Uri(linkUrl).PathAndQuery;
+            var req = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(_applicationUrl, relativeUrl),
+            };
+
             try
             {
-                EnsureRestClient();
-                var relativeUrl = new Uri(linkUrl).PathAndQuery;
-                var request = new RestRequest(relativeUrl);
-                HandleHeaders(ref request);
-                var response = _restClient.Execute<ServiceNowResult<T>>(request);
-                return response?.Data?.result?.FirstOrDefault();
+                var res = _restClient.SendAsync(req).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                return JsonConvert.DeserializeObject<ServiceNowResult<T>>(msg)?.result?.FirstOrDefault();
             }
             catch (Exception ex)
             {
@@ -92,34 +92,24 @@ namespace ServiceNowTicketValidator
             return FollowLink<ServiceNowSysUser>(linkUrl);
         }
 
-        private bool UseBasicAuth => _clientSecret == null;
-
-        private RestClient GetRestClient()
+        private void CreateHttpClient()
         {
-            var restClient = _restClient ?? new RestClient(_applicationUrl, options =>
-            {
-                if (UseBasicAuth)
-                    options.Authenticator = new HttpBasicAuthenticator(_userName, _password.ToInsecureString());
-                else
-                    HandleOAuth();
-            });
+            var handler = new HttpClientHandler();
 
-            return restClient;
-        }
+            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
 
-        private void HandleOAuth()
-        {
-            // TODO:
-            _accessToken = null;
-            throw new NotImplementedException("Need to implement the HandleOAuth method");
+            _restClient = new HttpClient(handler);
+
+            _restClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _restClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_userName}:{_password.ToInsecureString()}")));
         }
 
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _clientSecret?.Dispose();
                 _password?.Dispose();
+                _restClient?.Dispose();
             }
         }
 

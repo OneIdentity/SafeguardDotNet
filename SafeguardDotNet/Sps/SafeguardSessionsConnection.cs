@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using RestSharp;
-using RestSharp.Authenticators;
 using System.Net;
 using System;
 using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace OneIdentity.SafeguardDotNet.Sps
 {
@@ -14,7 +14,9 @@ namespace OneIdentity.SafeguardDotNet.Sps
     {
         private bool _disposed;
 
-        private readonly RestClient _client;
+        private readonly HttpClient _client;
+
+        private readonly Uri _spsUri;
 
         private readonly ISpsAuthenticator _authenticator;
 
@@ -25,43 +27,38 @@ namespace OneIdentity.SafeguardDotNet.Sps
         public SafeguardSessionsConnection(ISpsAuthenticator authenticator)
         {
             _authenticator = authenticator;
+            _spsUri = new Uri($"https://{_authenticator.NetworkAddress}/api/", UriKind.Absolute);
 
-            _client = new RestClient($"https://{_authenticator.NetworkAddress}/api",
-            options => 
-            {
-                options.CookieContainer = new CookieContainer();
-                options.Authenticator = new HttpBasicAuthenticator(_authenticator.UserName, _authenticator.Password.ToInsecureString());
-                if (_authenticator.IgnoreSsl)
-                {
-                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
-                }
+            _client = CreateHttpClient();
 
-                options.ConfigureMessageHandler = h =>
-                {
-                    var handler = (HttpClientHandler)h;
-                    handler.CookieContainer = options.CookieContainer;
-                    handler.UseCookies = true;
-                    return handler;
-                };
-            });
-
-            var authRequest = new RestRequest("authentication", RestSharp.Method.Get);
-
-            _client.LogRequestDetails(authRequest);
-
-            var response = _client.Get(new RestRequest("authentication", RestSharp.Method.Get));
-
-            response.LogResponseDetails();
-
-            if (!response.IsSuccessful)
-            {
-                throw new SafeguardDotNetException($"Error returned when authenticating to {_client.Options.BaseUrl} sps api.", response.StatusCode, response.Content);
-            }
+            _ = InvokeMethod(Method.Get, "authentication");
 
             _lazyStreamingRequest = new Lazy<ISpsStreamingRequest>(() =>
             {
                 return new SpsStreamingRequest(_authenticator, () => _disposed);
             });
+        }
+
+        private HttpClient CreateHttpClient()
+        {
+            var handler = new HttpClientHandler();
+
+            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+
+            if (_authenticator.IgnoreSsl)
+            {
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            }
+
+            handler.CookieContainer = new CookieContainer();
+            handler.UseCookies = true;
+            handler.PreAuthenticate = true;
+
+            var c = new HttpClient(handler);
+
+            c.DefaultRequestHeaders.Authorization = _authenticator.GetAuthenticationHeader();
+
+            return c;
         }
 
         public string InvokeMethod(Method method, string relativeUrl, string body = null)
@@ -74,38 +71,51 @@ namespace OneIdentity.SafeguardDotNet.Sps
         /// and body. If there is a failure a SafeguardDotNetException will be thrown.
         /// </summary>
         /// <param name="method">HTTP method type to use.</param>
-        /// <param name="relativeUrl">The url.</param>
+        /// <param name="relativeUrl">Relative portion of the URL. Do not include a leading forward slash.</param>
         /// <param name="body">Request body to pass to the method.</param>
         /// <returns>Response with status code, headers, and body as string.</returns>
         public FullResponse InvokeMethodFull(Method method, string relativeUrl, string body = null)
         {
-            var request = new RestRequest(relativeUrl, method.ConvertToRestSharpMethod());
+            var req = new HttpRequestMessage
+            {
+                Method = method.ConvertToHttpMethod(),
+                RequestUri = new Uri(_spsUri, relativeUrl),
+            };
+
+            req.Headers.Add("Accept", "application/json");
 
             if ((method == Method.Post || method == Method.Put) && body != null)
-                request.AddParameter("application/json", body, ParameterType.RequestBody);
-
-            _client.LogRequestDetails(request);
-
-            var response = _client.Execute(request);
-
-            response.LogResponseDetails();
-
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
             {
-                throw new SafeguardDotNetException($"Unable to connect to web service {_client.Options.BaseUrl}, Error: {response.ErrorMessage}");
+                req.Content = new StringContent(body, Encoding.UTF8, "application/json");
             }
 
-            if (!response.IsSuccessful)
+            try
             {
-                throw new SafeguardDotNetException($"Error returned from {_client.Options.BaseUrl} sps api", response.StatusCode, response.Content);
-            }
+                req.LogRequestDetails();
 
-            return new FullResponse
+                var res = _client.SendAsync(req).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    throw new SafeguardDotNetException($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}", res.StatusCode, msg);
+                }
+
+                var fr = new FullResponse
+                {
+                    StatusCode = res.StatusCode,
+                    Headers = new Dictionary<string, string>(),
+                    Body = msg
+                };
+
+                fr.LogResponseDetails();
+
+                return fr;
+            }
+            catch (TaskCanceledException)
             {
-                StatusCode = response.StatusCode,
-                Headers = new Dictionary<string, string>(),
-                Body = response.Content
-            };
+                throw new SafeguardDotNetException($"Request timeout to {req.RequestUri}.");
+            }
         }
 
         public void Dispose()
@@ -131,6 +141,5 @@ namespace OneIdentity.SafeguardDotNet.Sps
                 _disposed = true;
             }
         }
-
     }
 }

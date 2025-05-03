@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Security;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
@@ -65,28 +65,20 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             if (IsDisposed)
                 throw new ObjectDisposedException("CertificateAuthenticator");
 
-            string providerScope = "rsts:sts:primaryproviderid:certificate";
+            var providerScope = "rsts:sts:primaryproviderid:certificate";
 
             if (!string.IsNullOrEmpty(_provider))
                 providerScope = ResolveProviderToScope(_provider);
 
-            var request = new RestRequest("oauth2/token", RestSharp.Method.Post)
-                .AddHeader("Accept", "application/json")
-                .AddHeader("Content-type", "application/json")
-                .AddJsonBody(new
-                {
-                    grant_type = "client_credentials",
-                    scope = providerScope
-                });
-            var response = RstsClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
-                throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.Options.BaseUrl}, Error: " +
-                                                   response.ErrorMessage);
-            if (!response.IsSuccessful)
-                throw new SafeguardDotNetException(
-                    $"Error using client_credentials grant_type with {ClientCertificate}" +
-                    $", Error: {response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-            var jObject = JObject.Parse(response.Content);
+            var data = JsonConvert.SerializeObject(new
+            {
+                grant_type = "client_credentials",
+                scope = providerScope,
+            });
+
+            var json = ApiRequest(HttpMethod.Post, $"https://{NetworkAddress}/RSTS/oauth2/token", data);
+
+            var jObject = JObject.Parse(json);
             return jObject.GetValue("access_token")?.ToString().ToSecureString();
         }
 

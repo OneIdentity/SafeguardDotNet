@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
-using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -939,72 +941,31 @@ namespace OneIdentity.SafeguardDotNet
         public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string RedirectUri)
         {
             var safeguardRstsUrl = $"https://{appliance}/RSTS";
-            var rstsClient = new RestClient(safeguardRstsUrl,
-                options =>
-                {
-                    // The client would have already ignored certificate validation manually in the browser
-                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
-                });
-
-            var request = new RestRequest("oauth2/token", RestSharp.Method.Post)
-                .AddHeader("Accept", "application/json")
-                .AddHeader("Content-type", "application/json")
-                .AddJsonBody(new
-                {
-                    grant_type = "authorization_code",
-                    redirect_uri = RedirectUri,
-                    code = authorizationCode,
-                    code_verifier = codeVerifier
-                });
-
-            var response = rstsClient.Execute(request);
-
-            if (response.ResponseStatus != ResponseStatus.Completed)
+            var data = JsonConvert.SerializeObject(new
             {
-                throw new SafeguardDotNetException($"Unable to connect to RSTS service {rstsClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
-            }
+                grant_type = "authorization_code",
+                redirect_uri = RedirectUri,
+                code = authorizationCode,
+                code_verifier = codeVerifier
+            });
 
-            if (!response.IsSuccessful)
-            {
-                throw new SafeguardDotNetException("Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-            }
+            var json = ApiRequest(HttpMethod.Post, $"{safeguardRstsUrl}/oauth2/token", data);
 
-            var jObject = JObject.Parse(response.Content);
+            var jObject = JObject.Parse(json);
             return jObject.GetValue("access_token")?.ToString().ToSecureString();
         }
 
         public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
         {
             var safeguardCoreUrl = $"https://{appliance}/service/core/v{DefaultApiVersion}";
-
-            var coreClient = new RestClient(safeguardCoreUrl,
-                options =>
-                {
-                    // The client would have already ignored certificate validation manually in the browser
-                    options.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true;
-                });
-
-            var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
-                .AddHeader("Accept", "application/json")
-                .AddHeader("Content-type", "application/json")
-                .AddJsonBody(new
-                {
-                    StsAccessToken = rstsAccessToken.ToInsecureString()
-                });
-
-            var response = coreClient.Execute(request);
-
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
+            var data = JsonConvert.SerializeObject(new
             {
-                throw new SafeguardDotNetException($"Unable to connect to core service {coreClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
-            }
+                StsAccessToken = rstsAccessToken.ToInsecureString()
+            });
 
-            if (!response.IsSuccessful)
-            {
-                throw new SafeguardDotNetException("Error using authorization code grant_type, Error: " + $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-            }
+            var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
 
-            return JObject.Parse(response.Content);
+            return JObject.Parse(json);
         }
 
         public static string OAuthCodeVerifier()
@@ -1038,6 +999,49 @@ namespace OneIdentity.SafeguardDotNet
         public static string ToBase64Url(byte[] data)
         {
             return Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        }
+
+        private static readonly HttpClient _http = CreateHttpClient();
+
+        private static HttpClient CreateHttpClient()
+        {
+            var handler = new HttpClientHandler();
+
+            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+
+            return new HttpClient(handler);
+        }
+
+        private static string ApiRequest(HttpMethod method, string url, string postData)
+        {
+            var req = new HttpRequestMessage
+            {
+                Method = method,
+                RequestUri = new Uri(url, UriKind.Absolute),
+            };
+
+            req.Headers.Add("Accept", "application/json");
+
+            req.Content = new StringContent(postData, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var res = _http.SendAsync(req).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    throw new SafeguardDotNetException($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}", res.StatusCode, msg);
+                }
+
+                return msg;
+            }
+            catch (TaskCanceledException)
+            {
+                throw new SafeguardDotNetException($"Request timeout to {url}.");
+            }
         }
     }
 }

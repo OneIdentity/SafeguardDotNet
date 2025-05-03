@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
-using OneIdentity.SafeguardDotNet.Authentication;
+﻿using OneIdentity.SafeguardDotNet.Authentication;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -122,10 +121,7 @@ namespace OneIdentity.SafeguardDotNet
 
             var token = cancellationToken ?? CancellationToken.None;
             var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
-            if (parameters != null)
-            {
-                uri = QueryHelpers.AddQueryString(uri, parameters);
-            }
+            uri = SafeguardConnection.AddQueryParameters(uri, parameters);
 
             using (var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters))
             {
@@ -147,11 +143,8 @@ namespace OneIdentity.SafeguardDotNet
         private string ConfigureUri(Service service, string relativeUrl, IDictionary<string,string> parameters)
         {
             var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
-            if (parameters != null)
-            {
-                uri = QueryHelpers.AddQueryString(uri, parameters);
-            }
-            return uri;
+
+            return SafeguardConnection.AddQueryParameters(uri, parameters);
         }
 
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local

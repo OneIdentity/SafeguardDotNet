@@ -1,22 +1,18 @@
-﻿using OneIdentity.SafeguardDotNet.Authentication;
+﻿using System;
+using OneIdentity.SafeguardDotNet.Authentication;
 using OneIdentity.SafeguardDotNet.Event;
 using OneIdentity.SafeguardDotNet.Sps;
-using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace OneIdentity.SafeguardDotNet
 {
     internal class SafeguardManagementServiceConnection : SafeguardConnection
     {
-        private readonly RestClient _managementClient;
+        private readonly Uri _managementUrl;
 
         internal SafeguardManagementServiceConnection(IAuthenticationMechanism parentAuthenticationMechanism, string networkAddress)
             : base(new ManagementServiceAuthenticator(parentAuthenticationMechanism, networkAddress))
         {
-            var safeguardManagementUrl = $"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}";
-            _managementClient = CreateRestClient(safeguardManagementUrl);
+            _managementUrl = new Uri($"https://{_authenticationMechanism.NetworkAddress}/service/management/v{_authenticationMechanism.ApiVersion}/", UriKind.Absolute);
         }
 
         public override FullResponse JoinSps(ISafeguardSessionsConnection spsConnection, string certificateChain, string sppAddress)
@@ -34,10 +30,10 @@ namespace OneIdentity.SafeguardDotNet
             throw new SafeguardDotNetException("Management connection does not support event listeners.");
         }
 
-        protected override RestClient GetClientForService(Service service)
+        protected override Uri GetClientForService(Service service)
         {
             if (service == Service.Management)
-                return _managementClient;
+                return _managementUrl;
             throw new SafeguardDotNetException($"{service} service cannot be invoked with a management connection.");
         }
     }

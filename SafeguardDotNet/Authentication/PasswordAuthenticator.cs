@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Net.Http;
 using System.Net.Security;
 using System.Security;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RestSharp;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
@@ -35,27 +36,18 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new ObjectDisposedException("PasswordAuthenticator");
             if (_providerScope == null)
                 _providerScope = ResolveProviderToScope(_provider);
-            var request = new RestRequest("oauth2/token", RestSharp.Method.Post)
-                .AddHeader("Accept", "application/json")
-                .AddHeader("Content-type", "application/json")
-                .AddJsonBody(new
-                {
-                    grant_type = "password",
-                    username = _username,
-                    // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
-                    // I'm not sure there is anything you can do about it.
-                    password = _password.ToInsecureString(),
-                    scope = _providerScope
-                });
-            var response = RstsClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
-                throw new SafeguardDotNetException($"Unable to connect to RSTS service {RstsClient.Options.BaseUrl}, Error: " +
-                                                   response.ErrorMessage);
-            if (!response.IsSuccessful)
-                throw new SafeguardDotNetException(
-                    $"Error using password grant_type with scope {_providerScope}, Error: " +
-                    $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-            var jObject = JObject.Parse(response.Content);
+
+            var data = JsonConvert.SerializeObject(new
+            {
+                grant_type = "password",
+                username = _username,
+                password = _password.ToInsecureString(),
+                scope = _providerScope
+            });
+
+            var json = ApiRequest(HttpMethod.Post, $"https://{NetworkAddress}/RSTS/oauth2/token", data);
+
+            var jObject = JObject.Parse(json);
             return jObject.GetValue("access_token")?.ToString().ToSecureString();
         }
 

@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Net.Security;
-using System.Runtime.InteropServices;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RestSharp;
-using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
@@ -18,11 +17,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected SecureString AccessToken;
 
-        protected readonly string SafeguardRstsUrl;
         protected readonly string SafeguardCoreUrl;
 
-        protected RestClient RstsClient;
-        protected RestClient CoreClient;
+        private readonly HttpClient _http;
 
         protected readonly CertificateContext ClientCertificate;
 
@@ -34,12 +31,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             ValidationCallback = validationCallback;
             ClientCertificate = clientCertificate;
 
-            SafeguardRstsUrl = $"https://{NetworkAddress}/RSTS";
-            RstsClient = CreateRestClient(SafeguardRstsUrl);
-
             SafeguardCoreUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
-            CoreClient = CreateRestClient(SafeguardCoreUrl);
-            ClientCertificate = clientCertificate;
+
+            _http = CreateHttpClient();
         }
 
         public abstract string Id { get; }
@@ -80,20 +74,10 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new ObjectDisposedException("AuthenticatorBase");
             if (!HasAccessToken())
                 return 0;
-            var request = new RestRequest("LoginMessage", RestSharp.Method.Get)
-                .AddHeader("Accept", "application/json")
-                // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
-                // I'm not sure there is anything you can do about it.
-                .AddHeader("Authorization", $"Bearer {AccessToken.ToInsecureString()}")
-                .AddHeader("X-TokenLifetimeRemaining", "");
-            var response = CoreClient.Execute(request);
-            if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
-                throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.Options.BaseUrl}, Error: " +
-                                    response.ErrorMessage);
-            if (!response.IsSuccessful)
-                return 0;
-            var remainingStr = response.Headers.FirstOrDefault(x => x.Name == "X-TokenLifetimeRemaining")?.Value?.ToString();
-            if (remainingStr == null || !int.TryParse(remainingStr, out var remaining))
+
+            var ttl = ApiRequest(HttpMethod.Get, $"{SafeguardCoreUrl}/LoginMessage", null, AccessToken.ToInsecureString(), true);
+
+            if (ttl == null || !int.TryParse(ttl, out var remaining))
                 return 10; // Random magic value... the access token was good, but for some reason it didn't return the remaining lifetime
             return remaining;
         }
@@ -104,21 +88,14 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                 throw new ObjectDisposedException("AuthenticatorBase");
             using (var rStsToken = GetRstsTokenInternal())
             {
-                var request = new RestRequest("Token/LoginResponse", RestSharp.Method.Post)
-                    .AddHeader("Accept", "application/json")
-                    .AddHeader("Content-type", "application/json")
-                    // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
-                    // I'm not sure there is anything you can do about it.
-                    .AddJsonBody(new { StsAccessToken = rStsToken.ToInsecureString() });
-                var response = CoreClient.Execute(request);
-                if (response.ResponseStatus != ResponseStatus.Completed && response.ResponseStatus != ResponseStatus.Error)
-                    throw new SafeguardDotNetException($"Unable to connect to web service {CoreClient.Options.BaseUrl}, Error: " +
-                                                       response.ErrorMessage);
-                if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException(
-                        $"Error exchanging RSTS token from {Id} authenticator for Safeguard API access token, Error: " +
-                        $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-                var jObject = JObject.Parse(response.Content);
+                var data = JsonConvert.SerializeObject(new
+                {
+                    StsAccessToken = rStsToken.ToInsecureString()
+                });
+
+                var json = ApiRequest(HttpMethod.Post, $"{SafeguardCoreUrl}/Token/LoginResponse", data);
+
+                var jObject = JObject.Parse(json);
                 AccessToken = jObject.GetValue("UserToken")?.ToString().ToSecureString();
             }
         }
@@ -127,19 +104,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
             try
             {
-                var request = new RestRequest("AuthenticationProviders", RestSharp.Method.Get)
-                    .AddHeader("Accept", "application/json");
-                RestResponse response = CoreClient.Execute(request);
+                var json = ApiRequest(HttpMethod.Get, $"{SafeguardCoreUrl}/AuthenticationProviders");
 
-                if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new SafeguardDotNetException(
-                        "Unable to connect to RSTS to find identity provider scopes, Error: " +
-                        response.ErrorMessage);
-                if (!response.IsSuccessful)
-                    throw new SafeguardDotNetException(
-                        "Error requesting identity provider scopes from RSTS, Error: " +
-                        $"{response.StatusCode} {response.Content}", response.StatusCode, response.Content);
-                var jProviders = JArray.Parse(response.Content);
+                var jProviders = JArray.Parse(json);
                 var knownScopes = new List<(string RstsProviderId, string Name, string RstsProviderScope)>();
                 if (jProviders != null)
                     knownScopes = jProviders.Select(s => (Id: s["RstsProviderId"].ToString(), Name: s["Name"].ToString(), Scope: s["RstsProviderScope"].ToString())).ToList();
@@ -185,20 +152,76 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected abstract SecureString GetRstsTokenInternal();
 
-        protected RestClient CreateRestClient(string baseUrl)
+        protected HttpClient CreateHttpClient()
         {
-            return new RestClient(baseUrl,
-                options =>
-                {
-                    options.RemoteCertificateValidationCallback = IgnoreSsl
-                    ? (sender, certificate, chain, errors) => true
-                    : (ValidationCallback ?? options.RemoteCertificateValidationCallback);
+            var handler = new HttpClientHandler();
 
-                    if (ClientCertificate != null)
+            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+
+            if (ClientCertificate?.Certificate != null)
+            {
+                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                handler.ClientCertificates.Add(ClientCertificate.Certificate);
+            }
+
+            if (IgnoreSsl)
+            {
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            }
+            else if (ValidationCallback != null)
+            {
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => ValidationCallback(message, cert, chain, errors);
+            }
+
+            return new HttpClient(handler);
+        }
+
+        protected string ApiRequest(HttpMethod method, string url, string postData = null, string authToken = null, bool getTtl = false)
+        {
+            var req = new HttpRequestMessage
+            {
+                Method = method,
+                RequestUri = new Uri(url, UriKind.Absolute),
+            };
+
+            req.Headers.Add("Accept", "application/json");
+
+            if (authToken != null)
+            {
+                req.Headers.Add("Authorization", $"Bearer {authToken}");
+            }
+
+            if (postData != null)
+            {
+                req.Content = new StringContent(postData, Encoding.UTF8, "application/json");
+            }
+
+            try
+            {
+                var res = _http.SendAsync(req).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                if (getTtl)
+                {
+                    if (res.Headers.TryGetValues("X-TokenLifetimeRemaining", out var ttl))
                     {
-                        options.ClientCertificates = new X509CertificateCollection { ClientCertificate.Certificate };
+                        return ttl.FirstOrDefault();
                     }
-                });
+
+                    return "0";
+                }
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    throw new SafeguardDotNetException($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}", res.StatusCode, msg);
+                }
+
+                return msg;
+            }
+            catch (TaskCanceledException)
+            {
+                throw new SafeguardDotNetException($"Request timeout to {url}.");
+            }
         }
 
         public abstract object Clone();
