@@ -127,7 +127,21 @@ namespace SafeguardDotNetA2aTool
                             if (opts.NewPassword)
                             {
                                 var password = HandlePassword(opts.ReadPassword);
-                                context.SetPassword(opts.ApiKey.ToSecureString(), password);
+                                try
+                                {
+                                    context.SetPassword(opts.ApiKey.ToSecureString(), password);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (ex.Message.Contains("Error returned from Safeguard API, Error: NotFound"))
+                                    {
+                                        Log.Information("Skipping test. SPP API does not have an implementation for set password.");
+                                    }
+                                    else
+                                    {
+                                        throw;
+                                    }
+                                }
                             }
                             else
                             {
