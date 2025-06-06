@@ -43,4 +43,8 @@ Updates:
     <PackageReference Include="Serilog" Version="3.0.1" />
   </ItemGroup>
 
+  <Target Name="SignAssemblies" AfterTargets="PostBuildEvent">
+    <Exec Condition="'$(SignFiles)'=='true'" Command="&quot;$(SignToolPath)&quot; sign /v /fd SHA256 /tr http://ts.ssl.com /td sha256 /n &quot;One Identity LLC&quot; &quot;$(TargetDir)*.dll&quot;" />
+  </Target>
+
 </Project>

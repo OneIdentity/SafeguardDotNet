@@ -1,11 +1,7 @@
 variables:
-  - name: solution
-    value: '**/*.sln'
-  - name: buildPlatform
-    value: 'Any CPU'
-  - name: buildConfiguration
-    value: 'Release'
-  - name: codeSigningCertFileName
-    value: 'OneIdentityCodeSigning.pfx'
-  - name: signingToolPath
-    value: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
+- name: solution
+  value: '**/*.sln'
+- name: buildPlatform
+  value: 'Any CPU'
+- name: buildConfiguration
+  value: 'Release'

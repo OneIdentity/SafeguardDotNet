@@ -14,6 +14,8 @@ jobs:
     displayName: 'Build .NET Standard SDK and .NET Framework GUI component'
     variables:
       - template: pipeline-templates/job-variables.yml
+      - name: signFiles
+        value: false
     pool:
       vmImage: 'windows-latest'
     steps:
