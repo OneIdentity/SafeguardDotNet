@@ -20,29 +20,10 @@ steps:
     restoreSolution: '$(solution)'
   displayName: 'Restore NuGet packages'
 
-# - task: AzureKeyVault@1
-#   inputs:
-#     azureSubscription: 'Azure.Infrastructure.CodeSigning'
-#     KeyVaultName: 'CodeSigningCertificates'
-#     SecretsFilter: '*'
-#   displayName: 'Get code signing certificate from Azure Key Vault'
-#   condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-# - powershell: |
-#     $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
-#     $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-#     $certCollection.Import($kvSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-#     $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12,"$(OneIdentity-CodeSigningCertPassword)")
-#     $certpath = '$(Build.BinariesDirectory)/$(codeSigningCertFileName)'
-#     Write-Verbose -Verbose $certpath
-#     [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
-#   displayName: 'Save code signing certificate to PFX file'
-#   condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
-    # msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
+    msbuildArgs: '/p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(solution)'
