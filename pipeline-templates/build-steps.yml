@@ -12,21 +12,64 @@ steps:
     script: 'env | sort'
   displayName: 'Display environment variables'
 
+# Install .NET SDK 10.0 for building projects with .NET 10.0 dependencies
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK 10.0.x'
+  inputs:
+    packageType: 'sdk'
+    version: '10.0.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# Install .NET SDK 8.0 for broader compatibility
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK 8.0.x'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# Ensure .NET Framework 4.8.1 Developer Pack is installed for GuiLogin project
+- task: PowerShell@2
+  displayName: 'Install .NET Framework 4.8.1 Developer Pack'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $installerUrl = "https://go.microsoft.com/fwlink/?linkid=2203306"
+      $installerPath = "$env:TEMP\ndp481-devpack-enu.exe"
+
+      # Check if targeting pack is already installed
+      $targetingPack = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" -ErrorAction SilentlyContinue
+      if ($targetingPack -and [int]$targetingPack.Release -ge 533320) {
+        Write-Host ".NET Framework 4.8.1 or higher is already installed"
+        exit 0
+      }
+
+      Write-Host "Downloading .NET Framework 4.8.1 Developer Pack..."
+      Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+
+      Write-Host "Installing .NET Framework 4.8.1 Developer Pack..."
+      Start-Process -FilePath $installerPath -ArgumentList "/quiet", "/norestart" -Wait
+
+      Write-Host "Installation complete"
+
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+# Restore all NuGet packages
+- task: DotNetCoreCLI@2
   displayName: 'Restore NuGet packages'
-
-- task: VSBuild@1
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'restore'
+    projects: '$(solution)'
+    feedsToUse: 'select'
+
+# Build the entire solution using dotnet CLI
+- task: DotNetCoreCLI@2
   displayName: 'Build $(solution)'
+  inputs:
+    command: 'build'
+    projects: '$(solution)'
+    arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
 
 - task: DotNetCoreCLI@2
   inputs:
