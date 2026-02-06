@@ -22,7 +22,7 @@ pr:
 jobs:
 # Job 1: PR Validation - runs only on pull requests
 - job: PRValidation
-  displayName: 'PR Validation: Build .NET Standard SDK and .NET Framework GUI component'
+  displayName: 'PR Validation: SafeguardDotNet SDK and supporting components'
   condition: eq(variables['Build.Reason'], 'PullRequest')
 
   variables:
@@ -38,7 +38,7 @@ jobs:
 
 # Job 2: Build and Publish - runs only on successful merges (not PRs)
 - job: BuildAndPublish
-  displayName: 'Build and publish .NET Standard SDK and .NET Framework GUI component'
+  displayName: 'Build and publish SafeguardDotNet SDK and supporting components'
   condition: ne(variables['Build.Reason'], 'PullRequest')
 
   variables:

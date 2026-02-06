@@ -56,7 +56,7 @@ steps:
   displayName: 'Install NuGet tools'
 
 # Restore all NuGet packages
-- task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@3
   displayName: 'Restore NuGet packages'
   inputs:
     command: 'restore'
@@ -64,21 +64,21 @@ steps:
     feedsToUse: 'select'
 
 # Build the entire solution using dotnet CLI
-- task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@3
   displayName: 'Build $(solution)'
   inputs:
     command: 'build'
     projects: '$(solution)'
     arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
 
-- task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@3
   inputs:
     command: 'custom'
     custom: 'pack'
     arguments: '$(Build.SourcesDirectory)\SafeguardDotNet\SafeguardDotNet.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet NuGet packages
 
-- task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@3
   inputs:
     command: 'custom'
     custom: 'pack'
