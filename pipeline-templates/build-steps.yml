@@ -63,7 +63,7 @@ steps:
 
 # Build the modern dotnet projects from the solution using dotnet CLI
 - task: DotNetCoreCLI@2
-  displayName: 'Build all .NET 10 projects'
+  displayName: 'Build all .NET projects'
   inputs:
     command: 'build'
     projects: '$(dotnetProjects)'
