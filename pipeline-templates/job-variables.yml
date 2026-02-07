@@ -2,9 +2,9 @@ variables:
 - name: solution
   value: '**/SafeguardDotNet.sln'
 - name: dotnetProjects
-  value: '**/*.csproj;!**/SafeguardDotNet.GuiLogin/**;!**/Samples/ServiceNowTicketValidator/**'
+  value: '**/SafeguardDotNet.Core.sln'
 - name: msbuildProjects
-  value: '**/SafeguardDotNet.GuiLogin/*.csproj;**/Samples/ServiceNowTicketValidator/*.csproj'
+  value: '**/SafeguardDotNet.Framework.sln'
 - name: buildPlatform
   value: 'Any CPU'
 - name: buildConfiguration

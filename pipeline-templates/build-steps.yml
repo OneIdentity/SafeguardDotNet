@@ -49,6 +49,7 @@ steps:
 
 # Restore all NuGet packages using NuGet task so it works for all projects
 - task: NuGetCommand@2
+  displayName: 'Restore NuGet packages for all projects'
   inputs:
     restoreSolution: '$(solution)'
 
