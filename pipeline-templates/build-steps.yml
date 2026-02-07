@@ -20,14 +20,6 @@ steps:
     version: '10.0.x'
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
-# Install .NET SDK 8.0 for broader compatibility
-- task: UseDotNet@2
-  displayName: 'Install .NET SDK 8.0.x'
-  inputs:
-    packageType: 'sdk'
-    version: '8.0.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-
 # Ensure .NET Framework 4.8.1 Developer Pack is installed for GuiLogin project
 - task: PowerShell@2
   displayName: 'Install .NET Framework 4.8.1 Developer Pack'
@@ -55,22 +47,28 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-# Restore all NuGet packages
-- task: DotNetCoreCLI@2
-  displayName: 'Restore NuGet packages'
+# Restore all NuGet packages using NuGet task so it works for all projects
+- task: NuGetCommand@2
   inputs:
-    command: 'restore'
-    projects: '$(solution)'
-    feedsToUse: 'select'
+    restoreSolution: '$(solution)'
 
-# Build the entire solution using dotnet CLI
+# build the older .NET Framework projects using MSBuild
+- task: MSBuild@1
+  displayName: 'Build all .NET Framework projects'
+  inputs:
+    solution: '$(msbuildProjects)'
+    msbuildArchitecture: 'x64'
+    configuration: '$(buildConfiguration)'
+
+# Build the modern dotnet projects from the solution using dotnet CLI
 - task: DotNetCoreCLI@2
-  displayName: 'Build $(solution)'
+  displayName: 'Build all .NET 10 projects'
   inputs:
     command: 'build'
-    projects: '$(solution)'
+    projects: '$(dotnetProjects)'
     arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
 
+# Package the SDK and BrowserLogin projects into NuGet packages using dotnet CLI
 - task: DotNetCoreCLI@2
   inputs:
     command: 'custom'
@@ -85,6 +83,7 @@ steps:
     arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet.BrowserLogin NuGet packages
 
+# Package GuiLogin separately using Nuget since it targets .NET Framework and has a nuspec
 - task: NuGetCommand@2
   inputs:
     command: 'custom'
