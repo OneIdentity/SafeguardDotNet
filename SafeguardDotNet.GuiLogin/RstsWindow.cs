@@ -1,15 +1,14 @@
-﻿using System;
+﻿using Microsoft.Web.WebView2.WinForms;
+using Serilog;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Web.WebView2.WinForms;
-using Serilog;
 
 namespace OneIdentity.SafeguardDotNet.GuiLogin
 {
     internal class RstsWindow
     {
-        private const string RedirectUri = "urn:InstalledApplication";
         private readonly string _appliance;
         private readonly Form _form;
         private readonly WebView2 _browser;
@@ -39,15 +38,16 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             _browser.CoreWebView2InitializationCompleted += CoreWebView2InitializationCompleted;
 
             await _browser.EnsureCoreWebView2Async(null);
-            
+
             Log.Debug("WebView2 Runtime version: " + _browser.CoreWebView2.Environment.BrowserVersionString);
         }
 
         private void CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
         {
-            CodeVerifier = Safeguard.OAuthCodeVerifier();
+            CodeVerifier = Safeguard.AgentBasedLoginUtils.OAuthCodeVerifier();
 
-            var url = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&code_challenge={Safeguard.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={Uri.EscapeDataString(RedirectUri)}";
+            var url = $"https://{_appliance}/RSTS/Login?response_type=code&code_challenge_method=S256&" +
+                $"code_challenge={Safeguard.AgentBasedLoginUtils.OAuthCodeChallenge(CodeVerifier)}&redirect_uri={Uri.EscapeDataString(Safeguard.AgentBasedLoginUtils.RedirectUri)}";
 
             _browser.Stop();
             _browser.CoreWebView2.DocumentTitleChanged += CoreWebView2_DocumentTitleChanged;

@@ -17,8 +17,13 @@ namespace OneIdentity.SafeguardDotNet
         /// <summary>
         /// Convenience method for easily converting standard strings to secure strings.
         /// </summary>
-        /// <param name="thisString"></param>
+        /// <param name="thisString">The string to convert.</param>
         /// <returns>A secure string for storage in long-lived memory.</returns>
+        /// <remarks>
+        /// Note: Converting from a standard string to SecureString may not provide complete memory protection
+        /// since the source string already exists in memory. This method is provided for convenience when
+        /// working with APIs that require SecureString parameters.
+        /// </remarks>
         public static SecureString ToSecureString(this string thisString)
         {
             // I realize this may defeat the purpose of using SecureStrings in the first place,
@@ -34,8 +39,13 @@ namespace OneIdentity.SafeguardDotNet
         /// <summary>
         /// Convenience method for easily converting secure strings to standard strings.
         /// </summary>
-        /// <param name="thisSecureString"></param>
+        /// <param name="thisSecureString">The SecureString to convert.</param>
         /// <returns>A standard string that can be passed more easily to other methods.</returns>
+        /// <remarks>
+        /// Warning: This method defeats the memory protection provided by SecureString by converting it back
+        /// to a standard string. Use only when necessary for interoperability with APIs that require string
+        /// parameters. The resulting string will remain in memory until garbage collected.
+        /// </remarks>
         public static string ToInsecureString(this SecureString thisSecureString)
         {
             // I realize this may defeat the purpose of using SecureStrings in the first place,
@@ -101,7 +111,7 @@ namespace OneIdentity.SafeguardDotNet
                 Log.Debug("LogRequestDetails: requestMessage is null!");
                 return;
             }
-            
+
             LogRequestDetails(requestMessage.Method, requestMessage.RequestUri.ToString(), parameters, additionalHeaders);
         }
 

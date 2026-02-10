@@ -1,4 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using OneIdentity.SafeguardDotNet.A2A;
+using OneIdentity.SafeguardDotNet.Authentication;
+using OneIdentity.SafeguardDotNet.Event;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Security;
@@ -6,11 +11,6 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using OneIdentity.SafeguardDotNet.A2A;
-using OneIdentity.SafeguardDotNet.Authentication;
-using OneIdentity.SafeguardDotNet.Event;
 
 namespace OneIdentity.SafeguardDotNet
 {
@@ -19,13 +19,11 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public static class Safeguard
     {
-        private const int DefaultApiVersion = 4;
-
-        private static SafeguardConnection GetConnection(IAuthenticationMechanism authenticationMechanism)
-        {
-            authenticationMechanism.RefreshAccessToken();
-            return new SafeguardConnection(authenticationMechanism);
-        }
+        /// <summary>
+        /// Default Safeguard API version (v4). This version is used by default across all connection methods
+        /// unless explicitly overridden. API v4 is supported in Safeguard 7.0 and later.
+        /// </summary>
+        public const int DefaultApiVersion = 4;
 
         /// <summary>
         /// Connect to Safeguard API anonymously.
@@ -602,7 +600,7 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, string certificateThumbprint, 
+            public static ISafeguardA2AContext GetContext(string networkAddress, string certificateThumbprint,
                 RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
             {
                 return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback);
@@ -677,7 +675,7 @@ namespace OneIdentity.SafeguardDotNet
             public static class Event
             {
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// from the certificate store.
                 /// </summary>
@@ -698,7 +696,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// from the certificate store.
                 /// </summary>
@@ -719,7 +717,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// from the certificate store.
                 /// </summary>
@@ -735,12 +733,12 @@ namespace OneIdentity.SafeguardDotNet
                     int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null), apiKeys, 
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null), apiKeys,
                             handler);
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// from the certificate store.
                 /// </summary>
@@ -756,12 +754,12 @@ namespace OneIdentity.SafeguardDotNet
                     RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback), apiKeys, 
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback), apiKeys,
                         handler);
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in a file.
                 /// </summary>
@@ -783,7 +781,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in a file.
                 /// </summary>
@@ -805,7 +803,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in a file.
                 /// </summary>
@@ -827,7 +825,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in a file.
                 /// </summary>
@@ -849,7 +847,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in memory.
                 /// </summary>
@@ -871,7 +869,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in memory.
                 /// </summary>
@@ -893,7 +891,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in memory.
                 /// </summary>
@@ -915,7 +913,7 @@ namespace OneIdentity.SafeguardDotNet
                 }
 
                 /// <summary>
-                /// Get a persistent A2A event listener for Gets an A2A event listener. The handler passed in will be registered
+                /// Get a persistent A2A event listener. The handler passed in will be registered
                 /// for the AssetAccountPasswordUpdated event, which is the only one supported in A2A. Uses a client certificate
                 /// stored in memory.
                 /// </summary>
@@ -938,110 +936,168 @@ namespace OneIdentity.SafeguardDotNet
             }
         }
 
-        public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string RedirectUri)
+        /// <summary>
+        /// This static class provides common authentication functionality for OAuth2/PKCE-based login methods.
+        /// This class contains shared code for browser-based and non-interactive authentication flows.
+        /// </summary>
+        public static class AgentBasedLoginUtils
         {
-            var safeguardRstsUrl = $"https://{appliance}/RSTS";
-            var data = JsonConvert.SerializeObject(new
+            /// <summary>
+            /// Standard redirect URI for installed applications
+            /// </summary>
+            public const string RedirectUri = "urn:InstalledApplication";
+
+            /// <summary>
+            /// Redirect URI for TCP listener-based authentication
+            /// </summary>
+            public const string RedirectUriTcpListener = "urn:InstalledApplicationTcpListener";
+
+            private static readonly HttpClient _http = CreateHttpClient();
+
+            /// <summary>
+            /// Posts the OAuth2 authorization code to complete the PKCE authentication flow and obtain an RSTS access token.
+            /// </summary>
+            /// <param name="appliance">Network address of the Safeguard appliance.</param>
+            /// <param name="authorizationCode">The authorization code received from the authorization endpoint.</param>
+            /// <param name="codeVerifier">The PKCE code verifier that matches the code challenge sent in the authorization request.</param>
+            /// <param name="RedirectUri">The redirect URI that was used in the authorization request.</param>
+            /// <param name="httpClient">Optional HttpClient instance to use for the request. If null, a default client will be used.</param>
+            /// <returns>An RSTS access token as a SecureString.</returns>
+            public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string RedirectUri)
             {
-                grant_type = "authorization_code",
-                redirect_uri = RedirectUri,
-                code = authorizationCode,
-                code_verifier = codeVerifier
-            });
-
-            var json = ApiRequest(HttpMethod.Post, $"{safeguardRstsUrl}/oauth2/token", data);
-
-            var jObject = JObject.Parse(json);
-            return jObject.GetValue("access_token")?.ToString().ToSecureString();
-        }
-
-        public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken)
-        {
-            var safeguardCoreUrl = $"https://{appliance}/service/core/v{DefaultApiVersion}";
-            var data = JsonConvert.SerializeObject(new
-            {
-                StsAccessToken = rstsAccessToken.ToInsecureString()
-            });
-
-            var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
-
-            return JObject.Parse(json);
-        }
-
-        public static string OAuthCodeVerifier()
-        {
-            var bytes = new byte[60];
-            RandomNumberGenerator.Create().GetBytes(bytes);
-            return ToBase64Url(bytes);
-        }
-
-        public static string OAuthCodeChallenge(string codeVerifier)
-        {
-            using (var sha = SHA256.Create())
-            {
-                var hash = sha.ComputeHash(Encoding.ASCII.GetBytes(codeVerifier));
-
-                return ToBase64Url(hash);
-            }
-        }
-
-        // https://172.21.21.1/RSTS/Login?
-        // response_type=code&
-        // redirect_uri=https%3a%2f%2flocalhost%3a7035%2f%3fserver%3d172.21.21.1%26auth%3dresume&
-        // code_challenge=Ullteua8nkpbqkCUpKSxqPfTqrZvZfnmpV3YTGEPUfQ&
-        // code_challenge_method=S256&
-        // state=w5mtmJUPPMhHEW-qo4PyyX4pGDsevgTN2QNRC0aWiaxd8weEQdgiHoieLe4NDeuAkL63Q6-ipG1nIOwY
-
-        /// <summary>Creates a Base64 string with the trailing equal signs removed and any plus signs replaced with
-        /// minus signs and any forward slashes replaced with underscores.</summary>
-        /// <param name="data">Any byte array to be Base64 encoded.</param>
-        /// <returns>A special Base64 string that is URL safe. Used in JWTs, OAuth2.0 and other things.</returns>
-        public static string ToBase64Url(byte[] data)
-        {
-            return Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        }
-
-        private static readonly HttpClient _http = CreateHttpClient();
-
-        private static HttpClient CreateHttpClient()
-        {
-            var handler = new HttpClientHandler();
-
-            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-
-            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-
-            return new HttpClient(handler);
-        }
-
-        private static string ApiRequest(HttpMethod method, string url, string postData)
-        {
-            var req = new HttpRequestMessage
-            {
-                Method = method,
-                RequestUri = new Uri(url, UriKind.Absolute),
-            };
-
-            req.Headers.Add("Accept", "application/json");
-
-            req.Content = new StringContent(postData, Encoding.UTF8, "application/json");
-
-            try
-            {
-                var res = _http.SendAsync(req).GetAwaiter().GetResult();
-                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                if (!res.IsSuccessStatusCode)
+                var safeguardRstsUrl = $"https://{appliance}/RSTS";
+                var data = JsonConvert.SerializeObject(new
                 {
-                    throw new SafeguardDotNetException($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}", res.StatusCode, msg);
-                }
+                    grant_type = "authorization_code",
+                    redirect_uri = RedirectUri,
+                    code = authorizationCode,
+                    code_verifier = codeVerifier
+                });
 
-                return msg;
+                var json = ApiRequest(HttpMethod.Post, $"{safeguardRstsUrl}/oauth2/token", data);
+
+                var jObject = JObject.Parse(json);
+                return jObject.GetValue("access_token")?.ToString().ToSecureString();
             }
-            catch (TaskCanceledException)
+
+            /// <summary>
+            /// Posts the RSTS access token to the Safeguard API to obtain a Safeguard user access token.
+            /// </summary>
+            /// <param name="appliance">Network address of the Safeguard appliance.</param>
+            /// <param name="rstsAccessToken">The RSTS access token obtained from the OAuth2 flow.</param>
+            /// <param name="apiVersion">Target API version to use.</param>
+            /// <param name="httpClient">Optional HttpClient instance to use for the request. If null, a default client will be used.</param>
+            /// <returns>A JObject containing the login response with the Safeguard user token.</returns>
+            public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken, int apiVersion = Safeguard.DefaultApiVersion)
             {
-                throw new SafeguardDotNetException($"Request timeout to {url}.");
+                var safeguardCoreUrl = $"https://{appliance}/service/core/v{apiVersion}";
+                var data = JsonConvert.SerializeObject(new
+                {
+                    StsAccessToken = rstsAccessToken.ToInsecureString()
+                });
+
+                var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
+
+                return JObject.Parse(json);
             }
+
+            /// <summary>
+            /// Generates a cryptographically random code verifier for PKCE (Proof Key for Code Exchange) OAuth2 flow.
+            /// The code verifier is a high-entropy cryptographic random string used to securely verify the authorization code exchange.
+            /// </summary>
+            /// <returns>A base64url-encoded code verifier string.</returns>
+            public static string OAuthCodeVerifier()
+            {
+                var bytes = new byte[60];
+                using (var rng = RandomNumberGenerator.Create())
+                {
+                    rng.GetBytes(bytes);
+                }
+                return ToBase64Url(bytes);
+            }
+
+            /// <summary>
+            /// Generates an OAuth2 PKCE code challenge from a code verifier using SHA256 hashing.
+            /// The code challenge is derived from the code verifier and sent in the authorization request.
+            /// </summary>
+            /// <param name="codeVerifier">The code verifier string from which to generate the challenge.</param>
+            /// <returns>A base64url-encoded SHA256 hash of the code verifier.</returns>
+            public static string OAuthCodeChallenge(string codeVerifier)
+            {
+                using (var sha = SHA256.Create())
+                {
+                    var hash = sha.ComputeHash(Encoding.ASCII.GetBytes(codeVerifier));
+
+                    return ToBase64Url(hash);
+                }
+            }
+
+            /// <summary>
+            /// Generates a cryptographically random CSRF (Cross-Site Request Forgery) token for state validation.
+            /// This token should be used to prevent CSRF attacks in OAuth2 flows by validating that authorization
+            /// responses match the original request.
+            /// </summary>
+            /// <returns>A base64url-encoded random token string.</returns>
+            public static string GenerateCsrfToken()
+            {
+                byte[] bytes = new byte[32];
+                using (var rng = RandomNumberGenerator.Create())
+                {
+                    rng.GetBytes(bytes);
+                }
+                return ToBase64Url(bytes);
+            }
+
+            private static string ApiRequest(HttpMethod method, string url, string postData)
+            {
+                var req = new HttpRequestMessage
+                {
+                    Method = method,
+                    RequestUri = new Uri(url, UriKind.Absolute),
+                };
+
+                req.Headers.Add("Accept", "application/json");
+                req.Content = new StringContent(postData, Encoding.UTF8, "application/json");
+
+                try
+                {
+                    var res = _http.SendAsync(req).GetAwaiter().GetResult();
+                    var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                    if (!res.IsSuccessStatusCode)
+                    {
+                        throw new SafeguardDotNetException($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}", res.StatusCode, msg);
+                    }
+
+                    return msg;
+                }
+                catch (TaskCanceledException)
+                {
+                    throw new SafeguardDotNetException($"Request timeout to {url}.");
+                }
+            }
+
+            private static HttpClient CreateHttpClient()
+            {
+                var handler = new HttpClientHandler()
+                {
+                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
+                };
+
+                return new HttpClient(handler);
+            }
+
+            private static string ToBase64Url(byte[] data)
+            {
+                return Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            }
+        }
+
+        private static SafeguardConnection GetConnection(IAuthenticationMechanism authenticationMechanism)
+        {
+            authenticationMechanism.RefreshAccessToken();
+            return new SafeguardConnection(authenticationMechanism);
         }
     }
 }

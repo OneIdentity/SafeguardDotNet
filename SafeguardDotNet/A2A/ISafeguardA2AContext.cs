@@ -85,7 +85,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// <summary>
         /// Gets a persistent A2A event listener. The handler passed in will be registered for the
         /// AssetAccountPasswordUpdated event, which is the only one supported in A2A. You just have to call Start().
-        /// The event listener returned by this method will not automatically recover from a SignalR timeout which
+        /// The event listener returned by this method WILL automatically recover from a SignalR timeout which
         /// occurs when there is a 30+ second outage.
         /// </summary>
         /// <param name="apiKey">API key corresponding to the configured account to listen for.</param>
@@ -96,7 +96,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
         /// <summary>
         /// Gets a persistent A2A event listener. The handler passed in will be registered for the
         /// AssetAccountPasswordUpdated event, which is the only one supported in A2A. You just have to call Start().
-        /// The event listener returned by this method will not automatically recover from a SignalR timeout which
+        /// The event listener returned by this method WILL automatically recover from a SignalR timeout which
         /// occurs when there is a 30+ second outage.
         /// </summary>
         /// <param name="apiKeys">A list of API keys corresponding to the configured accounts to listen for.</param>

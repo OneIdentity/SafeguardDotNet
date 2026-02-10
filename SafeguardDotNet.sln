@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet", "SafeguardDotNet\SafeguardDotNet.csproj", "{E2A99B0B-7037-4FF0-AECD-C3AFAE5B068F}"
 EndProject
@@ -44,6 +44,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet.BrowserLogin", "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj", "{2D04109D-5127-4DE2-8CB6-7CFBAA751946}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetBrowserLoginTester", "Test\SafeguardDotNetBrowserLoginTester\SafeguardDotNetBrowserLoginTester.csproj", "{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet.PkceNoninteractiveLogin", "SafeguardDotNet.PkceNoninteractiveLogin\SafeguardDotNet.PkceNoninteractiveLogin.csproj", "{B7C23456-2345-4321-9876-234567890BCD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetPkceNoninteractiveLoginTester", "Test\SafeguardDotNetPkceNoninteractiveLoginTester\SafeguardDotNetPkceNoninteractiveLoginTester.csproj", "{C6D34567-3456-4321-9876-345678901CDE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{867EB36D-7893-444D-900D-29733E8E2636}"
 EndProject
@@ -101,6 +105,14 @@ Global
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -123,6 +135,7 @@ Global
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{1EB6D64D-7AFB-41DC-B11B-58934D053684} = {9249E337-656D-4970-B45C-7A077C56FA44}
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{C6D34567-3456-4321-9876-345678901CDE} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9} = {867EB36D-7893-444D-900D-29733E8E2636}
 		{BE0C60E2-002E-42A0-A1D1-3BB9AE90D607} = {867EB36D-7893-444D-900D-29733E8E2636}
 	EndGlobalSection

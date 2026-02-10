@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet", "Safeguar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet.BrowserLogin", "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj", "{2D04109D-5127-4DE2-8CB6-7CFBAA751946}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet.LoginCommon", "SafeguardDotNet.LoginCommon\SafeguardDotNet.LoginCommon.csproj", "{F8A12345-1234-4321-9876-123456789ABC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNet.PkceNoninteractiveLogin", "SafeguardDotNet.PkceNoninteractiveLogin\SafeguardDotNet.PkceNoninteractiveLogin.csproj", "{B7C23456-2345-4321-9876-234567890BCD}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetTool", "Test\SafeguardDotNetTool\SafeguardDotNetTool.csproj", "{A1C31631-3433-415B-81D5-3C9BC80710AC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetA2aTool", "Test\SafeguardDotNetA2aTool\SafeguardDotNetA2aTool.csproj", "{0852DDE0-8C16-4C29-B49F-8E67A2993078}"
@@ -23,6 +27,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardSessionsDotNetTool", "Test\SafeguardSessionsDotNetTool\SafeguardSessionsDotNetTool.csproj", "{461AC59C-15E1-4B1A-9C7A-D265A311FDA3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetBrowserLoginTester", "Test\SafeguardDotNetBrowserLoginTester\SafeguardDotNetBrowserLoginTester.csproj", "{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetPkceNoninteractiveLoginTester", "Test\SafeguardDotNetPkceNoninteractiveLoginTester\SafeguardDotNetPkceNoninteractiveLoginTester.csproj", "{C6D34567-3456-4321-9876-345678901CDE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleA2aService", "Samples\SampleA2aService\SampleA2aService.csproj", "{0149D659-78E3-476B-81F1-A80BDFA6F8A9}"
 EndProject
@@ -87,6 +93,18 @@ Global
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8A12345-1234-4321-9876-123456789ABC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8A12345-1234-4321-9876-123456789ABC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8A12345-1234-4321-9876-123456789ABC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8A12345-1234-4321-9876-123456789ABC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7C23456-2345-4321-9876-234567890BCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6D34567-3456-4321-9876-345678901CDE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -103,6 +121,7 @@ Global
 		{EACEF9A1-0E06-4AF4-9589-12E3F77CB959} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{461AC59C-15E1-4B1A-9C7A-D265A311FDA3} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{D0009DBA-16E1-4E6F-AC1E-D11B16AB3C41} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
+		{C6D34567-3456-4321-9876-345678901CDE} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9} = {867EB36D-7893-444D-900D-29733E8E2636}
 		{1EB6D64D-7AFB-41DC-B11B-58934D053684} = {9249E337-656D-4970-B45C-7A077C56FA44}
 	EndGlobalSection

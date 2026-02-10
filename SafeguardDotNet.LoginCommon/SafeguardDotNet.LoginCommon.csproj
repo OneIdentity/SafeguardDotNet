@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>OneIdentity.SafeguardDotNet.LoginCommon</RootNamespace>
+    <PackageId>OneIdentity.SafeguardDotNet.LoginCommon</PackageId>
+    <Authors>One Identity LLC</Authors>
+    <Copyright>(c) 2026 One Identity LLC. All rights reserved.</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
+    <PackageIcon>Content\images\SafeguardLogo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
+    <Version>9999.9999.9999</Version>
+    <Description>Common OAuth/PKCE login utilities for One Identity Safeguard Web API .NET SDK</Description>
+    <AssemblyVersion>9999.9999.9999.9999</AssemblyVersion>
+    <FileVersion>9999.9999.9999.9999</FileVersion>
+    <AssemblyName>OneIdentity.SafeguardDotNet.LoginCommon</AssemblyName>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageTags>safeguard;credentials;vault;sdk;oauth;pkce</PackageTags>
+    <PackageReleaseNotes>
+      Common OAuth/PKCE login utilities for One Identity Safeguard Web API .NET SDK
+
+      Provides shared functionality for OAuth2/PKCE authentication flows used by
+      various Safeguard login methods.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\SafeguardLogo.png" Link="SafeguardLogo.png" Pack="true" PackagePath="Content\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SafeguardDotNet\SafeguardDotNet.csproj" />
+  </ItemGroup>
+
+  <Target Name="SignAssemblies" AfterTargets="PostBuildEvent">
+    <Exec Condition="'$(SignFiles)'=='true'" Command="&quot;$(SignToolPath)&quot; sign /v /fd SHA256 /tr http://ts.ssl.com /td sha256 /n &quot;One Identity LLC&quot; &quot;$(TargetDir)*.dll&quot;" />
+  </Target>
+
+</Project>
