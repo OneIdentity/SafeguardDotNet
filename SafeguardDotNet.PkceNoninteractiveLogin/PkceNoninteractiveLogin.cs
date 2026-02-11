@@ -1,6 +1,9 @@
 using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Security;
 using System.Text;
@@ -43,18 +46,20 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
 
             var http = CreateHttpClient(appliance, csrfToken, ignoreSsl);
 
+            var identityProvider = ResolveIdentityProvider(http, appliance, apiVersion, provider);
+
             // Form data to submit to the rSTS login screen
-            var data = $"directoryComboBox={provider}&usernameTextbox={Uri.EscapeDataString(username)}&" +
+            var data = $"directoryComboBox={identityProvider}&usernameTextbox={Uri.EscapeDataString(username)}&" +
                 $"passwordTextbox={Uri.EscapeDataString(password.ToInsecureString())}&csrfTokenTextbox={csrfToken}";
             var pkceUrl = $"https://{appliance}/RSTS/UserLogin/LoginController?response_type=code&code_challenge_method=S256&" +
                 $"code_challenge={oauthCodeChallenge}&redirect_uri={redirectUri}&loginRequestStep=";
 
             Log.Debug("Calling RSTS for primary authentication");
-            var response = ApiRequest(http, HttpMethod.Post, pkceUrl + "1", data);
+            var response = ApiRequest(http, HttpMethod.Post, pkceUrl + "1", data, "application/x-www-form-urlencoded");
             Log.Debug("Calling RSTS for primary login post");
-            response = ApiRequest(http, HttpMethod.Post, pkceUrl + "3", data);
+            response = ApiRequest(http, HttpMethod.Post, pkceUrl + "3", data, "application/x-www-form-urlencoded");
             Log.Debug("Calling RSTS for generate claims");
-            response = ApiRequest(http, HttpMethod.Post, pkceUrl + "6", data);
+            response = ApiRequest(http, HttpMethod.Post, pkceUrl + "6", data, "application/x-www-form-urlencoded");
 
             string authorizationCode = null;
             try
@@ -101,7 +106,40 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
             throw new SafeguardDotNetException("Unable to correctly simulate the browser for Safeguard login");
         }
 
-        private static string ApiRequest(HttpClient http, HttpMethod method, string url, string postData)
+        private static string ResolveIdentityProvider(HttpClient http, string appliance, int apiVersion, string provider)
+        {
+            var coreUrl = $"https://{appliance}/service/core/v{apiVersion}";
+
+            var response = ApiRequest(http, HttpMethod.Get, $"{coreUrl}/AuthenticationProviders", null, "application/json");
+            var jProviders = JArray.Parse(response);
+            var knownScopes = new List<(string RstsProviderId, string Name, string RstsProviderScope)>();
+            if (jProviders != null)
+                knownScopes = jProviders.Select(s => (Id: s["RstsProviderId"].ToString(), Name: s["Name"].ToString(), Scope: s["RstsProviderScope"].ToString())).ToList();
+
+            // try to match what the user typed for provider to an rSTS ID
+            var scope = knownScopes.FirstOrDefault(s => string.Equals(s.RstsProviderId, provider, StringComparison.OrdinalIgnoreCase));
+            if (scope.RstsProviderId == null)
+            {
+                scope = knownScopes.FirstOrDefault(s => string.Equals(s.Name, provider, StringComparison.OrdinalIgnoreCase));
+
+                if (scope.Name == null)
+                {
+                    scope = knownScopes.FirstOrDefault(s => CultureInfo.InvariantCulture.CompareInfo.IndexOf(s.RstsProviderId, provider,
+                       CompareOptions.IgnoreCase) >= 0);
+
+                    if (scope.RstsProviderId == null)
+                    {
+                        throw new SafeguardDotNetException(
+                        $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
+                    }
+                }
+
+            }
+
+            return scope.RstsProviderId;
+        }
+
+        private static string ApiRequest(HttpClient http, HttpMethod method, string url, string postData, string contentType)
         {
             var req = new HttpRequestMessage
             {
@@ -110,7 +148,11 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
             };
 
             req.Headers.Add("Accept", "application/json");
-            req.Content = new StringContent(postData, Encoding.UTF8, "application/x-www-form-urlencoded");
+
+            if (postData != null)
+            {
+                req.Content = new StringContent(postData, Encoding.UTF8, contentType);
+            }
 
             try
             {
