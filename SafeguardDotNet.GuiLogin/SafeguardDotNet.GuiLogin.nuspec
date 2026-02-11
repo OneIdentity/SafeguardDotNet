@@ -9,6 +9,7 @@
     <license type="expression">Apache-2.0</license>
     <projectUrl>https://github.com/OneIdentity/SafeguardDotNet</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/OneIdentity/SafeguardDotNet/master/SafeguardLogo.ico</iconUrl>
+    <readme>README.md</readme>
     <!-- <icon>Content\images\SafeguardLogo.png</icon> -->
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>GUI Login for One Identity Safeguard Web API .NET SDK</description>
@@ -28,9 +29,10 @@
       <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework=".NETFramework4.8.1" />
     </frameworkAssemblies>
   </metadata>
-  <!--
   <files>
+    <file src="README.md" target="" />
     <file src="..\SafeguardLogo.png" target="Content\images\" />
+    <file src="bin\$configuration$\OneIdentity.SafeguardDotNet.GuiLogin.dll" target="lib\net481" />
+    <file src="bin\$configuration$\OneIdentity.SafeguardDotNet.GuiLogin.pdb" target="lib\net481" />
   </files>
-  -->
 </package>
