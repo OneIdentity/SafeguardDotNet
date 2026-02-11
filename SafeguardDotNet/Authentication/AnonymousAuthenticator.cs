@@ -11,7 +11,14 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
             var notificationUrl = $"https://{NetworkAddress}/service/notification/v{ApiVersion}/Status";
 
-            _ = ApiRequest(HttpMethod.Get, notificationUrl);
+            try
+            {
+                _ = ApiRequest(HttpMethod.Get, notificationUrl);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new SafeguardDotNetException($"Unable to anonymously connect to {networkAddress}, Error: {ex.Message}");
+            }
         }
 
         public override string Id => "Anonymous";
