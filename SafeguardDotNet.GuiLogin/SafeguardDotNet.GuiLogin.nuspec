@@ -31,6 +31,8 @@
   </metadata>
   <files>
     <file src="README.md" target="" />
-    <!-- <file src="..\SafeguardLogo.png" target="Content\images\" /> -->
+    <file src="..\SafeguardLogo.png" target="Content\images\" />
+    <file src="bin\$configuration$\OneIdentity.SafeguardDotNet.GuiLogin.dll" target="lib\net481" />
+    <file src="bin\$configuration$\OneIdentity.SafeguardDotNet.GuiLogin.pdb" target="lib\net481" />
   </files>
 </package>
