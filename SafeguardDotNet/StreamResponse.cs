@@ -25,9 +25,10 @@ namespace OneIdentity.SafeguardDotNet
         private Stream Stream { get; set; }
 
         /// <summary>
-        /// Get the response stream object
+        /// Asynchronously retrieves the response stream object. The stream is created on first call
+        /// and cached for subsequent calls.
         /// </summary>
-        /// <returns>The HTTP response body content as a stream</returns>
+        /// <returns>A task representing the asynchronous operation. The task result contains the HTTP response body content as a stream.</returns>
         public async Task<Stream> GetStream()
         {
             if (Stream == null)
@@ -51,7 +52,7 @@ namespace OneIdentity.SafeguardDotNet
                 _disposedValue = true;
             }
         }
-        
+
         /// <summary>
         /// Disposes the stream and associated resources
         /// </summary>

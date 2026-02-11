@@ -1,30 +1,31 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>OneIdentity.SafeguardDotNet.BrowserLogin</RootNamespace>
-    <PackageId>OneIdentity.SafeguardDotNet.BrowserLogin</PackageId>
+    <RootNamespace>OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin</RootNamespace>
+    <PackageId>OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin</PackageId>
     <Authors>One Identity LLC</Authors>
-    <Copyright>(c) 2023 One Identity LLC. All rights reserved.</Copyright>
+    <Copyright>(c) 2026 One Identity LLC. All rights reserved.</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDotNet</PackageProjectUrl>
     <PackageIcon>Content\images\SafeguardLogo.png</PackageIcon>
     <RepositoryUrl>https://github.com/OneIdentity/SafeguardDotNet</RepositoryUrl>
     <Version>9999.9999.9999</Version>
-    <Description>Browser Login for One Identity Safeguard Web API .NET SDK</Description>
+    <Description>PKCE Non-interactive Login for One Identity Safeguard Web API .NET SDK</Description>
     <AssemblyVersion>9999.9999.9999.9999</AssemblyVersion>
     <FileVersion>9999.9999.9999.9999</FileVersion>
-    <AssemblyName>OneIdentity.SafeguardDotNet.BrowserLogin</AssemblyName>
+    <AssemblyName>OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin</AssemblyName>
     <RepositoryType>git</RepositoryType>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
+    <PackageTags>safeguard;credentials;vault;sdk;oauth;pkce</PackageTags>
     <PackageReleaseNotes>
-      Browser Login for One Identity Safeguard Web API .NET SDK
+      PKCE Non-interactive Login for One Identity Safeguard Web API .NET SDK
 
       Allows custom application to use the Safeguard Web API by authenticating to
-      Safeguard using the default system browser.
+      Safeguard using OAuth2/PKCE flow without launching a browser. This enables
+      programmatic authentication by directly calling rSTS endpoints.
     </PackageReleaseNotes>
   </PropertyGroup>
 
@@ -34,6 +35,7 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>

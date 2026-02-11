@@ -12,22 +12,64 @@ steps:
     script: 'env | sort'
   displayName: 'Display environment variables'
 
+# Install .NET SDK 10.0 for building projects with .NET 10.0 dependencies
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK 10.0.x'
+  inputs:
+    packageType: 'sdk'
+    version: '10.0.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# Ensure .NET Framework 4.8.1 Developer Pack is installed for GuiLogin project
+- task: PowerShell@2
+  displayName: 'Install .NET Framework 4.8.1 Developer Pack'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $installerUrl = "https://go.microsoft.com/fwlink/?linkid=2203306"
+      $installerPath = "$env:TEMP\ndp481-devpack-enu.exe"
+
+      # Check if targeting pack is already installed
+      $targetingPack = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" -ErrorAction SilentlyContinue
+      if ($targetingPack -and [int]$targetingPack.Release -ge 533320) {
+        Write-Host ".NET Framework 4.8.1 or higher is already installed"
+        exit 0
+      }
+
+      Write-Host "Downloading .NET Framework 4.8.1 Developer Pack..."
+      Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+
+      Write-Host "Installing .NET Framework 4.8.1 Developer Pack..."
+      Start-Process -FilePath $installerPath -ArgumentList "/quiet", "/norestart" -Wait
+
+      Write-Host "Installation complete"
+
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
+# Restore all NuGet packages using NuGet task so it works for all projects
 - task: NuGetCommand@2
+  displayName: 'Restore NuGet packages for all projects'
   inputs:
     restoreSolution: '$(solution)'
-  displayName: 'Restore NuGet packages'
 
-- task: VSBuild@1
+# build the older .NET Framework projects using MSBuild
+- task: MSBuild@1
+  displayName: 'Build all .NET Framework projects'
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
-    platform: '$(buildPlatform)'
+    solution: '$(msbuildProjects)'
+    msbuildArchitecture: 'x64'
     configuration: '$(buildConfiguration)'
-  displayName: 'Build $(solution)'
 
+# Build the modern dotnet projects from the solution using dotnet CLI
+- task: DotNetCoreCLI@2
+  displayName: 'Build all .NET projects'
+  inputs:
+    command: 'build'
+    projects: '$(dotnetProjects)'
+    arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
+
+# Package the SDK and BrowserLogin projects into NuGet packages using dotnet CLI
 - task: DotNetCoreCLI@2
   inputs:
     command: 'custom'
@@ -42,6 +84,14 @@ steps:
     arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet.BrowserLogin NuGet packages
 
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.PkceNoninteractiveLogin\SafeguardDotNet.PkceNoninteractiveLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+  displayName: Building SafeguardDotNet.PkceNoninteractiveLogin NuGet packages
+
+# Package GuiLogin separately using Nuget since it targets .NET Framework and has a nuspec
 - task: NuGetCommand@2
   inputs:
     command: 'custom'

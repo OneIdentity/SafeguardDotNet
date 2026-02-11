@@ -1,6 +1,10 @@
 variables:
 - name: solution
-  value: '**/*.sln'
+  value: '**/SafeguardDotNet.sln'
+- name: dotnetProjects
+  value: '**/SafeguardDotNet.Core.sln'
+- name: msbuildProjects
+  value: '**/SafeguardDotNet.Framework.sln'
 - name: buildPlatform
   value: 'Any CPU'
 - name: buildConfiguration

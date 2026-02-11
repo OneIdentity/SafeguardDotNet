@@ -146,7 +146,7 @@ namespace OneIdentity.SafeguardDotNet
                     req.Headers.Add(header.Key, header.Value);
             }
 
-            if ((method == Method.Post || method == Method.Put) && body != null)
+            if (method == Method.Post || method == Method.Put)
                 req.Content = new StringContent(body ?? string.Empty, Encoding.UTF8, "application/json");
 
             var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(100)); // 100 seconds is the default timeout.
@@ -189,6 +189,10 @@ namespace OneIdentity.SafeguardDotNet
                 fullResponse.LogResponseDetails();
 
                 return fullResponse;
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new SafeguardDotNetException($"Exception while calling {GetClientForService(service)}, Error: {ex.Message}", ex);
             }
             catch (TaskCanceledException)
             {

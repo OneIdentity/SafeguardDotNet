@@ -144,9 +144,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                throw new SafeguardDotNetException("Unable to connect to determine identity provider", ex);
+                throw new SafeguardDotNetException($"Unable to connect to RSTS to find identity provider scopes, Error: {ex.Message}", ex);
             }
         }
 

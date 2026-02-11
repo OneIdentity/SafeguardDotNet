@@ -35,22 +35,32 @@ namespace OneIdentity.SafeguardDotNet
         {
             HttpStatusCode = httpStatusCode;
             Response = response;
-            if (!string.IsNullOrEmpty(Response) && JToken.Parse(Response) is JObject responseObj)
+            if (!string.IsNullOrEmpty(Response))
             {
-                if (responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var codeVal))
+                try
                 {
-                    if (int.TryParse(codeVal.ToString(), out var code))
-                        ErrorCode = code;
-                }
-                if (responseObj.TryGetValue("Message", StringComparison.OrdinalIgnoreCase, out var messageVal))
-                {
-                    ErrorMessage = messageVal.ToString();
-                }
+                    if (JToken.Parse(Response) is JObject responseObj)
+                    {
+                        if (responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var codeVal))
+                        {
+                            if (int.TryParse(codeVal.ToString(), out var code))
+                                ErrorCode = code;
+                        }
+                        if (responseObj.TryGetValue("Message", StringComparison.OrdinalIgnoreCase, out var messageVal))
+                        {
+                            ErrorMessage = messageVal.ToString();
+                        }
 
-                // Sps provides an "error" json object containing details
-                if (responseObj.TryGetValue("error", StringComparison.OrdinalIgnoreCase, out var errorVal))
+                        // Sps provides an "error" json object containing details
+                        if (responseObj.TryGetValue("error", StringComparison.OrdinalIgnoreCase, out var errorVal))
+                        {
+                            ErrorMessage = errorVal.ToString();
+                        }
+                    }
+                }
+                catch (Newtonsoft.Json.JsonReaderException)
                 {
-                    ErrorMessage = errorVal.ToString();
+                    ErrorMessage = response;
                 }
             }
         }

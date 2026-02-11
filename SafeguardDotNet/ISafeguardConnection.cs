@@ -120,8 +120,8 @@ namespace OneIdentity.SafeguardDotNet
         /// returned ISafeguardConnection. Applicable options such as SSL validation will be inherited
         /// from the original ISafeguardConnection.
         /// </summary>
-        /// <param name="networkAddress"></param>
-        /// <returns></returns>
+        /// <param name="networkAddress">Network address of the management service endpoint.</param>
+        /// <returns>A new ISafeguardConnection configured for the Management service.</returns>
         ISafeguardConnection GetManagementServiceConnection(string networkAddress);
 
         /// <summary>
