@@ -53,14 +53,6 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-# build the older .NET Framework projects using MSBuild
-- task: MSBuild@1
-  displayName: 'Build all .NET Framework projects'
-  inputs:
-    solution: '$(msbuildProjects)'
-    msbuildArchitecture: 'x64'
-    configuration: '$(buildConfiguration)'
-
 # Build the modern dotnet projects from the solution using dotnet CLI
 - task: DotNetCoreCLI@2
   displayName: 'Build all .NET projects'
@@ -68,6 +60,15 @@ steps:
     command: 'build'
     projects: '$(dotnetProjects)'
     arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
+
+# build the older .NET Framework projects using MSBuild
+- task: MSBuild@1
+  displayName: 'Build all .NET Framework projects'
+  inputs:
+    solution: '$(msbuildProjects)'
+    msbuildArchitecture: 'x64'
+    configuration: '$(buildConfiguration)'
+    msbuildArguments: '/p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
 
 # Package the SDK and BrowserLogin projects into NuGet packages using dotnet CLI
 - task: DotNetCoreCLI@2
