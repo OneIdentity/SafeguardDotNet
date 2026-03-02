@@ -1,12 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Serilog;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
-    using DelegateRegistry = Dictionary<string, List<SafeguardEventHandler>>;
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    using Newtonsoft.Json.Linq;
+
+    using Serilog;
+
+    using DelegateRegistry = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<OneIdentity.SafeguardDotNet.Event.SafeguardEventHandler>>;
 
     internal class EventHandlerRegistry
     {
@@ -42,7 +46,7 @@ namespace OneIdentity.SafeguardDotNet.Event
             }
         }
 
-        private (string, JToken)[] ParseEvents(string eventObject)
+        private static (string, JToken)[] ParseEvents(string eventObject)
         {
             try
             {
@@ -53,23 +57,29 @@ namespace OneIdentity.SafeguardDotNet.Event
                 var body = jObject["Data"];
                 // Work around for bug in A2A events in Safeguard 2.2 and 2.3
                 if (name != null && int.TryParse(name.ToString(), out _) && body != null)
+                {
                     name = body["EventName"];
+                }
+
                 events.Add((name?.ToString(), body));
-                
+
                 return events.ToArray();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Log.Warning("Unable to parse event object {EventObject}", eventObject);
-                return null;
+                Log.Warning(ex, "Unable to parse event object {EventObject}", eventObject);
+                return Array.Empty<(string, JToken)>();
             }
         }
 
         public void HandleEvent(string eventObject)
         {
             var events = ParseEvents(eventObject);
-            if (events == null)
+            if (events.Length == 0)
+            {
                 return;
+            }
+
             foreach (var eventInfo in events)
             {
                 if (eventInfo.Item1 == null)
@@ -77,6 +87,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                     Log.Warning("Found null event with body {EventBody}", eventInfo.Item2);
                     continue;
                 }
+
                 HandleEvent(eventInfo.Item1, eventInfo.Item2.ToString());
             }
         }
@@ -84,7 +95,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         public void RegisterEventHandler(string eventName, SafeguardEventHandler handler)
         {
             if (!_delegateRegistry.ContainsKey(eventName))
+            {
                 _delegateRegistry[eventName] = new List<SafeguardEventHandler>();
+            }
+
             _delegateRegistry[eventName].Add(handler);
             Log.Debug("Registered event {Event} with delegate {Delegate}", eventName, handler.Method.Name);
         }

@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Sps
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
+
     public interface ISpsStreamingRequest : IDisposable
     {
         /// <summary>

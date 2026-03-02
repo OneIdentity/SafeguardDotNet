@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Security;
-using Serilog;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Http;
+    using System.Security;
+
+    using Serilog;
+
     /// <summary>
     /// A few extension methods that are useful when calling SafeguardDotNet methods.
     /// </summary>
@@ -29,10 +32,16 @@ namespace OneIdentity.SafeguardDotNet
             // I realize this may defeat the purpose of using SecureStrings in the first place,
             // because the string was already in memory, but at least I tried.
             if (string.IsNullOrWhiteSpace(thisString))
+            {
                 return null;
+            }
+
             var result = new SecureString();
             foreach (var c in thisString)
+            {
                 result.AppendChar(c);
+            }
+
             return result;
         }
 
@@ -60,8 +69,10 @@ namespace OneIdentity.SafeguardDotNet
     {
         public static bool ContainsNoCase(this string thisString, string otherString)
         {
-            return CultureInfo.InvariantCulture.CompareInfo.IndexOf(thisString, otherString,
-                       CompareOptions.IgnoreCase) >= 0;
+            return CultureInfo.InvariantCulture.CompareInfo.IndexOf(
+                thisString,
+                otherString,
+                CompareOptions.IgnoreCase) >= 0;
         }
 
         public static bool EqualsNoCase(this string thisString, string otherString)
@@ -95,11 +106,11 @@ namespace OneIdentity.SafeguardDotNet
                 return;
             }
 
-            Log.Debug($"Response status code: {fullResponse.StatusCode}");
+            Log.Debug("Response status code: {ResponseStatusCode}", fullResponse.StatusCode);
 
             Log.Debug("  Response headers: {ResponseHeaders}",
                 fullResponse.Headers?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
+                    .Aggregate(string.Empty, (str, header) => $"{str}{header}, ").TrimEnd(',', ' '));
 
             Log.Debug("  Body size: {ResponseBodySize}", fullResponse.Body == null ? "None" : $"{fullResponse.Body.Length}");
         }
@@ -117,15 +128,15 @@ namespace OneIdentity.SafeguardDotNet
 
         private static void LogRequestDetails(HttpMethod method, string uri, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null)
         {
-            Log.Debug($"Invoking method: {method.ToString().ToUpper()} {uri}");
+            Log.Debug("Invoking method: {HttpMethod} {Uri}", method.ToString().ToUpper(), uri);
 
             Log.Debug("  Query parameters: {QueryParameters}",
-                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
+                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate(string.Empty, (str, param) => $"{str}{param}&")
                     .TrimEnd('&') ?? "None");
 
             Log.Debug("  Additional headers: {AdditionalHeaders}",
                 additionalHeaders?.Select(kv => $"{kv.Key}: {kv.Value}")
-                    .Aggregate("", (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
+                    .Aggregate(string.Empty, (str, header) => $"{str}{header}, ").TrimEnd(',', ' ') ?? "None");
         }
     }
 }

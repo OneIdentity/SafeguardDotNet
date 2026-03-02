@@ -1,12 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Runtime.InteropServices;
-using System.Security;
-using Newtonsoft.Json;
+// Copyright (c) One Identity LLC. All rights reserved.
 
+#pragma warning disable SA1649 // File name should match first type name
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Runtime.InteropServices;
+    using System.Security;
+
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Service identifiers for the different services in the Safeguard API.
     /// </summary>
@@ -33,8 +37,8 @@ namespace OneIdentity.SafeguardDotNet
         /// it is bound to the MGMT network interface. For on-prem VM it is unavailable except through the Kiosk app. On cloud
         /// VM it is listening on port 9337 and should be firewalled appropriately to restrict access.
         /// </summary>
-        Management
-    };
+        Management,
+    }
 
     /// <summary>
     /// A limited list of methods supported by the Safeguard API. Not all HTTP methods are supported.
@@ -44,7 +48,7 @@ namespace OneIdentity.SafeguardDotNet
         Post,
         Get,
         Put,
-        Delete
+        Delete,
     }
 
     /// <summary>
@@ -53,7 +57,9 @@ namespace OneIdentity.SafeguardDotNet
     public class FullResponse
     {
         public HttpStatusCode StatusCode { get; set; }
+
         public IDictionary<string, string> Headers { get; set; }
+
         public string Body { get; set; }
     }
 
@@ -73,7 +79,7 @@ namespace OneIdentity.SafeguardDotNet
         /// <summary>
         /// Putty format for use with PuTTY tools
         /// </summary>
-        Putty
+        Putty,
     }
 
     /// <summary>
@@ -81,14 +87,21 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public class ApiKeySecret : IDisposable
     {
+        private bool _disposed;
+
         public int Id { get; set; }
+
         public string Name { get; set; }
+
         public string Description { get; set; }
+
         public string ClientId { get; set; }
 
         [JsonConverter(typeof(SecureStringConverter))]
         public SecureString ClientSecret { get; set; }
+
         public string ClientSecretId { get; set; }
+
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
@@ -96,8 +109,20 @@ namespace OneIdentity.SafeguardDotNet
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+            {
+                return;
+            }
+
             ClientSecret?.Dispose();
             ClientSecret = null;
+            _disposed = true;
         }
     }
 
@@ -123,6 +148,7 @@ namespace OneIdentity.SafeguardDotNet
                     s.AppendChar(c);
                 }
             }
+
             s.MakeReadOnly();
             return s;
         }
@@ -152,7 +178,10 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public class A2ARetrievableAccount : IDisposable
     {
+        private bool _disposed;
+
         public string ApplicationName { get; set; }
+
         public string Description { get; set; }
 
         [JsonProperty("AccountDisabled")]
@@ -161,16 +190,24 @@ namespace OneIdentity.SafeguardDotNet
 
         [JsonConverter(typeof(SecureStringConverter))]
         public SecureString ApiKey { get; set; }
+
         public int AssetId { get; set; }
+
         public string AssetName { get; set; }
 
         [JsonProperty("NetworkAddress")]
         public string AssetNetworkAddress { get; set; }
+
         public string AssetDescription { get; set; }
+
         public int AccountId { get; set; }
+
         public string AccountName { get; set; }
+
         public string DomainName { get; set; }
+
         public string AccountType { get; set; }
+
         public string AccountDescription { get; set; }
 
         public override string ToString()
@@ -180,8 +217,20 @@ namespace OneIdentity.SafeguardDotNet
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed || !disposing)
+            {
+                return;
+            }
+
             ApiKey?.Dispose();
             ApiKey = null;
+            _disposed = true;
         }
     }
 }

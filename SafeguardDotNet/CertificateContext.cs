@@ -1,18 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security;
-using System.Security.Cryptography.X509Certificates;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Security;
+    using System.Security.Cryptography.X509Certificates;
+
     internal class CertificateContext : IDisposable
     {
         private enum ContextType
         {
             Thumbprint,
             File,
-            Data
+            Data,
         }
 
         public CertificateContext(string thumbprint)
@@ -39,11 +41,17 @@ namespace OneIdentity.SafeguardDotNet
         }
 
         private CertificateContext()
-        {}
+        {
+        }
+
         private ContextType Type { get; set; }
+
         private string Thumbprint { get; set; }
+
         private string FilePath { get; set; }
+
         private byte[] DataBuffer { get; set; }
+
         private SecureString Password { get; set; }
 
         public X509Certificate2 Certificate { get; private set; }
@@ -56,7 +64,7 @@ namespace OneIdentity.SafeguardDotNet
                 Thumbprint = Thumbprint,
                 FilePath = FilePath,
                 DataBuffer = DataBuffer?.ToArray(),
-                Password = Password?.Copy()
+                Password = Password?.Copy(),
             };
 
             switch (Type)
@@ -89,15 +97,26 @@ namespace OneIdentity.SafeguardDotNet
                 case ContextType.Data:
                     return $"data={DataBuffer.Length} bytes";
                 default:
+#pragma warning disable S3877 // Throw in default case is intentional for exhaustive enum handling
                     throw new SafeguardDotNetException(
                         $"Error calling ToString() on unknown CertificateContext type: {Enum.GetName(typeof(ContextType), Type)}");
+#pragma warning restore S3877
             }
         }
 
         public void Dispose()
         {
-            Password?.Dispose();
-            Certificate?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Password?.Dispose();
+                Certificate?.Dispose();
+            }
         }
     }
 }

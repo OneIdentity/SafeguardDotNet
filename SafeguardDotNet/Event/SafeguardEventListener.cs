@@ -1,22 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Security;
-using System.Security;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
-using OneIdentity.SafeguardDotNet.A2A;
-using Serilog;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security;
+    using System.Threading.Tasks;
+
+    using Microsoft.AspNetCore.SignalR.Client;
+
+    using OneIdentity.SafeguardDotNet.A2A;
+
+    using Serilog;
+
     internal delegate void DisconnectHandler();
 
     internal class SafeguardEventListener : ISafeguardEventListener
     {
         private bool _disposed;
-        
+
         private readonly string _eventUrl;
         private readonly bool _ignoreSsl;
         private readonly RemoteCertificateValidationCallback _validationCallback;
@@ -40,34 +45,58 @@ namespace OneIdentity.SafeguardDotNet.Event
             _eventHandlerRegistry = new EventHandlerRegistry();
         }
 
-        public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : 
-            this(eventUrl, ignoreSsl, validationCallback)
+        public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
+            : this(eventUrl, ignoreSsl, validationCallback)
         {
             if (accessToken == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(accessToken));
+            }
+
             _accessToken = accessToken.Copy();
         }
 
-        public SafeguardEventListener(string eventUrl, CertificateContext clientCertificate, SecureString apiKey,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : this(eventUrl, ignoreSsl, validationCallback)
+        public SafeguardEventListener(
+            string eventUrl,
+            CertificateContext clientCertificate,
+            SecureString apiKey,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : this(eventUrl, ignoreSsl, validationCallback)
         {
             _clientCertificate = clientCertificate.Clone();
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
+
             _apiKey = apiKey.Copy();
         }
 
-        public SafeguardEventListener(string eventUrl, CertificateContext clientCertificate, IEnumerable<SecureString> apiKeys,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : this(eventUrl, ignoreSsl, validationCallback)
+        public SafeguardEventListener(
+            string eventUrl,
+            CertificateContext clientCertificate,
+            IEnumerable<SecureString> apiKeys,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : this(eventUrl, ignoreSsl, validationCallback)
         {
             _clientCertificate = clientCertificate.Clone();
             if (apiKeys == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+            }
+
             _apiKeys = new List<SecureString>();
             foreach (var apiKey in apiKeys)
+            {
                 _apiKeys.Add(apiKey.Copy());
+            }
+
             if (!_apiKeys.Any())
+            {
                 throw new ArgumentException("Parameter must include at least one item", nameof(apiKeys));
+            }
         }
 
         public void SetDisconnectHandler(DisconnectHandler handler)
@@ -88,7 +117,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         private void HandleDisconnect()
         {
             if (!_isStarted)
+            {
                 return;
+            }
+
             Log.Warning("SignalR disconnect detected, calling handler...");
             CallEventListenerStateCallback(SafeguardEventListenerState.Disconnected);
             _disconnectHandler();
@@ -117,6 +149,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                 {
                     _signalrConnection.Closed -= _signalrConnection_Closed;
                 }
+
                 _signalrConnection?.DisposeAsync();
             }
             catch (Exception ex)
@@ -132,7 +165,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         public void RegisterEventHandler(string eventName, SafeguardEventHandler handler)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardEventListener");
+            }
+
             _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
         }
 
@@ -144,7 +180,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         public void Start()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardEventListener");
+            }
+
             CleanupConnection();
             _signalrConnection = new HubConnectionBuilder()
                 .WithUrl(_eventUrl, options =>
@@ -162,7 +201,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                         options.ClientCertificates.Add(_clientCertificate.Certificate);
 
                         // Moving to SignalR 7.0.x and above, caused the connection to move to HTTP/2 rather than 1.1.  HTTP/2 does
-                        //  not support SSL renegotiation which is required by the HttpSys web host being using in SPP. Setting 
+                        //  not support SSL renegotiation which is required by the HttpSys web host being using in SPP. Setting
                         //  UseDefaultCredentials = true, forces the connection back to HTTP/1.1 which allows SSL renegotiation.
                         //
                         // Addition Information:
@@ -183,8 +222,10 @@ namespace OneIdentity.SafeguardDotNet.Event
                         {
                             if (_ignoreSsl)
                             {
+#pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set
                                 clientHandler.ServerCertificateCustomValidationCallback =
                                     (sender, certificate, chain, sslPolicyErrors) => true;
+#pragma warning restore S4830
                             }
                             else
                             {
@@ -199,6 +240,7 @@ namespace OneIdentity.SafeguardDotNet.Event
                                 }
                             }
                         }
+
                         return message;
                     };
                 })
@@ -227,7 +269,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         public void Stop()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardEventListener");
+            }
+
             try
             {
                 _isStarted = false;
@@ -249,7 +294,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed || !disposing)
+            {
                 return;
+            }
+
             try
             {
                 CleanupConnection();
@@ -257,8 +305,12 @@ namespace OneIdentity.SafeguardDotNet.Event
                 _clientCertificate?.Dispose();
                 _apiKey?.Dispose();
                 if (_apiKeys != null)
+                {
                     foreach (var apiKey in _apiKeys)
+                    {
                         apiKey?.Dispose();
+                    }
+                }
             }
             finally
             {

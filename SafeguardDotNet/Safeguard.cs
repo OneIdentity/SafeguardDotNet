@@ -1,19 +1,23 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using OneIdentity.SafeguardDotNet.A2A;
-using OneIdentity.SafeguardDotNet.Authentication;
-using OneIdentity.SafeguardDotNet.Event;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Security;
-using System.Security;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security;
+    using System.Security.Cryptography;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
+    using OneIdentity.SafeguardDotNet.A2A;
+    using OneIdentity.SafeguardDotNet.Authentication;
+    using OneIdentity.SafeguardDotNet.Event;
+
     /// <summary>
     /// This static class provides static methods for connecting to Safeguard API.
     /// </summary>
@@ -61,8 +65,11 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, SecureString accessToken,
-            int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            SecureString accessToken,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
             // Don't try to refresh access token on the access token connect method because it cannot be refreshed
             // So, don't use GetConnection() function above
@@ -77,8 +84,11 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, SecureString accessToken,
-            RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            SecureString accessToken,
+            RemoteCertificateValidationCallback validationCallback,
+            int apiVersion = DefaultApiVersion)
         {
             // Don't try to refresh access token on the access token connect method because it cannot be refreshed
             // So, don't use GetConnection() function above
@@ -95,11 +105,22 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string provider, string username,
-            SecureString password, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string provider,
+            string username,
+            SecureString password,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion,
-                ignoreSsl, null));
+            return GetConnection(new PasswordAuthenticator(
+                networkAddress,
+                provider,
+                username,
+                password,
+                apiVersion,
+                ignoreSsl,
+                null));
         }
 
         /// <summary>
@@ -112,11 +133,22 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string provider, string username,
-            SecureString password, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string provider,
+            string username,
+            SecureString password,
+            RemoteCertificateValidationCallback validationCallback,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion,
-                false, validationCallback));
+            return GetConnection(new PasswordAuthenticator(
+                networkAddress,
+                provider,
+                username,
+                password,
+                apiVersion,
+                false,
+                validationCallback));
         }
 
         /// <summary>
@@ -128,11 +160,18 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificateThumbprint,
-            int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificateThumbprint,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion,
-                ignoreSsl, null));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateThumbprint,
+                apiVersion,
+                ignoreSsl,
+                null));
         }
 
         /// <summary>
@@ -144,11 +183,18 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificateThumbprint,
-            RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificateThumbprint,
+            RemoteCertificateValidationCallback validationCallback,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion,
-                false, validationCallback));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateThumbprint,
+                apiVersion,
+                false,
+                validationCallback));
         }
 
         /// <summary>
@@ -160,11 +206,20 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificatePath,
-            SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
-                apiVersion, ignoreSsl, null));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificatePath,
+                certificatePassword,
+                apiVersion,
+                ignoreSsl,
+                null));
         }
 
         /// <summary>
@@ -176,11 +231,20 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificatePath,
-            SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            RemoteCertificateValidationCallback validationCallback,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
-                apiVersion, false, validationCallback));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificatePath,
+                certificatePassword,
+                apiVersion,
+                false,
+                validationCallback));
         }
 
         /// <summary>
@@ -192,11 +256,20 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
-            SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
-                apiVersion, ignoreSsl, null));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateData,
+                certificatePassword,
+                apiVersion,
+                ignoreSsl,
+                null));
         }
 
         /// <summary>
@@ -208,11 +281,20 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
-            SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            RemoteCertificateValidationCallback validationCallback,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
-                apiVersion, false, validationCallback));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateData,
+                certificatePassword,
+                apiVersion,
+                false,
+                validationCallback));
         }
 
         /// <summary>
@@ -225,11 +307,20 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificateThumbprint, string provider,
-            int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificateThumbprint,
+            string provider,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion,
-                ignoreSsl, null, provider));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateThumbprint,
+                apiVersion,
+                ignoreSsl,
+                null,
+                provider));
         }
 
         /// <summary>
@@ -242,11 +333,20 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificateThumbprint,
-            RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificateThumbprint,
+            RemoteCertificateValidationCallback validationCallback,
+            string provider,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion,
-                false, validationCallback, provider));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateThumbprint,
+                apiVersion,
+                false,
+                validationCallback,
+                provider));
         }
 
         /// <summary>
@@ -259,11 +359,22 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificatePath,
-            SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            string provider,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
-                apiVersion, ignoreSsl, null, provider));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificatePath,
+                certificatePassword,
+                apiVersion,
+                ignoreSsl,
+                null,
+                provider));
         }
 
         /// <summary>
@@ -276,11 +387,22 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, string certificatePath,
-            SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            RemoteCertificateValidationCallback validationCallback,
+            string provider,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificatePath, certificatePassword,
-                apiVersion, false, validationCallback, provider));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificatePath,
+                certificatePassword,
+                apiVersion,
+                false,
+                validationCallback,
+                provider));
         }
 
         /// <summary>
@@ -293,11 +415,22 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
-            SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            string provider,
+            int apiVersion = DefaultApiVersion,
+            bool ignoreSsl = false)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
-                apiVersion, ignoreSsl, null, provider));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateData,
+                certificatePassword,
+                apiVersion,
+                ignoreSsl,
+                null,
+                provider));
         }
 
         /// <summary>
@@ -310,11 +443,22 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <returns>Reusable Safeguard API connection.</returns>
-        public static ISafeguardConnection Connect(string networkAddress, IEnumerable<byte> certificateData,
-            SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+        public static ISafeguardConnection Connect(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            RemoteCertificateValidationCallback validationCallback,
+            string provider,
+            int apiVersion = DefaultApiVersion)
         {
-            return GetConnection(new CertificateAuthenticator(networkAddress, certificateData, certificatePassword,
-                apiVersion, false, validationCallback, provider));
+            return GetConnection(new CertificateAuthenticator(
+                networkAddress,
+                certificateData,
+                certificatePassword,
+                apiVersion,
+                false,
+                validationCallback,
+                provider));
         }
 
         /// <summary>
@@ -344,8 +488,13 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress, string provider,
-                string username, SecureString password, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string provider,
+                string username,
+                SecureString password,
+                int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
             {
                 return new PersistentSafeguardEventListener(GetConnection(
                     new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion, ignoreSsl, null)));
@@ -361,8 +510,13 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress, string provider,
-                string username, SecureString password, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string provider,
+                string username,
+                SecureString password,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
                 return new PersistentSafeguardEventListener(GetConnection(
                     new PasswordAuthenticator(networkAddress, provider, username, password, apiVersion, false, validationCallback)));
@@ -377,8 +531,11 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificateThumbprint, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificateThumbprint,
+                int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
             {
                 return new PersistentSafeguardEventListener(GetConnection(
                     new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null)));
@@ -393,8 +550,11 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificateThumbprint, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificateThumbprint,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
                 return new PersistentSafeguardEventListener(GetConnection(
                     new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, false, validationCallback)));
@@ -409,12 +569,20 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                IEnumerable<byte> certificateData, SecureString certificatePassword, int apiVersion = DefaultApiVersion,
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                IEnumerable<byte> certificateData,
+                SecureString certificatePassword,
+                int apiVersion = DefaultApiVersion,
                 bool ignoreSsl = false)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificateData, certificatePassword, apiVersion, ignoreSsl, null)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificateData,
+                    certificatePassword,
+                    apiVersion,
+                    ignoreSsl,
+                    null)));
             }
 
             /// <summary>
@@ -426,11 +594,20 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                IEnumerable<byte> certificateData, SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                IEnumerable<byte> certificateData,
+                SecureString certificatePassword,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificateData, certificatePassword, apiVersion, false, validationCallback)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificateData,
+                    certificatePassword,
+                    apiVersion,
+                    false,
+                    validationCallback)));
             }
 
             /// <summary>
@@ -442,12 +619,20 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificatePath, SecureString certificatePassword, int apiVersion = DefaultApiVersion,
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificatePath,
+                SecureString certificatePassword,
+                int apiVersion = DefaultApiVersion,
                 bool ignoreSsl = false)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificatePath, certificatePassword, apiVersion, ignoreSsl, null)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificatePath,
+                    certificatePassword,
+                    apiVersion,
+                    ignoreSsl,
+                    null)));
             }
 
             /// <summary>
@@ -459,11 +644,20 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificatePath, SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificatePath,
+                SecureString certificatePassword,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificatePath, certificatePassword, apiVersion, false, validationCallback)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificatePath,
+                    certificatePassword,
+                    apiVersion,
+                    false,
+                    validationCallback)));
             }
 
             /// <summary>
@@ -476,8 +670,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificateThumbprint, string provider, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificateThumbprint,
+                string provider,
+                int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
             {
                 return new PersistentSafeguardEventListener(GetConnection(
                     new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null, provider)));
@@ -493,8 +691,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificateThumbprint, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificateThumbprint,
+                RemoteCertificateValidationCallback validationCallback,
+                string provider,
+                int apiVersion = DefaultApiVersion)
             {
                 return new PersistentSafeguardEventListener(GetConnection(
                     new CertificateAuthenticator(networkAddress, certificateThumbprint, apiVersion, false, validationCallback, provider)));
@@ -510,12 +712,22 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                IEnumerable<byte> certificateData, SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion,
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                IEnumerable<byte> certificateData,
+                SecureString certificatePassword,
+                string provider,
+                int apiVersion = DefaultApiVersion,
                 bool ignoreSsl = false)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificateData, certificatePassword, apiVersion, ignoreSsl, null, provider)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificateData,
+                    certificatePassword,
+                    apiVersion,
+                    ignoreSsl,
+                    null,
+                    provider)));
             }
 
             /// <summary>
@@ -528,11 +740,22 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                IEnumerable<byte> certificateData, SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                IEnumerable<byte> certificateData,
+                SecureString certificatePassword,
+                RemoteCertificateValidationCallback validationCallback,
+                string provider,
+                int apiVersion = DefaultApiVersion)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificateData, certificatePassword, apiVersion, false, validationCallback, provider)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificateData,
+                    certificatePassword,
+                    apiVersion,
+                    false,
+                    validationCallback,
+                    provider)));
             }
 
             /// <summary>
@@ -545,12 +768,22 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificatePath, SecureString certificatePassword, string provider, int apiVersion = DefaultApiVersion,
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificatePath,
+                SecureString certificatePassword,
+                string provider,
+                int apiVersion = DefaultApiVersion,
                 bool ignoreSsl = false)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificatePath, certificatePassword, apiVersion, ignoreSsl, null, provider)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificatePath,
+                    certificatePassword,
+                    apiVersion,
+                    ignoreSsl,
+                    null,
+                    provider)));
             }
 
             /// <summary>
@@ -563,11 +796,22 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>New persistent Safeguard event listener.</returns>
-            public static ISafeguardEventListener GetPersistentEventListener(string networkAddress,
-                string certificatePath, SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, string provider, int apiVersion = DefaultApiVersion)
+            public static ISafeguardEventListener GetPersistentEventListener(
+                string networkAddress,
+                string certificatePath,
+                SecureString certificatePassword,
+                RemoteCertificateValidationCallback validationCallback,
+                string provider,
+                int apiVersion = DefaultApiVersion)
             {
-                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(networkAddress,
-                    certificatePath, certificatePassword, apiVersion, false, validationCallback, provider)));
+                return new PersistentSafeguardEventListener(GetConnection(new CertificateAuthenticator(
+                    networkAddress,
+                    certificatePath,
+                    certificatePassword,
+                    apiVersion,
+                    false,
+                    validationCallback,
+                    provider)));
             }
         }
 
@@ -585,8 +829,11 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, string certificateThumbprint,
-                int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            public static ISafeguardA2AContext GetContext(
+                string networkAddress,
+                string certificateThumbprint,
+                int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
             {
                 return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null);
             }
@@ -600,8 +847,11 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, string certificateThumbprint,
-                RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardA2AContext GetContext(
+                string networkAddress,
+                string certificateThumbprint,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
                 return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback);
             }
@@ -615,8 +865,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, string certificatePath,
-                SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            public static ISafeguardA2AContext GetContext(
+                string networkAddress,
+                string certificatePath,
+                SecureString certificatePassword,
+                int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
             {
                 return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl, null);
             }
@@ -630,8 +884,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, string certificatePath,
-                SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardA2AContext GetContext(
+                string networkAddress,
+                string certificatePath,
+                SecureString certificatePassword,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
                 return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, false, validationCallback);
             }
@@ -645,8 +903,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="ignoreSsl">Ignore server certificate validation.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, IEnumerable<byte> certificateData,
-                SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+            public static ISafeguardA2AContext GetContext(
+                string networkAddress,
+                IEnumerable<byte> certificateData,
+                SecureString certificatePassword,
+                int apiVersion = DefaultApiVersion,
+                bool ignoreSsl = false)
             {
                 return new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, ignoreSsl, null);
             }
@@ -660,8 +922,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="validationCallback">Certificate validation callback delegate.</param>
             /// <param name="apiVersion">Target API version to use.</param>
             /// <returns>Reusable Safeguard A2A context.</returns>
-            public static ISafeguardA2AContext GetContext(string networkAddress, IEnumerable<byte> certificateData,
-                SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+            public static ISafeguardA2AContext GetContext(
+                string networkAddress,
+                IEnumerable<byte> certificateData,
+                SecureString certificatePassword,
+                RemoteCertificateValidationCallback validationCallback,
+                int apiVersion = DefaultApiVersion)
             {
                 return new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, false, validationCallback);
             }
@@ -672,7 +938,9 @@ namespace OneIdentity.SafeguardDotNet
             /// recommended to use these interfaces when listening for Safeguard events from a long-running service.
             /// </summary>
             // ReSharper disable once MemberHidesStaticFromOuterClass
+#pragma warning disable S3218 // Inner class intentionally shadows outer class member name for API consistency
             public static class Event
+#pragma warning restore S3218
             {
                 /// <summary>
                 /// Get a persistent A2A event listener. The handler passed in will be registered
@@ -686,13 +954,18 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <param name="ignoreSsl">Ignore server certificate validation.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
-                    SafeguardEventHandler handler, string networkAddress, string certificateThumbprint,
-                    int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    SecureString apiKey,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificateThumbprint,
+                    int apiVersion = DefaultApiVersion,
+                    bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null), apiKey,
-                            handler);
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null),
+                        apiKey,
+                        handler);
                 }
 
                 /// <summary>
@@ -707,12 +980,17 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="validationCallback">Certificate validation callback delegate.</param>
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
-                    SafeguardEventHandler handler, string networkAddress, string certificateThumbprint,
-                    RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    SecureString apiKey,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificateThumbprint,
+                    RemoteCertificateValidationCallback validationCallback,
+                    int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback), apiKey,
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback),
+                        apiKey,
                         handler);
                 }
 
@@ -728,13 +1006,18 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <param name="ignoreSsl">Ignore server certificate validation.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
-                    SafeguardEventHandler handler, string networkAddress, string certificateThumbprint,
-                    int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    IEnumerable<SecureString> apiKeys,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificateThumbprint,
+                    int apiVersion = DefaultApiVersion,
+                    bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null), apiKeys,
-                            handler);
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null),
+                        apiKeys,
+                        handler);
                 }
 
                 /// <summary>
@@ -749,12 +1032,17 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="validationCallback">Certificate validation callback delegate.</param>
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
-                    SafeguardEventHandler handler, string networkAddress, string certificateThumbprint,
-                    RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    IEnumerable<SecureString> apiKeys,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificateThumbprint,
+                    RemoteCertificateValidationCallback validationCallback,
+                    int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback), apiKeys,
+                        new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback),
+                        apiKeys,
                         handler);
                 }
 
@@ -771,13 +1059,19 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <param name="ignoreSsl">Ignore server certificate validation.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
-                    SafeguardEventHandler handler, string networkAddress, string certificatePath,
-                    SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    SecureString apiKey,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificatePath,
+                    SecureString certificatePassword,
+                    int apiVersion = DefaultApiVersion,
+                    bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
-                            ignoreSsl, null), apiKey, handler);
+                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl, null),
+                        apiKey,
+                        handler);
                 }
 
                 /// <summary>
@@ -793,13 +1087,25 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="validationCallback">Certificate validation callback delegate.</param>
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
-                    SafeguardEventHandler handler, string networkAddress, string certificatePath,
-                    SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    SecureString apiKey,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificatePath,
+                    SecureString certificatePassword,
+                    RemoteCertificateValidationCallback validationCallback,
+                    int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
-                            false, validationCallback), apiKey, handler);
+                        new SafeguardA2AContext(
+                            networkAddress,
+                            certificatePath,
+                            certificatePassword,
+                            apiVersion,
+                            false,
+                            validationCallback),
+                        apiKey,
+                        handler);
                 }
 
                 /// <summary>
@@ -815,13 +1121,19 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <param name="ignoreSsl">Ignore server certificate validation.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
-                    SafeguardEventHandler handler, string networkAddress, string certificatePath,
-                    SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    IEnumerable<SecureString> apiKeys,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificatePath,
+                    SecureString certificatePassword,
+                    int apiVersion = DefaultApiVersion,
+                    bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
-                            ignoreSsl, null), apiKeys, handler);
+                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl, null),
+                        apiKeys,
+                        handler);
                 }
 
                 /// <summary>
@@ -837,13 +1149,25 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="validationCallback">Certificate validation callback delegate.</param>
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
-                    SafeguardEventHandler handler, string networkAddress, string certificatePath,
-                    SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    IEnumerable<SecureString> apiKeys,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    string certificatePath,
+                    SecureString certificatePassword,
+                    RemoteCertificateValidationCallback validationCallback,
+                    int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion,
-                            false, validationCallback), apiKeys, handler);
+                        new SafeguardA2AContext(
+                            networkAddress,
+                            certificatePath,
+                            certificatePassword,
+                            apiVersion,
+                            false,
+                            validationCallback),
+                        apiKeys,
+                        handler);
                 }
 
                 /// <summary>
@@ -859,13 +1183,19 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <param name="ignoreSsl">Ignore server certificate validation.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
-                    SafeguardEventHandler handler, string networkAddress, IEnumerable<byte> certificateData,
-                    SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    SecureString apiKey,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    IEnumerable<byte> certificateData,
+                    SecureString certificatePassword,
+                    int apiVersion = DefaultApiVersion,
+                    bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion,
-                            ignoreSsl, null), apiKey, handler);
+                        new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, ignoreSsl, null),
+                        apiKey,
+                        handler);
                 }
 
                 /// <summary>
@@ -881,13 +1211,25 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="validationCallback">Certificate validation callback delegate.</param>
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey,
-                    SafeguardEventHandler handler, string networkAddress, IEnumerable<byte> certificateData,
-                    SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    SecureString apiKey,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    IEnumerable<byte> certificateData,
+                    SecureString certificatePassword,
+                    RemoteCertificateValidationCallback validationCallback,
+                    int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion,
-                            false, validationCallback), apiKey, handler);
+                        new SafeguardA2AContext(
+                            networkAddress,
+                            certificateData,
+                            certificatePassword,
+                            apiVersion,
+                            false,
+                            validationCallback),
+                        apiKey,
+                        handler);
                 }
 
                 /// <summary>
@@ -903,13 +1245,19 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <param name="ignoreSsl">Ignore server certificate validation.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
-                    SafeguardEventHandler handler, string networkAddress, IEnumerable<byte> certificateData,
-                    SecureString certificatePassword, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    IEnumerable<SecureString> apiKeys,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    IEnumerable<byte> certificateData,
+                    SecureString certificatePassword,
+                    int apiVersion = DefaultApiVersion,
+                    bool ignoreSsl = false)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion,
-                            ignoreSsl, null), apiKeys, handler);
+                        new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, ignoreSsl, null),
+                        apiKeys,
+                        handler);
                 }
 
                 /// <summary>
@@ -925,13 +1273,25 @@ namespace OneIdentity.SafeguardDotNet
                 /// <param name="validationCallback">Certificate validation callback delegate.</param>
                 /// <param name="apiVersion">Target API version to use.</param>
                 /// <returns>New persistent A2A event listener.</returns>
-                public static ISafeguardEventListener GetPersistentA2AEventListener(IEnumerable<SecureString> apiKeys,
-                    SafeguardEventHandler handler, string networkAddress, IEnumerable<byte> certificateData,
-                    SecureString certificatePassword, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+                public static ISafeguardEventListener GetPersistentA2AEventListener(
+                    IEnumerable<SecureString> apiKeys,
+                    SafeguardEventHandler handler,
+                    string networkAddress,
+                    IEnumerable<byte> certificateData,
+                    SecureString certificatePassword,
+                    RemoteCertificateValidationCallback validationCallback,
+                    int apiVersion = DefaultApiVersion)
                 {
                     return new PersistentSafeguardA2AEventListener(
-                        new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion,
-                            false, validationCallback), apiKeys, handler);
+                        new SafeguardA2AContext(
+                            networkAddress,
+                            certificateData,
+                            certificatePassword,
+                            apiVersion,
+                            false,
+                            validationCallback),
+                        apiKeys,
+                        handler);
                 }
             }
         }
@@ -952,7 +1312,7 @@ namespace OneIdentity.SafeguardDotNet
             /// </summary>
             public const string RedirectUriTcpListener = "urn:InstalledApplicationTcpListener";
 
-            private static readonly HttpClient _http = CreateHttpClient();
+            private static readonly HttpClient Http = CreateHttpClient();
 
             /// <summary>
             /// Posts the OAuth2 authorization code to complete the PKCE authentication flow and obtain an RSTS access token.
@@ -960,18 +1320,18 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="appliance">Network address of the Safeguard appliance.</param>
             /// <param name="authorizationCode">The authorization code received from the authorization endpoint.</param>
             /// <param name="codeVerifier">The PKCE code verifier that matches the code challenge sent in the authorization request.</param>
-            /// <param name="RedirectUri">The redirect URI that was used in the authorization request.</param>
+            /// <param name="redirectUri">The redirect URI that was used in the authorization request.</param>
             /// <param name="httpClient">Optional HttpClient instance to use for the request. If null, a default client will be used.</param>
             /// <returns>An RSTS access token as a SecureString.</returns>
-            public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string RedirectUri)
+            public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string redirectUri)
             {
                 var safeguardRstsUrl = $"https://{appliance}/RSTS";
                 var data = JsonConvert.SerializeObject(new
                 {
                     grant_type = "authorization_code",
-                    redirect_uri = RedirectUri,
+                    redirect_uri = redirectUri,
                     code = authorizationCode,
-                    code_verifier = codeVerifier
+                    code_verifier = codeVerifier,
                 });
 
                 var json = ApiRequest(HttpMethod.Post, $"{safeguardRstsUrl}/oauth2/token", data);
@@ -988,12 +1348,12 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="apiVersion">Target API version to use.</param>
             /// <param name="httpClient">Optional HttpClient instance to use for the request. If null, a default client will be used.</param>
             /// <returns>A JObject containing the login response with the Safeguard user token.</returns>
-            public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken, int apiVersion = Safeguard.DefaultApiVersion)
+            public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken, int apiVersion = DefaultApiVersion)
             {
                 var safeguardCoreUrl = $"https://{appliance}/service/core/v{apiVersion}";
                 var data = JsonConvert.SerializeObject(new
                 {
-                    StsAccessToken = rstsAccessToken.ToInsecureString()
+                    StsAccessToken = rstsAccessToken.ToInsecureString(),
                 });
 
                 var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
@@ -1013,6 +1373,7 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     rng.GetBytes(bytes);
                 }
+
                 return ToBase64Url(bytes);
             }
 
@@ -1045,6 +1406,7 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     rng.GetBytes(bytes);
                 }
+
                 return ToBase64Url(bytes);
             }
 
@@ -1061,7 +1423,7 @@ namespace OneIdentity.SafeguardDotNet
 
                 try
                 {
-                    var res = _http.SendAsync(req).GetAwaiter().GetResult();
+                    var res = Http.SendAsync(req).GetAwaiter().GetResult();
                     var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
 
                     if (!res.IsSuccessStatusCode)
@@ -1082,7 +1444,9 @@ namespace OneIdentity.SafeguardDotNet
                 var handler = new HttpClientHandler()
                 {
                     SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+#pragma warning disable S4830 // Server certificate validation is intentionally bypassed for RSTS token requests
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
+#pragma warning restore S4830
                 };
 
                 return new HttpClient(handler);

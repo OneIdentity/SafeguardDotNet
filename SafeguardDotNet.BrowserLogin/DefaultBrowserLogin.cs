@@ -1,9 +1,12 @@
-﻿using Serilog;
-using System;
-using System.Threading;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.BrowserLogin
 {
+    using System;
+    using System.Threading;
+
+    using Serilog;
+
     /// <summary>
     /// Provides browser-based authentication to Safeguard using OAuth2/PKCE flow.
     /// This class launches the default browser and listens for the OAuth callback to complete authentication.
@@ -26,10 +29,10 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
             Log.Debug("Calling RSTS for primary authentication");
 
             var oauthCodeVerifier = Safeguard.AgentBasedLoginUtils.OAuthCodeVerifier();
-            var tokenExtractor = new AuthorizationCodeExtractor(appliance);
+            var tokenExtractor = new AuthorizationCodeExtractor();
             var browserLauncher = new BrowserLauncher(appliance, oauthCodeVerifier);
 
-            var source = new CancellationTokenSource();
+            using var source = new CancellationTokenSource();
             Console.CancelKeyPress += (sender, e) => { source.Cancel(); };
 
             browserLauncher.Show(username, port);
@@ -42,27 +45,22 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
 
             Log.Debug("Redeeming RSTS authorization code");
 
-            using (var rstsAccessToken = Safeguard.AgentBasedLoginUtils.PostAuthorizationCodeFlow(
-                appliance, tokenExtractor.AuthorizationCode, oauthCodeVerifier, Safeguard.AgentBasedLoginUtils.RedirectUri))
+            using var rstsAccessToken = Safeguard.AgentBasedLoginUtils.PostAuthorizationCodeFlow(
+                appliance, tokenExtractor.AuthorizationCode, oauthCodeVerifier, Safeguard.AgentBasedLoginUtils.RedirectUri);
+
+            Log.Debug("Exchanging RSTS access token");
+
+            var responseObject = Safeguard.AgentBasedLoginUtils.PostLoginResponse(appliance, rstsAccessToken, apiVersion);
+
+            var statusValue = responseObject.GetValue("Status")?.ToString();
+
+            if (string.IsNullOrEmpty(statusValue) || statusValue != "Success")
             {
-                Log.Debug("Exchanging RSTS access token");
-
-                var responseObject = Safeguard.AgentBasedLoginUtils.PostLoginResponse(appliance, rstsAccessToken, apiVersion);
-
-                var statusValue = responseObject.GetValue("Status")?.ToString();
-
-                if (string.IsNullOrEmpty(statusValue) || statusValue != "Success")
-                {
-                    throw new SafeguardDotNetException($"Error response status {statusValue} from RSTS");
-                }
-
-                using (var accessToken = responseObject.GetValue("UserToken")?.ToString().ToSecureString())
-                {
-                    return Safeguard.Connect(appliance, accessToken, apiVersion, ignoreSsl);
-                }
+                throw new SafeguardDotNetException($"Error response status {statusValue} from RSTS");
             }
 
-            throw new SafeguardDotNetException("Unable to correctly manipulate the browser for Safeguard login");
+            using var accessToken = responseObject.GetValue("UserToken")?.ToString().ToSecureString();
+            return Safeguard.Connect(appliance, accessToken, apiVersion, ignoreSsl);
         }
     }
 }

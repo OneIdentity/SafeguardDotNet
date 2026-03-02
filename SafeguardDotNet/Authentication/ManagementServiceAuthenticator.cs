@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Security;
-using System.Security;
-using System.Text;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
+    using System;
+    using System.Net.Security;
+    using System.Security;
+
     internal class ManagementServiceAuthenticator : IAuthenticationMechanism
     {
         internal ManagementServiceAuthenticator(IAuthenticationMechanism parentAuthenticationMechanism, string networkAddress)
@@ -40,7 +40,13 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public void Dispose()
         {
-            // Nothing to do
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            // Nothing to dispose
         }
 
         public SecureString GetAccessToken()
@@ -60,12 +66,12 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public void RefreshAccessToken()
         {
-            throw new SafeguardDotNetException("Anonymous connection cannot be used to get an API access token, Error: Unsupported operation");
+            throw new SafeguardDotNetException("Management Service connection cannot be used to get an API access token, Error: Unsupported operation");
         }
 
         public string ResolveProviderToScope(string provider)
         {
-            throw new SafeguardDotNetException("Anonymous connection does not require a provider, Error: Unsupported operation");
+            throw new SafeguardDotNetException("Management Service connection does not require a provider, Error: Unsupported operation");
         }
     }
 }

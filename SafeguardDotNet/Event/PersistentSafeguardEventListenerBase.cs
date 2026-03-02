@@ -1,10 +1,13 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Serilog;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Event
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using Serilog;
+
     internal abstract class PersistentSafeguardEventListenerBase : ISafeguardEventListener
     {
         private bool _disposed;
@@ -24,7 +27,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         public void RegisterEventHandler(string eventName, SafeguardEventHandler handler)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("PersistentSafeguardEventListener");
+            }
+
             _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
         }
 
@@ -38,7 +44,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         private void PersistentReconnectAndStart()
         {
             if (_reconnectTask != null)
+            {
                 return;
+            }
+
             _reconnectCancel = new CancellationTokenSource();
             _reconnectTask = Task.Run(() =>
             {
@@ -62,21 +71,27 @@ namespace OneIdentity.SafeguardDotNet.Event
                         Thread.Sleep(5000);
                     }
                 }
-            }, _reconnectCancel.Token);
+            },
+                _reconnectCancel.Token);
             _reconnectTask.ContinueWith((task) =>
             {
                 _reconnectCancel?.Dispose();
                 _reconnectCancel = null;
                 _reconnectTask = null;
                 if (!task.IsFaulted)
+                {
                     Log.Debug("Internal event listener successfully connected and started.");
+                }
             });
         }
 
         public void Start()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("PersistentSafeguardEventListener");
+            }
+
             Log.Information("Internal event listener requested to start.");
             PersistentReconnectAndStart();
         }
@@ -84,7 +99,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         public void Stop()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("PersistentSafeguardEventListener");
+            }
+
             Log.Information("Internal event listener requested to stop.");
             _reconnectCancel?.Cancel();
             _eventListener?.Stop();
@@ -99,7 +117,10 @@ namespace OneIdentity.SafeguardDotNet.Event
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed || !disposing)
+            {
                 return;
+            }
+
             try
             {
                 _eventListener?.Dispose();

@@ -1,59 +1,96 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Security;
-using System.Security;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security;
+
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     internal class CertificateAuthenticator : AuthenticatorBase
     {
         private readonly string _provider;
 
-        public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint))
+        public CertificateAuthenticator(
+            string networkAddress,
+            string certificateThumbprint,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint))
         {
         }
 
-        public CertificateAuthenticator(string networkAddress, string certificatePath, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword))
+        public CertificateAuthenticator(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword))
         {
         }
 
-        public CertificateAuthenticator(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword, 
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword))
+        public CertificateAuthenticator(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword))
         {
         }
 
-        private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, clientCertificate.Clone())
+        private CertificateAuthenticator(
+            string networkAddress,
+            CertificateContext clientCertificate,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, clientCertificate.Clone())
         {
         }
 
-        public CertificateAuthenticator(string networkAddress, string certificateThumbprint, int apiVersion,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint))
+        public CertificateAuthenticator(
+            string networkAddress,
+            string certificateThumbprint,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback,
+            string provider)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint))
         {
             _provider = provider;
         }
 
-        public CertificateAuthenticator(string networkAddress, string certificatePath, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword))
+        public CertificateAuthenticator(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback,
+            string provider)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword))
         {
             _provider = provider;
         }
 
-        public CertificateAuthenticator(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword))
-        {
-            _provider = provider;
-        }
-
-        // Retaining this constructor in case we need to create from CertificateContext again in the future
-        // ReSharper disable once UnusedMember.Local
-        private CertificateAuthenticator(string networkAddress, CertificateContext clientCertificate, int apiVersion,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, string provider) : base(networkAddress, apiVersion, ignoreSsl, validationCallback, clientCertificate.Clone())
+        public CertificateAuthenticator(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback,
+            string provider)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword))
         {
             _provider = provider;
         }
@@ -63,12 +100,16 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         protected override SecureString GetRstsTokenInternal()
         {
             if (IsDisposed)
+            {
                 throw new ObjectDisposedException("CertificateAuthenticator");
+            }
 
             var providerScope = "rsts:sts:primaryproviderid:certificate";
 
             if (!string.IsNullOrEmpty(_provider))
+            {
                 providerScope = ResolveProviderToScope(_provider);
+            }
 
             var data = JsonConvert.SerializeObject(new
             {
@@ -84,17 +125,20 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public override object Clone()
         {
-            var auth = new CertificateAuthenticator(NetworkAddress, ClientCertificate, ApiVersion, IgnoreSsl, ValidationCallback)
+            var auth = new CertificateAuthenticator(NetworkAddress, clientCertificate, ApiVersion, IgnoreSsl, ValidationCallback)
             {
-                AccessToken = AccessToken?.Copy()
+                accessToken = accessToken?.Copy(),
             };
             return auth;
         }
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(true);
-            ClientCertificate?.Dispose();
+            if (disposing)
+            {
+                base.Dispose(disposing);
+                clientCertificate?.Dispose();
+            }
         }
     }
 }

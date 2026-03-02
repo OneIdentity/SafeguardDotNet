@@ -1,27 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Security;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     internal abstract class AuthenticatorBase : IAuthenticationMechanism
     {
         private bool _disposed;
 
-        protected SecureString AccessToken;
+        protected SecureString accessToken;
 
-        protected readonly string SafeguardCoreUrl;
+        protected readonly string safeguardCoreUrl;
 
         private readonly HttpClient _http;
 
-        protected readonly CertificateContext ClientCertificate;
+        protected readonly CertificateContext clientCertificate;
 
         protected AuthenticatorBase(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, CertificateContext clientCertificate = null)
         {
@@ -29,9 +32,9 @@ namespace OneIdentity.SafeguardDotNet.Authentication
             ApiVersion = apiVersion;
             IgnoreSsl = ignoreSsl;
             ValidationCallback = validationCallback;
-            ClientCertificate = clientCertificate;
+            this.clientCertificate = clientCertificate;
 
-            SafeguardCoreUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
+            safeguardCoreUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
 
             _http = CreateHttpClient();
         }
@@ -52,51 +55,65 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         public bool HasAccessToken()
         {
-            return AccessToken != null;
+            return accessToken != null;
         }
 
         public void ClearAccessToken()
         {
-            AccessToken?.Dispose();
-            AccessToken = null;
+            accessToken?.Dispose();
+            accessToken = null;
         }
 
         public SecureString GetAccessToken()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("AuthenticatorBase");
-            return AccessToken;
+            }
+
+            return accessToken;
         }
 
         public int GetAccessTokenLifetimeRemaining()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("AuthenticatorBase");
-            if (!HasAccessToken())
-                return 0;
+            }
 
-            var ttl = ApiRequest(HttpMethod.Get, $"{SafeguardCoreUrl}/LoginMessage", null, AccessToken.ToInsecureString(), true);
+            if (!HasAccessToken())
+            {
+                return 0;
+            }
+
+            var ttl = ApiRequest(HttpMethod.Get, $"{safeguardCoreUrl}/LoginMessage", null, accessToken.ToInsecureString(), true);
 
             if (ttl == null || !int.TryParse(ttl, out var remaining))
+            {
                 return 10; // Random magic value... the access token was good, but for some reason it didn't return the remaining lifetime
+            }
+
             return remaining;
         }
 
         public void RefreshAccessToken()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("AuthenticatorBase");
+            }
+
             using (var rStsToken = GetRstsTokenInternal())
             {
                 var data = JsonConvert.SerializeObject(new
                 {
-                    StsAccessToken = rStsToken.ToInsecureString()
+                    StsAccessToken = rStsToken.ToInsecureString(),
                 });
 
-                var json = ApiRequest(HttpMethod.Post, $"{SafeguardCoreUrl}/Token/LoginResponse", data);
+                var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
 
                 var jObject = JObject.Parse(json);
-                AccessToken = jObject.GetValue("UserToken")?.ToString().ToSecureString();
+                accessToken = jObject.GetValue("UserToken")?.ToString().ToSecureString();
             }
         }
 
@@ -104,12 +121,14 @@ namespace OneIdentity.SafeguardDotNet.Authentication
         {
             try
             {
-                var json = ApiRequest(HttpMethod.Get, $"{SafeguardCoreUrl}/AuthenticationProviders");
+                var json = ApiRequest(HttpMethod.Get, $"{safeguardCoreUrl}/AuthenticationProviders");
 
                 var jProviders = JArray.Parse(json);
                 var knownScopes = new List<(string RstsProviderId, string Name, string RstsProviderScope)>();
                 if (jProviders != null)
+                {
                     knownScopes = jProviders.Select(s => (Id: s["RstsProviderId"].ToString(), Name: s["Name"].ToString(), Scope: s["RstsProviderScope"].ToString())).ToList();
+                }
 
                 // 3 step check for determining if the user provided scope is valid:
                 //
@@ -135,15 +154,16 @@ namespace OneIdentity.SafeguardDotNet.Authentication
                             $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
                         }
                     }
-
                 }
 
                 return scope.RstsProviderScope;
             }
+#pragma warning disable S2737 // Intentionally rethrow SafeguardDotNetException without wrapping
             catch (SafeguardDotNetException)
             {
                 throw;
             }
+#pragma warning restore S2737
             catch (HttpRequestException ex)
             {
                 throw new SafeguardDotNetException($"Unable to connect to RSTS to find identity provider scopes, Error: {ex.Message}", ex);
@@ -154,19 +174,22 @@ namespace OneIdentity.SafeguardDotNet.Authentication
 
         protected HttpClient CreateHttpClient()
         {
-            var handler = new HttpClientHandler();
+            var handler = new HttpClientHandler
+            {
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            };
 
-            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-
-            if (ClientCertificate?.Certificate != null)
+            if (clientCertificate?.Certificate != null)
             {
                 handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-                handler.ClientCertificates.Add(ClientCertificate.Certificate);
+                handler.ClientCertificates.Add(clientCertificate.Certificate);
             }
 
             if (IgnoreSsl)
             {
+#pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set
                 handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#pragma warning restore S4830
             }
             else if (ValidationCallback != null)
             {

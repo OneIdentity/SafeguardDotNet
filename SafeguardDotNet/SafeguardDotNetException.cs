@@ -1,10 +1,12 @@
-﻿using System;
-using System.Net;
-using System.Runtime.Serialization;
-using Newtonsoft.Json.Linq;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Net;
+
+    using Newtonsoft.Json.Linq;
+
     /// <summary>
     /// This class extends the base Exception class with a SafeguardDotNet specific exception.
     /// SafeguardDotNet tries to throw all exception using this class. SafeguardDotNet throws
@@ -14,7 +16,6 @@ namespace OneIdentity.SafeguardDotNet
     /// </summary>
     public class SafeguardDotNetException : Exception
     {
-
         public SafeguardDotNetException()
             : base("Unknown SafeguardDotNetException")
         {
@@ -41,11 +42,12 @@ namespace OneIdentity.SafeguardDotNet
                 {
                     if (JToken.Parse(Response) is JObject responseObj)
                     {
-                        if (responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var codeVal))
+                        if (responseObj.TryGetValue("Code", StringComparison.OrdinalIgnoreCase, out var codeVal)
+                            && int.TryParse(codeVal.ToString(), out var code))
                         {
-                            if (int.TryParse(codeVal.ToString(), out var code))
-                                ErrorCode = code;
+                            ErrorCode = code;
                         }
+
                         if (responseObj.TryGetValue("Message", StringComparison.OrdinalIgnoreCase, out var messageVal))
                         {
                             ErrorMessage = messageVal.ToString();
@@ -63,12 +65,6 @@ namespace OneIdentity.SafeguardDotNet
                     ErrorMessage = response;
                 }
             }
-        }
-
-        protected SafeguardDotNetException
-            (SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
         }
 
         /// <summary>

@@ -1,17 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Security;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using OneIdentity.SafeguardDotNet.Event;
-using Serilog;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.A2A
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
+    using OneIdentity.SafeguardDotNet.Event;
+
+    using Serilog;
+
     internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
     {
         private bool _disposed;
@@ -20,15 +25,19 @@ namespace OneIdentity.SafeguardDotNet.A2A
         private static readonly string A2A = "A2A";
 
         private readonly string _networkAddress;
-        private readonly int _apiVersion; 
+        private readonly int _apiVersion;
         private readonly bool _ignoreSsl;
         private readonly RemoteCertificateValidationCallback _validationCallback;
 
         private readonly CertificateContext _clientCertificate;
         private readonly HttpClient _http;
 
-        private SafeguardA2AContext(string networkAddress, CertificateContext clientCertificate, int apiVersion,
-            bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
+        private SafeguardA2AContext(
+            string networkAddress,
+            CertificateContext clientCertificate,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
         {
             _networkAddress = networkAddress;
             _apiVersion = apiVersion;
@@ -41,9 +50,10 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
         private HttpClient CreateHttpClient()
         {
-            var handler = new HttpClientHandler();
-
-            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+            var handler = new HttpClientHandler
+            {
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            };
 
             if (_clientCertificate?.Certificate != null)
             {
@@ -53,7 +63,9 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
             if (_ignoreSsl)
             {
+#pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set
                 handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#pragma warning restore S4830
             }
             else if (_validationCallback != null)
             {
@@ -63,27 +75,39 @@ namespace OneIdentity.SafeguardDotNet.A2A
             return new HttpClient(handler);
         }
 
-        public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : 
-            this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl, validationCallback)
+        public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
+            : this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl, validationCallback)
         {
         }
 
-        public SafeguardA2AContext(string networkAddress, string certificatePath, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) :
-            this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl, validationCallback)
+        public SafeguardA2AContext(
+            string networkAddress,
+            string certificatePath,
+            SecureString certificatePassword,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl, validationCallback)
         {
         }
 
-        public SafeguardA2AContext(string networkAddress, IEnumerable<byte> certificateData, SecureString certificatePassword,
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) :
-            this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl, validationCallback)
+        public SafeguardA2AContext(
+            string networkAddress,
+            IEnumerable<byte> certificateData,
+            SecureString certificatePassword,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl, validationCallback)
         {
         }
 
         public IList<A2ARetrievableAccount> GetRetrievableAccounts()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
 
             var list = new List<A2ARetrievableAccount>();
 
@@ -113,9 +137,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public SecureString RetrievePassword(SecureString apiKey)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
 
             var pwd = ApiRequest(HttpMethod.Get, GetUrl(A2A, "Credentials?type=Password"), null, apiKey);
 
@@ -129,11 +158,19 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public void SetPassword(SecureString apiKey, SecureString password)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
+
             if (password == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(password));
+            }
 
             var data = JsonConvert.SerializeObject(password.ToInsecureString());
 
@@ -144,9 +181,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public SecureString RetrievePrivateKey(SecureString apiKey, KeyFormat keyFormat = KeyFormat.OpenSsh)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
 
             var key = ApiRequest(HttpMethod.Get, GetUrl(A2A, $"Credentials?type=PrivateKey&keyFormat={keyFormat}"), null, apiKey);
 
@@ -158,18 +200,29 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public void SetPrivateKey(SecureString apiKey, SecureString privateKey, SecureString password, KeyFormat keyFormat = KeyFormat.OpenSsh)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
+
             if (privateKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(privateKey));
+            }
+
             if (password == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(password));
+            }
 
             var data = JsonConvert.SerializeObject(new SshKey
             {
                 Passphrase = password.ToInsecureString(),
-                PrivateKey = privateKey.ToInsecureString()
+                PrivateKey = privateKey.ToInsecureString(),
             });
 
             _ = ApiRequest(HttpMethod.Put, GetUrl(A2A, $"Credentials/SshKey?keyFormat={keyFormat}"), data, apiKey);
@@ -179,14 +232,19 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public IList<ApiKeySecret> RetrieveApiKeySecret(SecureString apiKey)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
 
             var json = ApiRequest(HttpMethod.Get, GetUrl(A2A, "Credentials?type=ApiKey"), null, apiKey);
-            
+
             Log.Information("Successfully retrieved A2A API key(s).");
-            
+
             var list = JsonConvert.DeserializeObject<List<ApiKeySecret>>(json, new SecureStringConverter());
 
             return list;
@@ -195,12 +253,21 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public ISafeguardEventListener GetA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
-            if (apiKey == null)
-                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
 
-            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a/signalr",
-                _clientCertificate, apiKey, _ignoreSsl, _validationCallback);
+            if (apiKey == null)
+            {
+                throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
+
+            var eventListener = new SafeguardEventListener(
+                $"https://{_networkAddress}/service/a2a/signalr",
+                _clientCertificate,
+                apiKey,
+                _ignoreSsl,
+                _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             eventListener.RegisterEventHandler("AccountApiKeySecretUpdated", handler);
@@ -211,12 +278,21 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public ISafeguardEventListener GetA2AEventListener(IEnumerable<SecureString> apiKeys, SafeguardEventHandler handler)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
-            if (apiKeys == null)
-                throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+            }
 
-            var eventListener = new SafeguardEventListener($"https://{_networkAddress}/service/a2a/signalr", _clientCertificate,
-                apiKeys, _ignoreSsl, _validationCallback);
+            if (apiKeys == null)
+            {
+                throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+            }
+
+            var eventListener = new SafeguardEventListener(
+                $"https://{_networkAddress}/service/a2a/signalr",
+                _clientCertificate,
+                apiKeys,
+                _ignoreSsl,
+                _validationCallback);
             eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
             eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
             eventListener.RegisterEventHandler("AccountApiKeySecretUpdated", handler);
@@ -227,9 +303,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public ISafeguardEventListener GetPersistentA2AEventListener(SecureString apiKey, SafeguardEventHandler handler)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
 
             return new PersistentSafeguardA2AEventListener(Clone() as SafeguardA2AContext, apiKey, handler);
         }
@@ -238,9 +319,14 @@ namespace OneIdentity.SafeguardDotNet.A2A
             SafeguardEventHandler handler)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKeys == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKeys));
+            }
 
             return new PersistentSafeguardA2AEventListener(Clone() as SafeguardA2AContext, apiKeys, handler);
         }
@@ -248,15 +334,29 @@ namespace OneIdentity.SafeguardDotNet.A2A
         public string BrokerAccessRequest(SecureString apiKey, BrokeredAccessRequest accessRequest)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException("SafeguardA2AContext");
+            }
+
             if (apiKey == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(apiKey));
+            }
+
             if (accessRequest == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(accessRequest));
+            }
+
             if (accessRequest.ForUserId == null && accessRequest.ForUserName == null)
+            {
                 throw new SafeguardDotNetException("You must specify a user to create an access request for");
+            }
+
             if (accessRequest.AssetId == null && accessRequest.AssetName == null)
+            {
                 throw new SafeguardDotNetException("You must specify an asset to create an access request for");
+            }
 
             var data = JsonConvert.SerializeObject(accessRequest);
             var json = ApiRequest(HttpMethod.Post, GetUrl(A2A, "AccessRequests"), data, apiKey);
@@ -274,7 +374,10 @@ namespace OneIdentity.SafeguardDotNet.A2A
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed || !disposing)
+            {
                 return;
+            }
+
             try
             {
                 _clientCertificate?.Dispose();
@@ -308,7 +411,7 @@ namespace OneIdentity.SafeguardDotNet.A2A
 
             if (apiKey != null)
             {
-                req.Headers.Add("Authorization", $"A2A {apiKey.ToInsecureString()}"); 
+                req.Headers.Add("Authorization", $"A2A {apiKey.ToInsecureString()}");
             }
 
             if (postData != null)
@@ -338,8 +441,11 @@ namespace OneIdentity.SafeguardDotNet.A2A
     internal class A2ARegistration
     {
         public string Id { get; set; }
+
         public string AppName { get; set; }
+
         public string Description { get; set; }
+
         public bool Disabled { get; set; }
     }
 }

@@ -1,9 +1,11 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.BrowserLogin
 {
+    using System;
+    using System.Diagnostics;
+    using System.Runtime.InteropServices;
+
     internal class BrowserLauncher
     {
         private readonly string _appliance;

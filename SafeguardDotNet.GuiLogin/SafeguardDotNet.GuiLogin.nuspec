@@ -14,7 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>GUI Login for One Identity Safeguard Web API .NET SDK</description>
     <releaseNotes>GuiLogin assembly for .NET interactive login.</releaseNotes>
-    <copyright>(c) 2023 One Identity LLC. All rights reserved.</copyright>
+    <copyright>(c) 2026 One Identity LLC. All rights reserved.</copyright>
     <tags>safeguard credentials vault sdk</tags>
     <dependencies>
       <group targetFramework=".NETFramework4.8.1">

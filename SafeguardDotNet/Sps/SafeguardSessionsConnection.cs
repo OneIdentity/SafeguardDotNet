@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Net;
-using System;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Sps
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading.Tasks;
+
     /// <summary>
     /// This is the reusable connection interface that can be used to call SPS API.
     /// </summary>
@@ -21,7 +23,7 @@ namespace OneIdentity.SafeguardDotNet.Sps
         private readonly ISpsAuthenticator _authenticator;
 
         private readonly Lazy<ISpsStreamingRequest> _lazyStreamingRequest;
-        
+
         public ISpsStreamingRequest Streaming => _lazyStreamingRequest.Value;
 
         public SafeguardSessionsConnection(ISpsAuthenticator authenticator)
@@ -41,13 +43,16 @@ namespace OneIdentity.SafeguardDotNet.Sps
 
         private HttpClient CreateHttpClient()
         {
-            var handler = new HttpClientHandler();
-
-            handler.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+            var handler = new HttpClientHandler
+            {
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            };
 
             if (_authenticator.IgnoreSsl)
             {
+#pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set
                 handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#pragma warning restore S4830
             }
 
             handler.CookieContainer = new CookieContainer();
@@ -105,7 +110,7 @@ namespace OneIdentity.SafeguardDotNet.Sps
                 {
                     StatusCode = res.StatusCode,
                     Headers = new Dictionary<string, string>(),
-                    Body = msg
+                    Body = msg,
                 };
 
                 fr.LogResponseDetails();
@@ -134,7 +139,9 @@ namespace OneIdentity.SafeguardDotNet.Sps
             try
             {
                 if (_lazyStreamingRequest.IsValueCreated)
+                {
                     Streaming.Dispose();
+                }
             }
             finally
             {

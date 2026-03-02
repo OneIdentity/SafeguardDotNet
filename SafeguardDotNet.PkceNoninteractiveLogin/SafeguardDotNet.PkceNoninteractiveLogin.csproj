@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <RootNamespace>OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin</RootNamespace>
     <PackageId>OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin</PackageId>
     <Authors>One Identity LLC</Authors>

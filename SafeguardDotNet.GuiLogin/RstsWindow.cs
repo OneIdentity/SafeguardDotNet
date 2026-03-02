@@ -1,12 +1,16 @@
-﻿using Microsoft.Web.WebView2.WinForms;
-using Serilog;
-using System;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.GuiLogin
 {
+    using System;
+    using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
+    using System.Windows.Forms;
+
+    using Microsoft.Web.WebView2.WinForms;
+
+    using Serilog;
+
     internal class RstsWindow
     {
         private readonly string _appliance;
@@ -14,6 +18,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
         private readonly WebView2 _browser;
 
         public string AuthorizationCode { get; set; }
+
         public string CodeVerifier { get; set; }
 
         public RstsWindow(string appliance)
@@ -24,7 +29,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                 Text = $"{_appliance} - Safeguard Login",
                 Width = 720,
                 Height = 720,
-                StartPosition = FormStartPosition.CenterParent
+                StartPosition = FormStartPosition.CenterParent,
             };
 
             _browser = new WebView2() { Dock = DockStyle.Fill };
@@ -39,7 +44,7 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
 
             await _browser.EnsureCoreWebView2Async(null);
 
-            Log.Debug("WebView2 Runtime version: " + _browser.CoreWebView2.Environment.BrowserVersionString);
+            Log.Debug("WebView2 Runtime version: {BrowserVersion}", _browser.CoreWebView2.Environment.BrowserVersionString);
         }
 
         private void CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
@@ -62,10 +67,12 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             {
                 throw new SafeguardDotNetException(b.DocumentTitle.Substring(6));
             }
+
             if (Regex.IsMatch(b.DocumentTitle, "code=[^&]*"))
             {
                 AuthorizationCode = b.DocumentTitle.Substring(5);
             }
+
             if (AuthorizationCode != null)
             {
                 _form.DialogResult = DialogResult.OK;
@@ -81,8 +88,10 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
             }
             catch (Exception e)
             {
-                var color = Console.ForegroundColor; Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e); Console.ForegroundColor = color;
+                var color = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e);
+                Console.ForegroundColor = color;
                 return false;
             }
         }

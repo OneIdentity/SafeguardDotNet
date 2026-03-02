@@ -1,30 +1,34 @@
-﻿using OneIdentity.SafeguardDotNet.Authentication;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Handlers;
-using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Net.Http.Handlers;
+    using System.Net.Http.Headers;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using OneIdentity.SafeguardDotNet.Authentication;
+
     internal class StreamingRequest : IStreamingRequest
     {
-        const int DefaultBufferSize = 81920;
+        private const int DefaultBufferSize = 81920;
         private readonly ProgressMessageHandler _progressMessageHandler = new ProgressMessageHandler();
         private readonly IAuthenticationMechanism _authenticationMechanism;
         private readonly Func<bool> _isDisposed;
         private readonly Lazy<HttpClient> _lazyHttpClient;
+
         private HttpClient Client => _lazyHttpClient.Value;
 
         internal StreamingRequest(IAuthenticationMechanism authenticationMechanism, Func<bool> isDisposed)
         {
             _authenticationMechanism = authenticationMechanism;
             _isDisposed = isDisposed;
-            _lazyHttpClient = new Lazy<HttpClient>(()=> CreateHttpClient(_progressMessageHandler));
+            _lazyHttpClient = new Lazy<HttpClient>(() => CreateHttpClient(_progressMessageHandler));
         }
 
         public async Task<string> UploadAsync(Service service, string relativeUrl, Stream stream, IProgress<TransferProgress> progress = null, IDictionary<string, string> parameters = null, IDictionary<string, string> additionalHeaders = null, CancellationToken? cancellationToken = null)
@@ -42,19 +46,20 @@ namespace OneIdentity.SafeguardDotNet
                     request.Content = content;
                     request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-                    if(progress != null)
+                    if (progress != null)
                     {
                         progressHandlerFunc = (sender, args) =>
                         {
                             var uploadProgress = new TransferProgress
                             {
                                 BytesTotal = args.TotalBytes.GetValueOrDefault(0),
-                                BytesTransferred = args.BytesTransferred
+                                BytesTransferred = args.BytesTransferred,
                             };
                             progress.Report(uploadProgress);
                         };
                         _progressMessageHandler.HttpSendProgress += progressHandlerFunc;
                     }
+
                     try
                     {
                         var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
@@ -62,7 +67,7 @@ namespace OneIdentity.SafeguardDotNet
                     }
                     finally
                     {
-                        if(progressHandlerFunc != null)
+                        if (progressHandlerFunc != null)
                         {
                             _progressMessageHandler.HttpSendProgress -= progressHandlerFunc;
                         }
@@ -88,7 +93,7 @@ namespace OneIdentity.SafeguardDotNet
                         var downloadProgress = new TransferProgress
                         {
                             BytesTotal = args.TotalBytes.GetValueOrDefault(0),
-                            BytesTransferred = args.BytesTransferred
+                            BytesTransferred = args.BytesTransferred,
                         };
                         progress.Report(downloadProgress);
                     };
@@ -132,7 +137,7 @@ namespace OneIdentity.SafeguardDotNet
                     ValidateGetResponse(response);
                     return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
                 }
-                catch(Exception)
+                catch (Exception)
                 {
                     CleanupProgress(progressHandlerFunc);
                     throw;
@@ -140,7 +145,7 @@ namespace OneIdentity.SafeguardDotNet
             }
         }
 
-        private string ConfigureUri(Service service, string relativeUrl, IDictionary<string,string> parameters)
+        private string ConfigureUri(Service service, string relativeUrl, IDictionary<string, string> parameters)
         {
             var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
 
@@ -151,9 +156,14 @@ namespace OneIdentity.SafeguardDotNet
         private void PreconditionCheck(string relativeUrl)
         {
             if (_isDisposed())
+            {
                 throw new ObjectDisposedException("SafeguardConnection");
+            }
+
             if (string.IsNullOrEmpty(relativeUrl))
+            {
                 throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
+            }
         }
 
         private void ValidateGetResponse(HttpResponseMessage response)
@@ -161,7 +171,7 @@ namespace OneIdentity.SafeguardDotNet
             var fullResponse = new FullResponse
             {
                 Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
-                StatusCode = response.StatusCode
+                StatusCode = response.StatusCode,
             };
 
             // Check for 200 OK here because 204 Accepted doesn't return a stream,
@@ -171,7 +181,8 @@ namespace OneIdentity.SafeguardDotNet
                 fullResponse.Body = response.Content.ReadAsStringAsync().Result;
                 throw new SafeguardDotNetException(
                     $"Response does not indicate OK status. Error: {fullResponse.StatusCode} {fullResponse.Body}",
-                    fullResponse.StatusCode, fullResponse.Body);
+                    fullResponse.StatusCode,
+                    fullResponse.Body);
             }
 
             fullResponse.LogResponseDetails();
@@ -183,13 +194,16 @@ namespace OneIdentity.SafeguardDotNet
             {
                 Body = await response.Content.ReadAsStringAsync(),
                 Headers = response.Headers.ToDictionary(key => key.Key, value => value.Value.FirstOrDefault()),
-                StatusCode = response.StatusCode
+                StatusCode = response.StatusCode,
             };
 
             if (!response.IsSuccessStatusCode)
+            {
                 throw new SafeguardDotNetException(
                     $"Error returned from Safeguard API, Error: {fullResponse.StatusCode} {fullResponse.Body}",
-                    fullResponse.StatusCode, fullResponse.Body);
+                    fullResponse.StatusCode,
+                    fullResponse.Body);
+            }
 
             fullResponse.LogResponseDetails();
 
@@ -210,7 +224,10 @@ namespace OneIdentity.SafeguardDotNet
             if (!_authenticationMechanism.IsAnonymous)
             {
                 if (!_authenticationMechanism.HasAccessToken())
+                {
                     throw new SafeguardDotNetException("Access token is missing due to log out, you must refresh the access token to invoke a method");
+                }
+
                 // SecureString handling here basically negates the use of a secure string anyway, but when calling a Web API
                 // I'm not sure there is anything you can do about it.
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authenticationMechanism.GetAccessToken().ToInsecureString());
@@ -219,7 +236,9 @@ namespace OneIdentity.SafeguardDotNet
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)
+                {
                     request.Headers.Add(header.Key, header.Value);
+                }
             }
 
             var acceptHeaderValue = GetMediaTypeForMethod(method);
@@ -262,18 +281,20 @@ namespace OneIdentity.SafeguardDotNet
         {
             if (progress != null)
             {
-                EventHandler<HttpProgressEventArgs> progressHandlerFunc = (sender, args) =>
+                void progressHandlerFunc(object sender, HttpProgressEventArgs args)
                 {
                     var downloadProgress = new TransferProgress
                     {
                         BytesTotal = args.TotalBytes.GetValueOrDefault(0),
-                        BytesTransferred = args.BytesTransferred
+                        BytesTransferred = args.BytesTransferred,
                     };
                     progress.Report(downloadProgress);
-                };
+                }
+
                 _progressMessageHandler.HttpReceiveProgress += progressHandlerFunc;
                 return progressHandlerFunc;
             }
+
             return null;
         }
 
@@ -283,16 +304,20 @@ namespace OneIdentity.SafeguardDotNet
             progressHandler.InnerHandler = httpClientHandler;
             if (_authenticationMechanism.IgnoreSsl)
             {
+#pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set
                 httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#pragma warning restore S4830
             }
             else if (_authenticationMechanism.ValidationCallback != null)
             {
                 httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => _authenticationMechanism.ValidationCallback(message, cert, chain, errors);
             }
 
-            var client = new HttpClient(progressHandler); 
-            // do not time out on streaming requests, let the cancellation token handle timeouts
-            client.Timeout = Timeout.InfiniteTimeSpan;
+            var client = new HttpClient(progressHandler)
+            {
+                // do not time out on streaming requests, let the cancellation token handle timeouts
+                Timeout = Timeout.InfiniteTimeSpan,
+            };
             return client;
         }
 
@@ -305,8 +330,10 @@ namespace OneIdentity.SafeguardDotNet
         protected virtual void Dispose(bool disposing)
         {
             if (_isDisposed() || !disposing)
+            {
                 return;
-            
+            }
+
             Client.Dispose();
         }
     }

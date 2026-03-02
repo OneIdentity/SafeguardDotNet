@@ -1,10 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Security;
-using System.Security.Cryptography.X509Certificates;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Linq;
+    using System.Security;
+    using System.Security.Cryptography.X509Certificates;
+
     internal static class CertificateUtilities
     {
         public static X509Certificate2 GetClientCertificateFromStore(string thumbprint)
@@ -18,6 +20,7 @@ namespace OneIdentity.SafeguardDotNet
                     cert = store.Certificates.OfType<X509Certificate2>()
                         .FirstOrDefault(x => string.Equals(x.Thumbprint, thumbprint, StringComparison.OrdinalIgnoreCase));
                 }
+
                 if (cert == null)
                 {
                     using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
@@ -26,10 +29,13 @@ namespace OneIdentity.SafeguardDotNet
                         cert = store.Certificates.OfType<X509Certificate2>()
                             .FirstOrDefault(x => string.Equals(x.Thumbprint, thumbprint, StringComparison.OrdinalIgnoreCase));
                         if (cert == null)
+                        {
                             throw new SafeguardDotNetException("Unable to find certificate matching " +
                                                                $"thumbprint={thumbprint} in Computer or User store");
+                        }
                     }
                 }
+
                 return cert;
             }
             catch (Exception ex)

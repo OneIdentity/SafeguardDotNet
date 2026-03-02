@@ -1,4 +1,6 @@
-﻿namespace OneIdentity.SafeguardDotNet.A2A
+// Copyright (c) One Identity LLC. All rights reserved.
+
+namespace OneIdentity.SafeguardDotNet.A2A
 {
     /// <summary>
     /// Connection state of the Safeguard event listener.
@@ -12,6 +14,6 @@
         /// <summary>
         /// Event listener disconnected.
         /// </summary>
-        Disconnected
+        Disconnected,
     }
 }

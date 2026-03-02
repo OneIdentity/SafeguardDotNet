@@ -1,17 +1,21 @@
-using Newtonsoft.Json.Linq;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net.Http;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Security;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Web;
+
+    using Newtonsoft.Json.Linq;
+
+    using Serilog;
+
     /// <summary>
     /// Provides PKCE-based authentication to Safeguard without launching a browser.
     /// This class enables programmatic authentication by manually handling the OAuth2/PKCE flow.
@@ -55,13 +59,13 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
                 $"code_challenge={oauthCodeChallenge}&redirect_uri={redirectUri}&loginRequestStep=";
 
             Log.Debug("Calling RSTS for primary authentication");
-            var response = ApiRequest(http, HttpMethod.Post, pkceUrl + "1", data, "application/x-www-form-urlencoded");
+            _ = ApiRequest(http, HttpMethod.Post, pkceUrl + "1", data, "application/x-www-form-urlencoded");
             Log.Debug("Calling RSTS for primary login post");
-            response = ApiRequest(http, HttpMethod.Post, pkceUrl + "3", data, "application/x-www-form-urlencoded");
+            _ = ApiRequest(http, HttpMethod.Post, pkceUrl + "3", data, "application/x-www-form-urlencoded");
             Log.Debug("Calling RSTS for generate claims");
-            response = ApiRequest(http, HttpMethod.Post, pkceUrl + "6", data, "application/x-www-form-urlencoded");
+            var response = ApiRequest(http, HttpMethod.Post, pkceUrl + "6", data, "application/x-www-form-urlencoded");
 
-            string authorizationCode = null;
+            string authorizationCode;
             try
             {
                 var jsonObject = JObject.Parse(response);
@@ -114,7 +118,9 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
             var jProviders = JArray.Parse(response);
             var knownScopes = new List<(string RstsProviderId, string Name, string RstsProviderScope)>();
             if (jProviders != null)
+            {
                 knownScopes = jProviders.Select(s => (Id: s["RstsProviderId"].ToString(), Name: s["Name"].ToString(), Scope: s["RstsProviderScope"].ToString())).ToList();
+            }
 
             // try to match what the user typed for provider to an rSTS ID
             var scope = knownScopes.FirstOrDefault(s => string.Equals(s.RstsProviderId, provider, StringComparison.OrdinalIgnoreCase));
@@ -124,16 +130,17 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
 
                 if (scope.Name == null)
                 {
-                    scope = knownScopes.FirstOrDefault(s => CultureInfo.InvariantCulture.CompareInfo.IndexOf(s.RstsProviderId, provider,
-                       CompareOptions.IgnoreCase) >= 0);
+                    scope = knownScopes.FirstOrDefault(s => CultureInfo.InvariantCulture.CompareInfo.IndexOf(
+                        s.RstsProviderId,
+                        provider,
+                        CompareOptions.IgnoreCase) >= 0);
 
                     if (scope.RstsProviderId == null)
                     {
                         throw new SafeguardDotNetException(
-                        $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
+                            $"Unable to find scope matching '{provider}' in [{string.Join(",", knownScopes)}]");
                     }
                 }
-
             }
 
             return scope.RstsProviderId;
@@ -186,7 +193,9 @@ namespace OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin
 
             if (ignoreSsl)
             {
+#pragma warning disable S4830 // Intentional SSL bypass when user explicitly opts in via ignoreSsl parameter
                 handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#pragma warning restore S4830
             }
 
             return new HttpClient(handler);

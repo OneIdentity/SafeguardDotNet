@@ -1,5 +1,5 @@
 variables:
   - name: semanticVersion
-    value: '8.2.0'
+    value: '8.2.1'
   - name: isPrerelease
     value: ${{ true }}

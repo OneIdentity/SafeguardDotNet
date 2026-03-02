@@ -1,7 +1,9 @@
-﻿using System.Security;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Sps
 {
+    using System.Security;
+
     /// <summary>
     /// This static class provides static methods for connecting to the Safeguard for Privileged Sessions API.
     /// </summary>

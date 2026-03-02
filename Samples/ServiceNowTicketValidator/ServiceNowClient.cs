@@ -1,16 +1,20 @@
-﻿using System;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security;
-using System.Text;
-using Newtonsoft.Json;
-using OneIdentity.SafeguardDotNet;
-using Serilog;
-using ServiceNowTicketValidator.DTOs;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace ServiceNowTicketValidator
 {
+    using System;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Security;
+    using System.Text;
+
+    using global::ServiceNowTicketValidator.DTOs;
+
+    using Newtonsoft.Json;
+    using OneIdentity.SafeguardDotNet;
+    using Serilog;
+
     internal class ServiceNowClient : IDisposable
     {
         private const string IncidentByTicketNumberFormat = "api/now/table/incident?sysparm_query=number%3D{0}&sysparm_limit=1";
@@ -20,7 +24,10 @@ namespace ServiceNowTicketValidator
         private readonly SecureString _password;
         private HttpClient _restClient;
 
-        public ServiceNowClient(string applicationUrl, SecureString clientSecret, string userName,
+        public ServiceNowClient(
+            string applicationUrl,
+            SecureString clientSecret,
+            string userName,
             SecureString password)
         {
             _applicationUrl = new Uri(applicationUrl, UriKind.Absolute);
@@ -53,12 +60,13 @@ namespace ServiceNowTicketValidator
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"Unable to find incident for ticket number {ticketNumber}");
+                Log.Error(ex, "Unable to find incident for ticket number {TicketNumber}", ticketNumber);
                 return null;
             }
         }
 
-        private T FollowLink<T>(string linkUrl) where T : class
+        private T FollowLink<T>(string linkUrl)
+            where T : class
         {
             var relativeUrl = new Uri(linkUrl).PathAndQuery;
             var req = new HttpRequestMessage
@@ -76,7 +84,10 @@ namespace ServiceNowTicketValidator
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Unable to follow link {ServiceNowLink} for type {ObjectType}", linkUrl,
+                Log.Error(
+                    ex,
+                    "Unable to follow link {ServiceNowLink} for type {ObjectType}",
+                    linkUrl,
                     typeof(T).ToString());
                 return null;
             }

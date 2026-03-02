@@ -1,17 +1,27 @@
-﻿using System;
-using System.Net.Security;
-using System.Security;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
+    using System;
+    using System.Net.Security;
+    using System.Security;
+
     internal class AccessTokenAuthenticator : AuthenticatorBase
     {
-        public AccessTokenAuthenticator(string networkAddress, SecureString accessToken,
-            int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback) : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        public AccessTokenAuthenticator(
+            string networkAddress,
+            SecureString accessToken,
+            int apiVersion,
+            bool ignoreSsl,
+            RemoteCertificateValidationCallback validationCallback)
+            : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
         {
             if (accessToken == null)
+            {
                 throw new ArgumentException("Parameter may not be null", nameof(accessToken));
-            AccessToken = accessToken.Copy();
+            }
+
+            this.accessToken = accessToken.Copy();
         }
 
         public override string Id => "AccessToken";

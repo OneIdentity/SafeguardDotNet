@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security;
-using OneIdentity.SafeguardDotNet.Event;
-using OneIdentity.SafeguardDotNet.Sps;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Security;
+
+    using OneIdentity.SafeguardDotNet.Event;
+    using OneIdentity.SafeguardDotNet.Sps;
+
     /// <summary>
     /// This is the reusable connection interface that can be used to call Safeguard API after
     /// connecting using the API access token obtained during authentication.
@@ -37,8 +40,12 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="additionalHeaders">Additional headers to add to the request.</param>
         /// <param name="timeout">Optional per-request timeout</param>
         /// <returns>Response body as a string.</returns>
-        string InvokeMethod(Service service, Method method, string relativeUrl,
-            string body = null, IDictionary<string, string> parameters = null,
+        string InvokeMethod(
+            Service service,
+            Method method,
+            string relativeUrl,
+            string body = null,
+            IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null,
             TimeSpan? timeout = null);
 
@@ -54,8 +61,12 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="additionalHeaders">Additional headers to add to the request.</param>
         /// <param name="timeout">Optional per-request timeout</param>
         /// <returns>Response with status code, headers, and body as string.</returns>
-        FullResponse InvokeMethodFull(Service service, Method method, string relativeUrl,
-            string body = null, IDictionary<string, string> parameters = null,
+        FullResponse InvokeMethodFull(
+            Service service,
+            Method method,
+            string relativeUrl,
+            string body = null,
+            IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null,
             TimeSpan? timeout = null);
 
@@ -82,8 +93,12 @@ namespace OneIdentity.SafeguardDotNet
         /// <param name="additionalHeaders">Additional headers to add to the request.</param>
         /// <param name="timeout">Optional per-request timeout</param>
         /// <returns>Response body as a CSV string.</returns>
-        string InvokeMethodCsv(Service service, Method method, string relativeUrl,
-            string body = null, IDictionary<string, string> parameters = null,
+        string InvokeMethodCsv(
+            Service service,
+            Method method,
+            string relativeUrl,
+            string body = null,
+            IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null,
             TimeSpan? timeout = null);
 

@@ -18,6 +18,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetGuiTester", "Test\SafeguardDotNetGuiTester\SafeguardDotNetGuiTester.csproj", "{3298668C-7255-45E9-806C-111ED4DFB800}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}"
+	ProjectSection(SolutionItems) = preProject
+		Test\Invoke-SafeguardDotNetTests.ps1 = Test\Invoke-SafeguardDotNetTests.ps1
+		Test\README.md = Test\README.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetExceptionTest", "Test\SafeguardDotNetExceptionTest\SafeguardDotNetExceptionTest.csproj", "{EACEF9A1-0E06-4AF4-9589-12E3F77CB959}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -26,6 +30,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDotNetExceptionTes
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9249E337-656D-4970-B45C-7A077C56FA44}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		build.yml = build.yml
 		Test\Invoke-SafeguardDotNetTests.ps1 = Test\Invoke-SafeguardDotNetTests.ps1
 		README.md = README.md

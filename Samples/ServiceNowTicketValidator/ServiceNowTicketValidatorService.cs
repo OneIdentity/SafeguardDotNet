@@ -1,14 +1,18 @@
-﻿using System;
-using System.Configuration;
-using System.Security;
-using Newtonsoft.Json;
-using OneIdentity.SafeguardDotNet;
-using OneIdentity.SafeguardDotNet.Event;
-using Serilog;
-using ServiceNowTicketValidator.DTOs;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace ServiceNowTicketValidator
 {
+    using System;
+    using System.Configuration;
+    using System.Security;
+
+    using global::ServiceNowTicketValidator.DTOs;
+
+    using Newtonsoft.Json;
+    using OneIdentity.SafeguardDotNet;
+    using OneIdentity.SafeguardDotNet.Event;
+    using Serilog;
+
     internal class ServiceNowTicketValidatorService
     {
         private readonly string _safeguardAddress;
@@ -64,6 +68,7 @@ namespace ServiceNowTicketValidator
                     Log.Warning("Unable to parse access requestId for event {EventBody}", eventBody);
                     return;
                 }
+
                 var accessRequestJson =
                     _connection.InvokeMethod(Service.Core, Method.Get, $"AccessRequests/{accessRequestId}");
                 var accessRequest = JsonConvert.DeserializeObject<AccessRequest>(accessRequestJson);
@@ -79,23 +84,31 @@ namespace ServiceNowTicketValidator
                 }
 
                 if (_connection.GetAccessTokenLifetimeRemaining() == 0)
+                {
                     _connection.RefreshAccessToken();
+                }
 
                 switch (_validator.CheckTicket(ticketNumber, accessRequest))
                 {
                     case ValidationResult.Approve:
-                        Log.Information("Approving access request {AccessRequestId} with ticket number {TicketNumber}",
-                            accessRequestId, ticketNumber);
+                        Log.Information(
+                            "Approving access request {AccessRequestId} with ticket number {TicketNumber}",
+                            accessRequestId,
+                            ticketNumber);
                         _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Approve");
                         break;
                     case ValidationResult.Deny:
-                        Log.Information("Denying access request {AccessRequestId} with ticket number {TicketNumber}",
-                            accessRequestId, ticketNumber);
+                        Log.Information(
+                            "Denying access request {AccessRequestId} with ticket number {TicketNumber}",
+                            accessRequestId,
+                            ticketNumber);
                         _connection.InvokeMethod(Service.Core, Method.Post, $"AccessRequests/{accessRequestId}/Deny");
                         break;
                     default:
-                        Log.Information("Ignoring access request {AccessRequestId} with ticket number {TicketNumber}",
-                            accessRequestId, ticketNumber);
+                        Log.Information(
+                            "Ignoring access request {AccessRequestId} with ticket number {TicketNumber}",
+                            accessRequestId,
+                            ticketNumber);
                         break;
                 }
             }
@@ -107,17 +120,29 @@ namespace ServiceNowTicketValidator
 
         public void Start()
         {
-            _eventListener = Safeguard.Event.GetPersistentEventListener(_safeguardAddress,
-                _safeguardClientCertificateThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
-            _connection = Safeguard.Connect(_safeguardAddress, _safeguardClientCertificateThumbprint,
-                _safeguardApiVersion, _safeguardIgnoreSsl);
-            using (var a2AContext = Safeguard.A2A.GetContext(_safeguardAddress, _safeguardClientCertificateThumbprint,
-                _safeguardApiVersion, _safeguardIgnoreSsl))
+            _eventListener = Safeguard.Event.GetPersistentEventListener(
+                _safeguardAddress,
+                _safeguardClientCertificateThumbprint,
+                _safeguardApiVersion,
+                _safeguardIgnoreSsl);
+            _connection = Safeguard.Connect(
+                _safeguardAddress,
+                _safeguardClientCertificateThumbprint,
+                _safeguardApiVersion,
+                _safeguardIgnoreSsl);
+            using (var a2AContext = Safeguard.A2A.GetContext(
+                _safeguardAddress,
+                _safeguardClientCertificateThumbprint,
+                _safeguardApiVersion,
+                _safeguardIgnoreSsl))
             {
                 _serviceNowPassword = a2AContext.RetrievePassword(_safeguardA2AApiKeyForServiceNowPassword);
             }
 
-            _validator = new ServiceNowTicketValidator(_serviceNowDnsName, _serviceNowClientSecret, _serviceNowUserName,
+            _validator = new ServiceNowTicketValidator(
+                _serviceNowDnsName,
+                _serviceNowClientSecret,
+                _serviceNowUserName,
                 _serviceNowPassword);
             _eventListener.RegisterEventHandler("AccessRequestPendingApproval", HandlePendingApprovalNotification);
 

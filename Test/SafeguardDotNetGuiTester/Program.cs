@@ -1,29 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using CommandLine;
-using OneIdentity.SafeguardDotNet;
-using OneIdentity.SafeguardDotNet.GuiLogin;
-using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace SafeguardDotNetGuiTester
 {
-    internal class Options
-    {
-        [Option('a', "Appliance", Required = true,
-            HelpText = "IP address or hostname of Safeguard appliance")]
-        public string Appliance { get; set; }
+    using System;
+    using System.Collections.Generic;
 
-        [Option('x', "Insecure", Required = false, Default = false,
-            HelpText = "Ignore validation of Safeguard appliance SSL certificate")]
-        public bool Insecure { get; set; }
+    using CommandLine;
 
-        [Option('V', "Verbose", Required = false, Default = false,
-            HelpText = "Display verbose debug output")]
-        public bool Verbose { get; set; }
-    }
+    using OneIdentity.SafeguardDotNet;
+    using OneIdentity.SafeguardDotNet.GuiLogin;
 
-    internal class Program
+    using Serilog;
+    using Serilog.Sinks.SystemConsole.Themes;
+
+    internal static class Program
     {
         private static void Execute(Options opts)
         {
@@ -33,9 +23,13 @@ namespace SafeguardDotNetGuiTester
                 config.WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}", theme: AnsiConsoleTheme.Code);
 
                 if (opts.Verbose)
+                {
                     config.MinimumLevel.Debug();
+                }
                 else
+                {
                     config.MinimumLevel.Information();
+                }
 
                 Log.Logger = config.CreateLogger();
                 var connection = LoginWindow.Connect(opts.Appliance);
@@ -61,7 +55,7 @@ namespace SafeguardDotNetGuiTester
         }
 
         [STAThread]
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(Execute)

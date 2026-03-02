@@ -1,12 +1,14 @@
-﻿using System;
-using System.Net.Security;
-using System.Security;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.Authentication
 {
+    using System;
+    using System.Net.Security;
+    using System.Security;
+
     internal interface IAuthenticationMechanism : IDisposable, ICloneable
     {
-        string Id { get;  }
+        string Id { get; }
 
         string NetworkAddress { get; }
 

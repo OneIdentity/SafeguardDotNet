@@ -1,10 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet
 {
+    using System;
+    using System.IO;
+    using System.Net.Http;
+    using System.Threading.Tasks;
+
     /// <summary>
     /// Represents a streamed response
     /// </summary>
@@ -35,6 +37,7 @@ namespace OneIdentity.SafeguardDotNet
             {
                 Stream = await Response.Content.ReadAsStreamAsync();
             }
+
             return Stream;
         }
 

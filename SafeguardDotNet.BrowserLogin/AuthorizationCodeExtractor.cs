@@ -1,20 +1,19 @@
-﻿using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Web;
+// Copyright (c) One Identity LLC. All rights reserved.
 
 namespace OneIdentity.SafeguardDotNet.BrowserLogin
 {
+    using System;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+    using System.Web;
+
     public class AuthorizationCodeExtractor
     {
-        private readonly string _appliance;
-
-        public AuthorizationCodeExtractor(string appliance)
+        public AuthorizationCodeExtractor()
         {
-            _appliance = appliance;
         }
 
         public string AuthorizationCode { get; set; }
@@ -28,7 +27,11 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
             {
                 var listenTask = tcpListener.AcceptTcpClientAsync().ContinueWith(async t =>
                 {
-                    if (t.IsFaulted || t.IsCanceled) return null;
+                    if (t.IsFaulted || t.IsCanceled)
+                    {
+                        return null;
+                    }
+
                     var tcpClient = t.Result;
                     using (var networkStream = tcpClient.GetStream())
                     {
@@ -39,7 +42,8 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                             var numberOfBytesRead = await networkStream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken).ConfigureAwait(false);
                             var s = Encoding.ASCII.GetString(readBuffer, 0, numberOfBytesRead);
                             sb.Append(s);
-                        } while (networkStream.DataAvailable);
+                        }
+                        while (networkStream.DataAvailable);
 
                         var fullResponse =
                             "HTTP/1.1 200 OK\r\n\r\n<html><head><title>Authentication Complete</title></head><body><h2>Authentication complete.</h2>" +
@@ -49,7 +53,8 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
                         await networkStream.FlushAsync(cancellationToken);
                         return sb.ToString();
                     }
-                }, cancellationToken);
+                },
+                cancellationToken);
 
                 listenTask.Wait(cancellationToken);
 
@@ -78,7 +83,7 @@ namespace OneIdentity.SafeguardDotNet.BrowserLogin
             }
         }
 
-        private string ExtractUriFromHttpRequest(string httpRequest)
+        private static string ExtractUriFromHttpRequest(string httpRequest)
         {
             var regexp = @"GET \/\?(.*) HTTP";
             var r1 = new Regex(regexp);
