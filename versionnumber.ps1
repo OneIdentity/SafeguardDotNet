@@ -36,24 +36,24 @@ Write-Host "AssemblyVersion = $($local:AssemblyVersion)"
 
 Write-Host "Replacing markers in SafeguardDotNet"
 $local:ProjectFile = (Join-Path $PSScriptRoot "SafeguardDotNet\SafeguardDotNet.csproj")
-(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
-(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
 
 Write-Host "Replacing markers in SafeguardDotNet.BrowserLogin"
 $local:ProjectFile = (Join-Path $PSScriptRoot "SafeguardDotNet.BrowserLogin\SafeguardDotNet.BrowserLogin.csproj")
-(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
-(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
 
 Write-Host "Replacing markers in SafeguardDotNet.PkceNoninteractiveLogin"
 $local:ProjectFile = (Join-Path $PSScriptRoot "SafeguardDotNet.PkceNoninteractiveLogin\SafeguardDotNet.PkceNoninteractiveLogin.csproj")
-(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
-(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
 
 Write-Host "Replacing markers in SafeguardDotNet.GuiLogin"
 $local:GuiAssemblyInfoFile = (Join-Path $PSScriptRoot "SafeguardDotNet.GuiLogin\Properties\AssemblyInfo.cs")
 $local:GuiNuspec = (Join-Path $PSScriptRoot "SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec")
-(Get-Content $local:GuiAssemblyInfoFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion) | Set-Content -Encoding UTF8 $local:GuiAssemblyInfoFile
-(Get-Content $local:GuiNuspec -Raw).replace($local:PackageCodeMarker, $local:PackageVersion) | Set-Content -Encoding UTF8 $local:GuiNuspec
+(Get-Content $local:GuiAssemblyInfoFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:GuiAssemblyInfoFile
+(Get-Content $local:GuiNuspec -Raw).replace($local:PackageCodeMarker, $local:PackageVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:GuiNuspec
 
 
 Write-Output "##vso[task.setvariable variable=AssemblyVersion;]$($local:AssemblyVersion)"
