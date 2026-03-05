@@ -1321,7 +1321,6 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="authorizationCode">The authorization code received from the authorization endpoint.</param>
             /// <param name="codeVerifier">The PKCE code verifier that matches the code challenge sent in the authorization request.</param>
             /// <param name="redirectUri">The redirect URI that was used in the authorization request.</param>
-            /// <param name="httpClient">Optional HttpClient instance to use for the request. If null, a default client will be used.</param>
             /// <returns>An RSTS access token as a SecureString.</returns>
             public static SecureString PostAuthorizationCodeFlow(string appliance, string authorizationCode, string codeVerifier, string redirectUri)
             {
@@ -1346,7 +1345,6 @@ namespace OneIdentity.SafeguardDotNet
             /// <param name="appliance">Network address of the Safeguard appliance.</param>
             /// <param name="rstsAccessToken">The RSTS access token obtained from the OAuth2 flow.</param>
             /// <param name="apiVersion">Target API version to use.</param>
-            /// <param name="httpClient">Optional HttpClient instance to use for the request. If null, a default client will be used.</param>
             /// <returns>A JObject containing the login response with the Safeguard user token.</returns>
             public static JObject PostLoginResponse(string appliance, SecureString rstsAccessToken, int apiVersion = DefaultApiVersion)
             {

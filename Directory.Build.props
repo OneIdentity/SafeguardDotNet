@@ -1,4 +1,7 @@
 <Project>
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.20.0.135146" PrivateAssets="all" />
