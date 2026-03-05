@@ -1383,12 +1383,10 @@ public static class Safeguard
         /// <returns>A base64url-encoded SHA256 hash of the code verifier.</returns>
         public static string OAuthCodeChallenge(string codeVerifier)
         {
-            using (var sha = SHA256.Create())
-            {
-                var hash = sha.ComputeHash(Encoding.ASCII.GetBytes(codeVerifier));
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.ASCII.GetBytes(codeVerifier));
 
-                return ToBase64Url(hash);
-            }
+            return ToBase64Url(hash);
         }
 
         /// <summary>

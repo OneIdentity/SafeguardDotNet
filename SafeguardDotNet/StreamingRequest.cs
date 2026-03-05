@@ -38,40 +38,36 @@ internal class StreamingRequest : IStreamingRequest
         var token = cancellationToken ?? CancellationToken.None;
         var uri = ConfigureUri(service, relativeUrl, parameters);
 
-        using (var request = PrepareStreamingRequest(HttpMethod.Post, uri, null, additionalHeaders, parameters))
+        using var request = PrepareStreamingRequest(HttpMethod.Post, uri, null, additionalHeaders, parameters);
+        EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
+        using var content = new StreamContent(stream, DefaultBufferSize);
+        request.Content = content;
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+        if (progress != null)
         {
-            EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
-            using (var content = new StreamContent(stream, DefaultBufferSize))
+            progressHandlerFunc = (sender, args) =>
             {
-                request.Content = content;
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                var uploadProgress = new TransferProgress
+                {
+                    BytesTotal = args.TotalBytes.GetValueOrDefault(0),
+                    BytesTransferred = args.BytesTransferred,
+                };
+                progress.Report(uploadProgress);
+            };
+            _progressMessageHandler.HttpSendProgress += progressHandlerFunc;
+        }
 
-                if (progress != null)
-                {
-                    progressHandlerFunc = (sender, args) =>
-                    {
-                        var uploadProgress = new TransferProgress
-                        {
-                            BytesTotal = args.TotalBytes.GetValueOrDefault(0),
-                            BytesTransferred = args.BytesTransferred,
-                        };
-                        progress.Report(uploadProgress);
-                    };
-                    _progressMessageHandler.HttpSendProgress += progressHandlerFunc;
-                }
-
-                try
-                {
-                    var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
-                    return await ValidatePostResponse(response);
-                }
-                finally
-                {
-                    if (progressHandlerFunc != null)
-                    {
-                        _progressMessageHandler.HttpSendProgress -= progressHandlerFunc;
-                    }
-                }
+        try
+        {
+            var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
+            return await ValidatePostResponse(response);
+        }
+        finally
+        {
+            if (progressHandlerFunc != null)
+            {
+                _progressMessageHandler.HttpSendProgress -= progressHandlerFunc;
             }
         }
     }
@@ -83,39 +79,35 @@ internal class StreamingRequest : IStreamingRequest
         var token = cancellationToken ?? CancellationToken.None;
         var uri = ConfigureUri(service, relativeUrl, parameters);
 
-        using (var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters))
+        using var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters);
+        EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
+        if (progress != null)
         {
-            EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
-            if (progress != null)
+            progressHandlerFunc = (sender, args) =>
             {
-                progressHandlerFunc = (sender, args) =>
+                var downloadProgress = new TransferProgress
                 {
-                    var downloadProgress = new TransferProgress
-                    {
-                        BytesTotal = args.TotalBytes.GetValueOrDefault(0),
-                        BytesTransferred = args.BytesTransferred,
-                    };
-                    progress.Report(downloadProgress);
+                    BytesTotal = args.TotalBytes.GetValueOrDefault(0),
+                    BytesTransferred = args.BytesTransferred,
                 };
-                _progressMessageHandler.HttpReceiveProgress += progressHandlerFunc;
-            }
+                progress.Report(downloadProgress);
+            };
+            _progressMessageHandler.HttpReceiveProgress += progressHandlerFunc;
+        }
 
-            try
+        try
+        {
+            var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
+            ValidateGetResponse(response);
+            using var fs = new FileStream(outputFilePath, FileMode.Create, FileAccess.ReadWrite);
+            var downloadStream = await response.Content.ReadAsStreamAsync();
+            await downloadStream.CopyToAsync(fs, DefaultBufferSize);
+        }
+        finally
+        {
+            if (progressHandlerFunc != null)
             {
-                var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
-                ValidateGetResponse(response);
-                using (var fs = new FileStream(outputFilePath, FileMode.Create, FileAccess.ReadWrite))
-                {
-                    var downloadStream = await response.Content.ReadAsStreamAsync();
-                    await downloadStream.CopyToAsync(fs, DefaultBufferSize);
-                }
-            }
-            finally
-            {
-                if (progressHandlerFunc != null)
-                {
-                    _progressMessageHandler.HttpReceiveProgress -= progressHandlerFunc;
-                }
+                _progressMessageHandler.HttpReceiveProgress -= progressHandlerFunc;
             }
         }
     }
@@ -128,20 +120,18 @@ internal class StreamingRequest : IStreamingRequest
         var uri = $"https://{_authenticationMechanism.NetworkAddress}/service/{service}/v{_authenticationMechanism.ApiVersion}/{relativeUrl}";
         uri = SafeguardConnection.AddQueryParameters(uri, parameters);
 
-        using (var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters))
+        using var request = PrepareStreamingRequest(HttpMethod.Get, uri, body, additionalHeaders, parameters);
+        var progressHandlerFunc = ConfigureProgressHandler(progress);
+        try
         {
-            var progressHandlerFunc = ConfigureProgressHandler(progress);
-            try
-            {
-                var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
-                ValidateGetResponse(response);
-                return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
-            }
-            catch (Exception)
-            {
-                CleanupProgress(progressHandlerFunc);
-                throw;
-            }
+            var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
+            ValidateGetResponse(response);
+            return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
+        }
+        catch (Exception)
+        {
+            CleanupProgress(progressHandlerFunc);
+            throw;
         }
     }
 

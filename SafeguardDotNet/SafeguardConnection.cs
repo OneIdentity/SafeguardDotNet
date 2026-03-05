@@ -190,7 +190,7 @@ internal class SafeguardConnection : ISafeguardConnection, ICloneable
             }
         }
 
-        if (method == Method.Post || method == Method.Put)
+        if (method is Method.Post or Method.Put)
         {
             req.Content = new StringContent(body ?? string.Empty, Encoding.UTF8, "application/json");
         }

@@ -23,16 +23,14 @@ internal static class CertificateUtilities
 
             if (cert == null)
             {
-                using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+                using var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+                store.Open(OpenFlags.ReadOnly);
+                cert = store.Certificates.OfType<X509Certificate2>()
+                    .FirstOrDefault(x => string.Equals(x.Thumbprint, thumbprint, StringComparison.OrdinalIgnoreCase));
+                if (cert == null)
                 {
-                    store.Open(OpenFlags.ReadOnly);
-                    cert = store.Certificates.OfType<X509Certificate2>()
-                        .FirstOrDefault(x => string.Equals(x.Thumbprint, thumbprint, StringComparison.OrdinalIgnoreCase));
-                    if (cert == null)
-                    {
-                        throw new SafeguardDotNetException("Unable to find certificate matching " +
-                                                           $"thumbprint={thumbprint} in Computer or User store");
-                    }
+                    throw new SafeguardDotNetException("Unable to find certificate matching " +
+                                                       $"thumbprint={thumbprint} in Computer or User store");
                 }
             }
 

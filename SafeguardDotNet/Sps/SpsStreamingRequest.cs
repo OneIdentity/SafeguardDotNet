@@ -37,42 +37,38 @@ internal class SpsStreamingRequest : ISpsStreamingRequest
         // Ideally we'd authenticate when creating the http client, but this way we don't have to worry about token lifetime issues.
         await Authenticate(token);
 
-        using (var request = PrepareStreamingRequest(HttpMethod.Post, relativeUrl, parameters, additionalHeaders))
+        using var request = PrepareStreamingRequest(HttpMethod.Post, relativeUrl, parameters, additionalHeaders);
+        EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
+
+        using var content = new StreamContent(stream, DefaultBufferSize);
+        request.Content = content;
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+        if (progress != null)
         {
-            EventHandler<HttpProgressEventArgs> progressHandlerFunc = null;
-
-            using (var content = new StreamContent(stream, DefaultBufferSize))
+            progressHandlerFunc = (sender, args) =>
             {
-                request.Content = content;
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-
-                if (progress != null)
+                var uploadProgress = new TransferProgress
                 {
-                    progressHandlerFunc = (sender, args) =>
-                    {
-                        var uploadProgress = new TransferProgress
-                        {
-                            BytesTotal = args.TotalBytes.GetValueOrDefault(0),
-                            BytesTransferred = args.BytesTransferred,
-                        };
-                        progress.Report(uploadProgress);
-                    };
+                    BytesTotal = args.TotalBytes.GetValueOrDefault(0),
+                    BytesTransferred = args.BytesTransferred,
+                };
+                progress.Report(uploadProgress);
+            };
 
-                    _progressMessageHandler.HttpSendProgress += progressHandlerFunc;
-                }
+            _progressMessageHandler.HttpSendProgress += progressHandlerFunc;
+        }
 
-                try
-                {
-                    var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
-                    return await ValidatePostResponse(response);
-                }
-                finally
-                {
-                    if (progressHandlerFunc != null)
-                    {
-                        _progressMessageHandler.HttpSendProgress -= progressHandlerFunc;
-                    }
-                }
+        try
+        {
+            var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseHeadersRead, token);
+            return await ValidatePostResponse(response);
+        }
+        finally
+        {
+            if (progressHandlerFunc != null)
+            {
+                _progressMessageHandler.HttpSendProgress -= progressHandlerFunc;
             }
         }
     }
@@ -86,20 +82,18 @@ internal class SpsStreamingRequest : ISpsStreamingRequest
         // Ideally we'd authenticate when creating the http client, but this way we don't have to worry about token lifetime issues.
         await Authenticate(token);
 
-        using (var request = PrepareStreamingRequest(HttpMethod.Get, relativeUrl, parameters, additionalHeaders))
+        using var request = PrepareStreamingRequest(HttpMethod.Get, relativeUrl, parameters, additionalHeaders);
+        var progressHandlerFunc = ConfigureProgressHandler(progress);
+        try
         {
-            var progressHandlerFunc = ConfigureProgressHandler(progress);
-            try
-            {
-                var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseContentRead, cancellationToken: token);
-                ValidateGetResponse(response);
-                return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
-            }
-            catch (Exception)
-            {
-                CleanupProgress(progressHandlerFunc);
-                throw;
-            }
+            var response = await Client.SendAsync(request, completionOption: HttpCompletionOption.ResponseContentRead, cancellationToken: token);
+            ValidateGetResponse(response);
+            return new StreamResponse(response, () => CleanupProgress(progressHandlerFunc));
+        }
+        catch (Exception)
+        {
+            CleanupProgress(progressHandlerFunc);
+            throw;
         }
     }
 

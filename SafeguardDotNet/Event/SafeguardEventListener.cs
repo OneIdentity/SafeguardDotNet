@@ -263,7 +263,7 @@ internal class SafeguardEventListener : ISafeguardEventListener
 
     private Task _signalrConnection_Closed(Exception arg)
     {
-        return Task.Run(() => HandleDisconnect());
+        return Task.Run(HandleDisconnect);
     }
 
     public void Stop()

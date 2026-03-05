@@ -103,18 +103,16 @@ internal abstract class AuthenticatorBase : IAuthenticationMechanism
             throw new ObjectDisposedException("AuthenticatorBase");
         }
 
-        using (var rStsToken = GetRstsTokenInternal())
+        using var rStsToken = GetRstsTokenInternal();
+        var data = JsonConvert.SerializeObject(new
         {
-            var data = JsonConvert.SerializeObject(new
-            {
-                StsAccessToken = rStsToken.ToInsecureString(),
-            });
+            StsAccessToken = rStsToken.ToInsecureString(),
+        });
 
-            var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
+        var json = ApiRequest(HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data);
 
-            var jObject = JObject.Parse(json);
-            accessToken = jObject.GetValue("UserToken")?.ToString().ToSecureString();
-        }
+        var jObject = JObject.Parse(json);
+        accessToken = jObject.GetValue("UserToken")?.ToString().ToSecureString();
     }
 
     public string ResolveProviderToScope(string provider)
