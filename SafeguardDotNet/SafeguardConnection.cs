@@ -47,7 +47,7 @@ namespace OneIdentity.SafeguardDotNet
                 handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => authenticationMechanism.ValidationCallback(message, cert, chain, errors);
             }
 
-            return new HttpClient(handler);
+            return new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
         }
 
         public SecureString GetAccessToken() => authenticationMechanism.GetAccessToken();
