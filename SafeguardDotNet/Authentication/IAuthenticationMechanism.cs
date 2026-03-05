@@ -1,35 +1,34 @@
 // Copyright (c) One Identity LLC. All rights reserved.
 
-namespace OneIdentity.SafeguardDotNet.Authentication
+namespace OneIdentity.SafeguardDotNet.Authentication;
+
+using System;
+using System.Net.Security;
+using System.Security;
+
+internal interface IAuthenticationMechanism : IDisposable, ICloneable
 {
-    using System;
-    using System.Net.Security;
-    using System.Security;
+    string Id { get; }
 
-    internal interface IAuthenticationMechanism : IDisposable, ICloneable
-    {
-        string Id { get; }
+    string NetworkAddress { get; }
 
-        string NetworkAddress { get; }
+    int ApiVersion { get; }
 
-        int ApiVersion { get; }
+    bool IgnoreSsl { get; }
 
-        bool IgnoreSsl { get; }
+    RemoteCertificateValidationCallback ValidationCallback { get; }
 
-        RemoteCertificateValidationCallback ValidationCallback { get; }
+    bool IsAnonymous { get; }
 
-        bool IsAnonymous { get; }
+    bool HasAccessToken();
 
-        bool HasAccessToken();
+    void ClearAccessToken();
 
-        void ClearAccessToken();
+    SecureString GetAccessToken();
 
-        SecureString GetAccessToken();
+    int GetAccessTokenLifetimeRemaining();
 
-        int GetAccessTokenLifetimeRemaining();
+    void RefreshAccessToken();
 
-        void RefreshAccessToken();
-
-        string ResolveProviderToScope(string provider);
-    }
+    string ResolveProviderToScope(string provider);
 }

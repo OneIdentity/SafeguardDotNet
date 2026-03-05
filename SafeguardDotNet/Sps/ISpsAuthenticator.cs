@@ -1,20 +1,19 @@
 // Copyright (c) One Identity LLC. All rights reserved.
 
-namespace OneIdentity.SafeguardDotNet.Sps
+namespace OneIdentity.SafeguardDotNet.Sps;
+
+using System.Net.Http.Headers;
+using System.Security;
+
+internal interface ISpsAuthenticator
 {
-    using System.Net.Http.Headers;
-    using System.Security;
+    string NetworkAddress { get; }
 
-    internal interface ISpsAuthenticator
-    {
-        string NetworkAddress { get; }
+    string UserName { get; }
 
-        string UserName { get; }
+    SecureString Password { get; }
 
-        SecureString Password { get; }
+    bool IgnoreSsl { get; }
 
-        bool IgnoreSsl { get; }
-
-        AuthenticationHeaderValue GetAuthenticationHeader();
-    }
+    AuthenticationHeaderValue GetAuthenticationHeader();
 }

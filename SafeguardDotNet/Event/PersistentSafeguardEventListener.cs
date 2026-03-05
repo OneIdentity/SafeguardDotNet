@@ -1,47 +1,46 @@
 // Copyright (c) One Identity LLC. All rights reserved.
 
-namespace OneIdentity.SafeguardDotNet.Event
+namespace OneIdentity.SafeguardDotNet.Event;
+
+using Serilog;
+
+internal class PersistentSafeguardEventListener : PersistentSafeguardEventListenerBase
 {
-    using Serilog;
+    private bool _disposed;
 
-    internal class PersistentSafeguardEventListener : PersistentSafeguardEventListenerBase
+    private readonly ISafeguardConnection _connection;
+
+    public PersistentSafeguardEventListener(ISafeguardConnection connection)
     {
-        private bool _disposed;
+        _connection = connection;
+        Log.Debug("Persistent event listener successfully created.");
+    }
 
-        private readonly ISafeguardConnection _connection;
-
-        public PersistentSafeguardEventListener(ISafeguardConnection connection)
+    protected override SafeguardEventListener ReconnectEventListener()
+    {
+        if (_connection.GetAccessTokenLifetimeRemaining() == 0)
         {
-            _connection = connection;
-            Log.Debug("Persistent event listener successfully created.");
+            _connection.RefreshAccessToken();
         }
 
-        protected override SafeguardEventListener ReconnectEventListener()
-        {
-            if (_connection.GetAccessTokenLifetimeRemaining() == 0)
-            {
-                _connection.RefreshAccessToken();
-            }
+        return (SafeguardEventListener)_connection.GetEventListener();
+    }
 
-            return (SafeguardEventListener)_connection.GetEventListener();
+    protected override void Dispose(bool disposing)
+    {
+        if (_disposed || !disposing)
+        {
+            return;
         }
 
-        protected override void Dispose(bool disposing)
+        try
         {
-            if (_disposed || !disposing)
-            {
-                return;
-            }
-
-            try
-            {
-                base.Dispose(disposing);
-                _connection?.Dispose();
-            }
-            finally
-            {
-                _disposed = true;
-            }
+            base.Dispose(disposing);
+            _connection?.Dispose();
+        }
+        finally
+        {
+            _disposed = true;
         }
     }
 }
