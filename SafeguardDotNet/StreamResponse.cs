@@ -1,69 +1,68 @@
 // Copyright (c) One Identity LLC. All rights reserved.
 
-namespace OneIdentity.SafeguardDotNet
+namespace OneIdentity.SafeguardDotNet;
+
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+/// <summary>
+/// Represents a streamed response
+/// </summary>
+public class StreamResponse : IDisposable
 {
-    using System;
-    using System.IO;
-    using System.Net.Http;
-    using System.Threading.Tasks;
+    private bool _disposedValue;
+
+    internal StreamResponse(HttpResponseMessage response, Action cleanup)
+    {
+        Response = response;
+        Cleanup = cleanup;
+    }
+
+    private HttpResponseMessage Response { get; }
+
+    private Action Cleanup { get; }
+
+    private Stream Stream { get; set; }
 
     /// <summary>
-    /// Represents a streamed response
+    /// Asynchronously retrieves the response stream object. The stream is created on first call
+    /// and cached for subsequent calls.
     /// </summary>
-    public class StreamResponse : IDisposable
+    /// <returns>A task representing the asynchronous operation. The task result contains the HTTP response body content as a stream.</returns>
+    public async Task<Stream> GetStream()
     {
-        private bool _disposedValue;
-
-        internal StreamResponse(HttpResponseMessage response, Action cleanup)
+        if (Stream == null)
         {
-            Response = response;
-            Cleanup = cleanup;
+            Stream = await Response.Content.ReadAsStreamAsync();
         }
 
-        private HttpResponseMessage Response { get; }
+        return Stream;
+    }
 
-        private Action Cleanup { get; }
-
-        private Stream Stream { get; set; }
-
-        /// <summary>
-        /// Asynchronously retrieves the response stream object. The stream is created on first call
-        /// and cached for subsequent calls.
-        /// </summary>
-        /// <returns>A task representing the asynchronous operation. The task result contains the HTTP response body content as a stream.</returns>
-        public async Task<Stream> GetStream()
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
         {
-            if (Stream == null)
+            if (disposing)
             {
-                Stream = await Response.Content.ReadAsStreamAsync();
+                Response.Dispose();
+                Stream?.Dispose();
+                Cleanup();
             }
 
-            return Stream;
+            _disposedValue = true;
         }
+    }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    Response.Dispose();
-                    Stream?.Dispose();
-                    Cleanup();
-                }
-
-                _disposedValue = true;
-            }
-        }
-
-        /// <summary>
-        /// Disposes the stream and associated resources
-        /// </summary>
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+    /// <summary>
+    /// Disposes the stream and associated resources
+    /// </summary>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

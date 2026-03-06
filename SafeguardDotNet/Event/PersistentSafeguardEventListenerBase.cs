@@ -1,134 +1,133 @@
 // Copyright (c) One Identity LLC. All rights reserved.
 
-namespace OneIdentity.SafeguardDotNet.Event
+namespace OneIdentity.SafeguardDotNet.Event;
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Serilog;
+
+internal abstract class PersistentSafeguardEventListenerBase : ISafeguardEventListener
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
+    private bool _disposed;
 
-    using Serilog;
+    private SafeguardEventListener _eventListener;
+    private readonly EventHandlerRegistry _eventHandlerRegistry;
+    private SafeguardEventListenerStateCallback _eventListenerStateCallback;
 
-    internal abstract class PersistentSafeguardEventListenerBase : ISafeguardEventListener
+    private Task _reconnectTask;
+    private CancellationTokenSource _reconnectCancel;
+
+    protected PersistentSafeguardEventListenerBase()
     {
-        private bool _disposed;
+        _eventHandlerRegistry = new EventHandlerRegistry();
+    }
 
-        private SafeguardEventListener _eventListener;
-        private readonly EventHandlerRegistry _eventHandlerRegistry;
-        private SafeguardEventListenerStateCallback _eventListenerStateCallback;
-
-        private Task _reconnectTask;
-        private CancellationTokenSource _reconnectCancel;
-
-        protected PersistentSafeguardEventListenerBase()
+    public void RegisterEventHandler(string eventName, SafeguardEventHandler handler)
+    {
+        if (_disposed)
         {
-            _eventHandlerRegistry = new EventHandlerRegistry();
+            throw new ObjectDisposedException("PersistentSafeguardEventListener");
         }
 
-        public void RegisterEventHandler(string eventName, SafeguardEventHandler handler)
-        {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException("PersistentSafeguardEventListener");
-            }
+        _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
+    }
 
-            _eventHandlerRegistry.RegisterEventHandler(eventName, handler);
+    public void SetEventListenerStateCallback(SafeguardEventListenerStateCallback eventListenerStateCallback)
+    {
+        _eventListenerStateCallback = eventListenerStateCallback;
+    }
+
+    protected abstract SafeguardEventListener ReconnectEventListener();
+
+    private void PersistentReconnectAndStart()
+    {
+        if (_reconnectTask != null)
+        {
+            return;
         }
 
-        public void SetEventListenerStateCallback(SafeguardEventListenerStateCallback eventListenerStateCallback)
+        _reconnectCancel = new CancellationTokenSource();
+        _reconnectTask = Task.Run(() =>
         {
-            _eventListenerStateCallback = eventListenerStateCallback;
-        }
-
-        protected abstract SafeguardEventListener ReconnectEventListener();
-
-        private void PersistentReconnectAndStart()
-        {
-            if (_reconnectTask != null)
+            while (!_reconnectCancel.IsCancellationRequested)
             {
-                return;
-            }
-
-            _reconnectCancel = new CancellationTokenSource();
-            _reconnectTask = Task.Run(() =>
-            {
-                while (!_reconnectCancel.IsCancellationRequested)
+                try
                 {
-                    try
-                    {
-                        _eventListener?.Dispose();
-                        Log.Debug("Attempting to connect and start internal event listener.");
-                        _eventListener = ReconnectEventListener();
-                        _eventListener.SetEventHandlerRegistry(_eventHandlerRegistry);
-                        _eventListener.SetEventListenerStateCallback(_eventListenerStateCallback);
-                        _eventListener.Start();
-                        _eventListener.SetDisconnectHandler(PersistentReconnectAndStart);
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning("Internal event listener connection error (see debug for more information), sleeping for 5 seconds...");
-                        Log.Debug(ex, "Internal event listener connection error.");
-                        Thread.Sleep(5000);
-                    }
+                    _eventListener?.Dispose();
+                    Log.Debug("Attempting to connect and start internal event listener.");
+                    _eventListener = ReconnectEventListener();
+                    _eventListener.SetEventHandlerRegistry(_eventHandlerRegistry);
+                    _eventListener.SetEventListenerStateCallback(_eventListenerStateCallback);
+                    _eventListener.Start();
+                    _eventListener.SetDisconnectHandler(PersistentReconnectAndStart);
+                    break;
                 }
-            },
-                _reconnectCancel.Token);
-            _reconnectTask.ContinueWith((task) =>
-            {
-                _reconnectCancel?.Dispose();
-                _reconnectCancel = null;
-                _reconnectTask = null;
-                if (!task.IsFaulted)
+                catch (Exception ex)
                 {
-                    Log.Debug("Internal event listener successfully connected and started.");
+                    Log.Warning("Internal event listener connection error (see debug for more information), sleeping for 5 seconds...");
+                    Log.Debug(ex, "Internal event listener connection error.");
+                    Thread.Sleep(5000);
                 }
-            });
+            }
+        },
+            _reconnectCancel.Token);
+        _reconnectTask.ContinueWith((task) =>
+        {
+            _reconnectCancel?.Dispose();
+            _reconnectCancel = null;
+            _reconnectTask = null;
+            if (!task.IsFaulted)
+            {
+                Log.Debug("Internal event listener successfully connected and started.");
+            }
+        });
+    }
+
+    public void Start()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException("PersistentSafeguardEventListener");
         }
 
-        public void Start()
-        {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException("PersistentSafeguardEventListener");
-            }
+        Log.Information("Internal event listener requested to start.");
+        PersistentReconnectAndStart();
+    }
 
-            Log.Information("Internal event listener requested to start.");
-            PersistentReconnectAndStart();
+    public void Stop()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException("PersistentSafeguardEventListener");
         }
 
-        public void Stop()
-        {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException("PersistentSafeguardEventListener");
-            }
+        Log.Information("Internal event listener requested to stop.");
+        _reconnectCancel?.Cancel();
+        _eventListener?.Stop();
+    }
 
-            Log.Information("Internal event listener requested to stop.");
-            _reconnectCancel?.Cancel();
-            _eventListener?.Stop();
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed || !disposing)
+        {
+            return;
         }
 
-        public void Dispose()
+        try
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            _eventListener?.Dispose();
         }
-
-        protected virtual void Dispose(bool disposing)
+        finally
         {
-            if (_disposed || !disposing)
-            {
-                return;
-            }
-
-            try
-            {
-                _eventListener?.Dispose();
-            }
-            finally
-            {
-                _disposed = true;
-            }
+            _disposed = true;
         }
     }
 }
