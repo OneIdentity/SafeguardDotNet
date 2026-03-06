@@ -11,6 +11,7 @@ public enum SafeguardEventListenerState
     /// Event listener connected.
     /// </summary>
     Connected,
+
     /// <summary>
     /// Event listener disconnected.
     /// </summary>

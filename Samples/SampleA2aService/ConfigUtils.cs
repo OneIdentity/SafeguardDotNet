@@ -4,10 +4,8 @@ namespace SampleA2aService;
 
 using System;
 using System.Configuration;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
 
 using Serilog;
 using Serilog.Events;
@@ -71,13 +69,13 @@ internal static class ConfigUtils
         var debugBreak = ReadSettingFromAppConfigIfPresent("DebugBreak");
         if (bool.TryParse(debugBreak, out var waitForDebugger) && waitForDebugger)
         {
-            while (!Debugger.IsAttached)
+            while (!System.Diagnostics.Debugger.IsAttached)
             {
-                Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+                System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(2)).Wait();
                 Log.Debug("Waiting for debugger to attach");
             }
 
-            Debugger.Break();
+            System.Diagnostics.Debugger.Break();
             Log.Debug("Debugger attached");
         }
 #endif

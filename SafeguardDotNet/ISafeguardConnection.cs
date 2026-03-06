@@ -18,7 +18,7 @@ public interface ISafeguardConnection : IDisposable
     /// <summary>
     /// Number of minutes remaining in the lifetime of the Safeguard API access token.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Number of minutes remaining.</returns>
     int GetAccessTokenLifetimeRemaining();
 
     /// <summary>
