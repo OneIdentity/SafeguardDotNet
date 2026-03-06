@@ -20,18 +20,22 @@ public enum Service
     /// The core service contains all general cluster-wide Safeguard operations.
     /// </summary>
     Core,
+
     /// <summary>
     /// The appliance service contains appliance-specific Safeguard operations.
     /// </summary>
     Appliance,
+
     /// <summary>
     /// The notification service contains unauthenticated Safeguard operations.
     /// </summary>
     Notification,
+
     /// <summary>
     /// The a2a service contains application integration Safeguard operations.  It is called via the Safeguard.A2A class.
     /// </summary>
     A2A,
+
     /// <summary>
     /// The Management service contains unauthenticated endpoints for disaster-recovery and support operations. On hardware
     /// it is bound to the MGMT network interface. For on-prem VM it is unavailable except through the Kiosk app. On cloud
@@ -45,9 +49,24 @@ public enum Service
 /// </summary>
 public enum Method
 {
+    /// <summary>
+    /// HTTP POST method.
+    /// </summary>
     Post,
+
+    /// <summary>
+    /// HTTP GET method.
+    /// </summary>
     Get,
+
+    /// <summary>
+    /// HTTP PUT method.
+    /// </summary>
     Put,
+
+    /// <summary>
+    /// HTTP DELETE method.
+    /// </summary>
     Delete,
 }
 
@@ -72,10 +91,12 @@ public enum KeyFormat
     /// OpenSSH legacy PEM format
     /// </summary>
     OpenSsh,
+
     /// <summary>
     /// Tectia format for use with tools from SSH.com
     /// </summary>
     Ssh2,
+
     /// <summary>
     /// Putty format for use with PuTTY tools
     /// </summary>

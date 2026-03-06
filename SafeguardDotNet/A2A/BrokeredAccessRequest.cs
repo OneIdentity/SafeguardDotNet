@@ -15,10 +15,12 @@ public enum BrokeredAccessRequestType
     /// Access request is for a password.
     /// </summary>
     Password,
+
     /// <summary>
     /// Access request is for an SSH session.
     /// </summary>
     Ssh,
+
     /// <summary>
     /// Access request is for a remote desktop session.
     /// </summary>

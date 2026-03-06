@@ -33,7 +33,6 @@ public interface ISafeguardA2AContext : IDisposable
     /// </summary>
     /// <param name="apiKey">API key corresponding to the configured account.</param>
     /// <param name="password">Password to set.</param>
-    /// <returns></returns>
     void SetPassword(SecureString apiKey, SecureString password);
 
     /// <summary>
@@ -51,7 +50,6 @@ public interface ISafeguardA2AContext : IDisposable
     /// <param name="privateKey">Private key to set.</param>
     /// <param name="password">Password associated with the private key.</param>
     /// <param name="keyFormat">Format to use when returning private key.</param>
-    /// <returns>The SSH private key.</returns>
     void SetPrivateKey(SecureString apiKey, SecureString privateKey, SecureString password, KeyFormat keyFormat = KeyFormat.OpenSsh);
 
     /// <summary>
