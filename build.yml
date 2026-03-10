@@ -27,13 +27,58 @@ jobs:
 
   variables:
   - template: pipeline-templates/job-variables.yml
+  # TEMPORARY: Enable signing in PR validation for testing
   - name: signFiles
-    value: false
+    value: true
 
   pool:
     vmImage: 'windows-latest'
 
   steps:
+  # TEMPORARY: Begin code signing setup for PR validation testing
+  - task: AzureKeyVault@2
+    displayName: 'TEMPORARY - Get code signing certificate from Azure Key Vault'
+    inputs:
+      ConnectedServiceName: "OneIdentity.Infrastructure.SPPCodeSigning"
+      KeyVaultName: "SPPCodeSigning"
+      SecretsFilter: "SPPCodeSigning-Password, SPPCodeSigning-TotpPrivateKey"
+
+  - powershell: |
+      Invoke-WebRequest -OutFile eSigner_CKA_Setup.zip "https://www.ssl.com/download/ssl-com-esigner-cka"
+      Expand-Archive -Force eSigner_CKA_Setup.zip
+      Remove-Item eSigner_CKA_Setup.zip
+      Move-Item -Path "eSigner_CKA_*\*.exe" -Destination "eSigner_CKA_Installer.exe"
+    displayName: "TEMPORARY - Download and Unzip eSignerCKA Setup"
+
+  - powershell: |
+      .\eSigner_CKA_Installer.exe /CURRENTUSER /VERYSILENT /SUPPRESSMSGBOXES /DIR="$(Build.SourcesDirectory)\eSignerCKA" | Out-Null
+      dir $(Build.SourcesDirectory)\eSignerCKA
+    displayName: "TEMPORARY - Setup eSignerCKA in silent mode"
+
+  - powershell: |
+      $(Build.SourcesDirectory)\eSignerCKA\eSignerCKATool.exe config -mode "product" -user "ssl.oid.safeguardpp@groups.quest.com" -pass "$(SPPCodeSigning-Password)" -totp "$(SPPCodeSigning-TotpPrivateKey)" -key "$(Build.SourcesDirectory)\eSignerCKA\master.key" -r
+    displayName: "TEMPORARY - Configure eSignerCKA"
+
+  - powershell: |
+      $(Build.SourcesDirectory)\eSignerCKA\eSignerCKATool.exe unload
+      $(Build.SourcesDirectory)\eSignerCKA\eSignerCKATool.exe load
+    displayName: "TEMPORARY - Load certificate into Windows Certificate Store"
+
+  - powershell: |
+      $ErrorActionPreference = "Stop"
+      $CodeSigningCert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
+      if (-not $CodeSigningCert) {
+          throw "No code signing certificate found in CurrentUser\My store"
+      }
+      Write-Host "Found code signing certificate:"
+      Write-Host "  Subject: $($CodeSigningCert.Subject)"
+      Write-Host "  Issuer: $($CodeSigningCert.Issuer)"
+      Write-Host "  Thumbprint: $($CodeSigningCert.Thumbprint)"
+      Write-Host "  Expires: $($CodeSigningCert.NotAfter)"
+      Write-Host "##vso[task.setvariable variable=CertThumbprint]$($CodeSigningCert.Thumbprint)"
+    displayName: "TEMPORARY - Get code signing certificate thumbprint"
+  # TEMPORARY: End code signing setup for PR validation testing
+
   - template: pipeline-templates/build-steps.yml
 
 # Job 2: Build and Publish - runs only on successful merges (not PRs)
