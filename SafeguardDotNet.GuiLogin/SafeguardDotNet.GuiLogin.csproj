@@ -69,7 +69,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if "$(SignFiles)" == "true" (
-    "$(SignToolPath)" sign /v /fd SHA256 /tr http://ts.ssl.com /td sha256 /n "One Identity LLC" "$(TargetDir)*.dll"
+    "$(SignToolPath)" sign /debug /v /fd SHA256 /tr http://ts.ssl.com /td sha256 /sha1 $(CertThumbprint) "$(TargetDir)*.dll"
 )</PostBuildEvent>
   </PropertyGroup>
 </Project>
