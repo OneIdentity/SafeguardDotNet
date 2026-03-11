@@ -145,10 +145,12 @@ internal class SafeguardEventListener : ISafeguardEventListener
     {
         try
         {
+#pragma warning disable IDE0031 // Null propagation - can't use ?. with event -=
             if (_signalrConnection != null)
             {
                 _signalrConnection.Closed -= _signalrConnection_Closed;
             }
+#pragma warning restore IDE0031
 
             _signalrConnection?.DisposeAsync();
         }
