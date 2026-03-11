@@ -12,14 +12,6 @@ steps:
     script: 'env | sort'
   displayName: 'Display environment variables'
 
-# Install .NET SDK 10.0 for building projects with .NET 10.0 dependencies
-- task: UseDotNet@2
-  displayName: 'Install .NET SDK 10.0.x'
-  inputs:
-    packageType: 'sdk'
-    version: '10.0.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-
 # Ensure .NET Framework 4.8.1 Developer Pack is installed for GuiLogin project
 - task: PowerShell@2
   displayName: 'Install .NET Framework 4.8.1 Developer Pack'
@@ -47,28 +39,88 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-# Restore all NuGet packages using NuGet task so it works for all projects
+# Restore .NET Framework projects via NuGet.exe (packages.config style)
 - task: NuGetCommand@2
-  displayName: 'Restore NuGet packages for all projects'
+  displayName: 'Restore NuGet packages for .NET Framework projects'
   inputs:
-    restoreSolution: '$(solution)'
+    restoreSolution: '$(msbuildProjects)'
 
-# Build the modern dotnet projects from the solution using dotnet CLI
+# Restore the SDK-style SafeguardDotNet project separately via dotnet CLI,
+# because Framework projects (GuiLogin) have a ProjectReference to it and
+# MSBuild needs project.assets.json present when building.
 - task: DotNetCoreCLI@2
-  displayName: 'Build all .NET projects'
+  displayName: 'Restore SafeguardDotNet (SDK-style dependency)'
   inputs:
-    command: 'build'
-    projects: '$(dotnetProjects)'
-    arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
+    command: 'restore'
+    projects: '**/SafeguardDotNet/SafeguardDotNet.csproj'
 
-# build the older .NET Framework projects using MSBuild
+# Resolve the x86 Windows SDK signtool path dynamically.
+# eSignerCKA's PKCS#11 DLL is 32-bit only, so only the x86 signtool can access the private key.
+- powershell: |
+    $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" |
+        Where-Object { $_.FullName -match "\\x86\\" } |
+        Sort-Object -Property FullName -Descending |
+        Select-Object -First 1
+    if ($signtool) {
+        Write-Host "Found x86 signtool at: $($signtool.FullName)"
+        Write-Host "##vso[task.setvariable variable=SignToolPath]$($signtool.FullName)"
+    } else {
+        Write-Host "##vso[task.logissue type=warning]x86 signtool.exe not found in Windows SDK, falling back to ClickOnce SDK"
+        Write-Host "##vso[task.setvariable variable=SignToolPath]C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"
+    }
+  displayName: 'Resolve x86 Windows SDK signtool path'
+
+# Build the older .NET Framework projects using MSBuild (before .NET 10 SDK is installed)
 - task: MSBuild@1
   displayName: 'Build all .NET Framework projects'
   inputs:
     solution: '$(msbuildProjects)'
     msbuildArchitecture: 'x64'
     configuration: '$(buildConfiguration)'
-    msbuildArguments: '/p:SignFiles=$(signFiles) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
+    msbuildArguments: '/p:SignFiles=$(signFiles) /p:SignToolPath="$(SignToolPath)" /p:CertThumbprint=$(CertThumbprint)'
+
+# Now install .NET SDK 10.0 for building the modern .NET projects
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK 10.0.x'
+  inputs:
+    packageType: 'sdk'
+    version: '10.0.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# Build the modern dotnet projects (dotnet CLI handles its own restore)
+- task: DotNetCoreCLI@2
+  displayName: 'Build all .NET projects'
+  inputs:
+    command: 'build'
+    projects: '$(dotnetProjects)'
+    arguments: '--configuration $(buildConfiguration) /p:SignFiles=$(signFiles) /p:SignToolPath="$(SignToolPath)" /p:CertThumbprint=$(CertThumbprint)'
+
+# Verify code signatures on built DLLs when signing is enabled
+- powershell: |
+    $ErrorActionPreference = "Stop"
+    $failed = @()
+    $verified = 0
+    $dlls = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "OneIdentity.SafeguardDotNet*.dll" |
+        Where-Object { $_.FullName -match "\\bin\\$(buildConfiguration)\\" -and $_.FullName -notmatch "\\ref\\" }
+    if ($dlls.Count -eq 0) {
+        throw "No OneIdentity.SafeguardDotNet DLLs found to verify"
+    }
+    foreach ($dll in $dlls) {
+        $sig = Get-AuthenticodeSignature -FilePath $dll.FullName
+        if ($sig.Status -ne "Valid") {
+            Write-Host "##vso[task.logissue type=error]FAILED: $($dll.FullName) - Status: $($sig.Status) - $($sig.StatusMessage)"
+            $failed += $dll.FullName
+        } else {
+            Write-Host "VERIFIED: $($dll.FullName) - Signed by: $($sig.SignerCertificate.Subject)"
+            $verified++
+        }
+    }
+    Write-Host "$verified of $($dlls.Count) DLLs verified successfully"
+    if ($failed.Count -gt 0) {
+        throw "$($failed.Count) DLL(s) failed signature verification"
+    }
+  condition: eq(variables['signFiles'], 'true')
+  displayName: 'Verify code signatures on built DLLs'
 
 # Package the SDK and BrowserLogin projects into NuGet packages using dotnet CLI
 - task: DotNetCoreCLI@2
@@ -98,6 +150,12 @@ steps:
     command: 'custom'
     arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
   displayName: Building SafeguardDotNet.GuiLogin NuGet packages
+
+# NOTE: NuGet package signing (.nupkg) is not possible with eSignerCKA on Windows.
+# eSignerCKA's PKCS#11 DLL is 32-bit only, and all available NuGet signing tools
+# (dotnet nuget sign, nuget.exe sign, dotnet/sign) are 64-bit and cannot access
+# the private key. SSL.com's CodeSignTool only runs on Linux.
+# The DLLs inside the packages are already Authenticode-signed via x86 signtool.
 
 - task: PublishBuildArtifacts@1
   inputs:

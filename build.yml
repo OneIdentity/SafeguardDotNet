@@ -88,14 +88,22 @@ jobs:
       $(Build.SourcesDirectory)\eSignerCKA\eSignerCKATool.exe load
     displayName: "Unload and load certificate into Windows Certificate Store"
 
-  # We should now be able to access the certificate using the standard Windows signtool.exe from the Windows SDK,
-  # which should be installed on the build agent images being used.
-  #
-  # Typically, you often see examples of signtool.exe and other things accessing the certificate by the thumbprint.
-  # And in fact, the sample SSL.com code includes a bunch of extra PowerShell script to get the thumbprint. However,
-  # signtool.exe can also access the certificate by a partial subject name match. We'll do that here in hopes that
-  # when the certificate is renewed, the subject name will remain the same, and we won't have to change this.
-  # "signtool.exe" sign /fd sha256 /tr http://ts.ssl.com /td sha256 /n "One Identity LLC" "C:\path\to\program.exe"
+  # Use the x86 Windows SDK signtool because eSignerCKA's PKCS#11 DLL is 32-bit only.
+  # The x64 signtool cannot load the 32-bit DLL, causing "After Private Key filter, 0 certs were left".
+  # Look up the certificate thumbprint so we can pass it to signtool via /sha1 for reliable matching.
+  - powershell: |
+      $ErrorActionPreference = "Stop"
+      $CodeSigningCert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
+      if (-not $CodeSigningCert) {
+          throw "No code signing certificate found in CurrentUser\My store"
+      }
+      Write-Host "Found code signing certificate:"
+      Write-Host "  Subject: $($CodeSigningCert.Subject)"
+      Write-Host "  Issuer: $($CodeSigningCert.Issuer)"
+      Write-Host "  Thumbprint: $($CodeSigningCert.Thumbprint)"
+      Write-Host "  Expires: $($CodeSigningCert.NotAfter)"
+      Write-Host "##vso[task.setvariable variable=CertThumbprint]$($CodeSigningCert.Thumbprint)"
+    displayName: "Get code signing certificate thumbprint"
 
   - template: pipeline-templates/build-steps.yml
 
