@@ -151,9 +151,9 @@ steps:
     arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
   displayName: Building SafeguardDotNet.GuiLogin NuGet packages
 
-# Sign NuGet packages using NuGet.exe sign with eSignerCKA certificate.
-# Using NuGet.exe instead of dotnet nuget sign because dotnet is 64-bit and
-# cannot access eSignerCKA's 32-bit PKCS#11 private key.
+# Sign NuGet packages using x86 NuGet.exe sign with eSignerCKA certificate.
+# eSignerCKA's PKCS#11 DLL is 32-bit only, so we must use x86 NuGet.exe.
+# The NuGetToolInstaller installs x64; we download x86 specifically for signing.
 # Per SSL.com guidance, NuGet signing requires the legacy timestamp endpoint.
 - powershell: |
     $ErrorActionPreference = "Stop"
@@ -166,8 +166,11 @@ steps:
     $sha256Fingerprint = ($sha256Bytes | ForEach-Object { $_.ToString("x2") }) -join ""
     Write-Host "SHA-256 fingerprint: $sha256Fingerprint"
 
-    $nugetExe = (Get-Command nuget.exe).Source
-    Write-Host "Using NuGet.exe: $nugetExe"
+    # Download x86 NuGet.exe for signing (32-bit required for eSignerCKA PKCS#11)
+    $nugetX86Path = Join-Path $env:TEMP "nuget-x86.exe"
+    Write-Host "Downloading x86 NuGet.exe..."
+    Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile $nugetX86Path
+    Write-Host "Downloaded x86 NuGet.exe to: $nugetX86Path"
 
     $nupkgs = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Filter "*.nupkg"
     if ($nupkgs.Count -eq 0) {
@@ -176,7 +179,7 @@ steps:
     Write-Host "Found $($nupkgs.Count) NuGet package(s) to sign"
     foreach ($nupkg in $nupkgs) {
         Write-Host "`nSigning: $($nupkg.Name)"
-        & $nugetExe sign $nupkg.FullName `
+        & $nugetX86Path sign $nupkg.FullName `
             -CertificateFingerprint $sha256Fingerprint `
             -CertificateStoreName My `
             -CertificateStoreLocation CurrentUser `
