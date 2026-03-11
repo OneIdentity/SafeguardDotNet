@@ -39,13 +39,20 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-# Restore only .NET Framework projects BEFORE installing .NET 10 SDK,
-# so that NuGet.exe and MSBuild 17 (VS 2022) don't encounter the incompatible SDK.
-# Core projects are restored later by 'dotnet build' after the .NET 10 SDK is installed.
+# Restore .NET Framework projects via NuGet.exe (packages.config style)
 - task: NuGetCommand@2
   displayName: 'Restore NuGet packages for .NET Framework projects'
   inputs:
     restoreSolution: '$(msbuildProjects)'
+
+# Restore the SDK-style SafeguardDotNet project separately via dotnet CLI,
+# because Framework projects (GuiLogin) have a ProjectReference to it and
+# MSBuild needs project.assets.json present when building.
+- task: DotNetCoreCLI@2
+  displayName: 'Restore SafeguardDotNet (SDK-style dependency)'
+  inputs:
+    command: 'restore'
+    projects: '**/SafeguardDotNet/SafeguardDotNet.csproj'
 
 # Resolve the x86 Windows SDK signtool path dynamically.
 # eSignerCKA's PKCS#11 DLL is 32-bit only, so only the x86 signtool can access the private key.
