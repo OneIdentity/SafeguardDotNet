@@ -12,14 +12,6 @@ steps:
     script: 'env | sort'
   displayName: 'Display environment variables'
 
-# Install .NET SDK 10.0 for building projects with .NET 10.0 dependencies
-- task: UseDotNet@2
-  displayName: 'Install .NET SDK 10.0.x'
-  inputs:
-    packageType: 'sdk'
-    version: '10.0.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-
 # Ensure .NET Framework 4.8.1 Developer Pack is installed for GuiLogin project
 - task: PowerShell@2
   displayName: 'Install .NET Framework 4.8.1 Developer Pack'
@@ -47,7 +39,8 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-# Restore all NuGet packages using NuGet task so it works for all projects
+# Restore and build .NET Framework projects BEFORE installing .NET 10 SDK,
+# so that NuGet.exe and MSBuild 17 (VS 2022) don't encounter the incompatible SDK.
 - task: NuGetCommand@2
   displayName: 'Restore NuGet packages for all projects'
   inputs:
@@ -69,15 +62,7 @@ steps:
     }
   displayName: 'Resolve x86 Windows SDK signtool path'
 
-# Build the modern dotnet projects from the solution using dotnet CLI
-- task: DotNetCoreCLI@2
-  displayName: 'Build all .NET projects'
-  inputs:
-    command: 'build'
-    projects: '$(dotnetProjects)'
-    arguments: '--configuration $(buildConfiguration) --no-restore /p:SignFiles=$(signFiles) /p:SignToolPath="$(SignToolPath)" /p:CertThumbprint=$(CertThumbprint)'
-
-# build the older .NET Framework projects using MSBuild
+# Build the older .NET Framework projects using MSBuild (before .NET 10 SDK is installed)
 - task: MSBuild@1
   displayName: 'Build all .NET Framework projects'
   inputs:
@@ -85,6 +70,22 @@ steps:
     msbuildArchitecture: 'x64'
     configuration: '$(buildConfiguration)'
     msbuildArguments: '/p:SignFiles=$(signFiles) /p:SignToolPath="$(SignToolPath)" /p:CertThumbprint=$(CertThumbprint)'
+
+# Now install .NET SDK 10.0 for building the modern .NET projects
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK 10.0.x'
+  inputs:
+    packageType: 'sdk'
+    version: '10.0.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# Build the modern dotnet projects (dotnet CLI handles its own restore)
+- task: DotNetCoreCLI@2
+  displayName: 'Build all .NET projects'
+  inputs:
+    command: 'build'
+    projects: '$(dotnetProjects)'
+    arguments: '--configuration $(buildConfiguration) /p:SignFiles=$(signFiles) /p:SignToolPath="$(SignToolPath)" /p:CertThumbprint=$(CertThumbprint)'
 
 # Verify code signatures on built DLLs when signing is enabled
 - powershell: |
