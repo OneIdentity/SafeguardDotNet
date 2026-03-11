@@ -151,75 +151,11 @@ steps:
     arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
   displayName: Building SafeguardDotNet.GuiLogin NuGet packages
 
-# Sign NuGet packages using x86 NuGet.exe sign with eSignerCKA certificate.
-# eSignerCKA's PKCS#11 DLL is 32-bit only, so we must use x86 NuGet.exe.
-# The NuGetToolInstaller installs x64; we download x86 specifically for signing.
-# Per SSL.com guidance, NuGet signing requires the legacy timestamp endpoint.
-- powershell: |
-    $ErrorActionPreference = "Stop"
-    # Get the SHA-256 fingerprint from the certificate (NuGet sign requires SHA-256+)
-    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq "$(CertThumbprint)" }
-    if (-not $cert) {
-        throw "Certificate with thumbprint $(CertThumbprint) not found in CurrentUser\My"
-    }
-    $sha256Bytes = $cert.GetCertHash("SHA256")
-    $sha256Fingerprint = ($sha256Bytes | ForEach-Object { $_.ToString("x2") }) -join ""
-    Write-Host "SHA-256 fingerprint: $sha256Fingerprint"
-
-    # Download x86 NuGet.exe for signing (32-bit required for eSignerCKA PKCS#11)
-    $nugetX86Path = Join-Path $env:TEMP "nuget-x86.exe"
-    Write-Host "Downloading x86 NuGet.exe..."
-    Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile $nugetX86Path
-    Write-Host "Downloaded x86 NuGet.exe to: $nugetX86Path"
-
-    $nupkgs = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Filter "*.nupkg"
-    if ($nupkgs.Count -eq 0) {
-        throw "No .nupkg files found in $(Build.ArtifactStagingDirectory)"
-    }
-    Write-Host "Found $($nupkgs.Count) NuGet package(s) to sign"
-    foreach ($nupkg in $nupkgs) {
-        Write-Host "`nSigning: $($nupkg.Name)"
-        & $nugetX86Path sign $nupkg.FullName `
-            -CertificateFingerprint $sha256Fingerprint `
-            -CertificateStoreName My `
-            -CertificateStoreLocation CurrentUser `
-            -Timestamper http://ts.ssl.com/legacy `
-            -HashAlgorithm SHA256 `
-            -TimestampHashAlgorithm SHA256 `
-            -Verbosity detailed `
-            -NonInteractive `
-            -Overwrite
-        if ($LASTEXITCODE -ne 0) {
-            throw "NuGet sign failed for $($nupkg.Name) with exit code $LASTEXITCODE"
-        }
-        Write-Host "Successfully signed: $($nupkg.Name)"
-    }
-  condition: eq(variables['signFiles'], 'true')
-  displayName: 'Sign NuGet packages'
-
-# Verify NuGet package signatures
-- powershell: |
-    $ErrorActionPreference = "Stop"
-    $nupkgs = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Filter "*.nupkg"
-    $failed = @()
-    $verified = 0
-    foreach ($nupkg in $nupkgs) {
-        Write-Host "`nVerifying: $($nupkg.Name)"
-        nuget verify -Signature $nupkg.FullName -Verbosity detailed -NonInteractive
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "##vso[task.logissue type=error]FAILED: $($nupkg.Name) - nuget verify returned exit code $LASTEXITCODE"
-            $failed += $nupkg.Name
-        } else {
-            Write-Host "VERIFIED: $($nupkg.Name)"
-            $verified++
-        }
-    }
-    Write-Host "`n$verified of $($nupkgs.Count) NuGet package(s) verified successfully"
-    if ($failed.Count -gt 0) {
-        throw "$($failed.Count) NuGet package(s) failed signature verification:`n$($failed -join "`n")"
-    }
-  condition: eq(variables['signFiles'], 'true')
-  displayName: 'Verify NuGet package signatures'
+# NOTE: NuGet package signing (.nupkg) is not possible with eSignerCKA on Windows.
+# eSignerCKA's PKCS#11 DLL is 32-bit only, and all available NuGet signing tools
+# (dotnet nuget sign, nuget.exe sign, dotnet/sign) are 64-bit and cannot access
+# the private key. SSL.com's CodeSignTool only runs on Linux.
+# The DLLs inside the packages are already Authenticode-signed via x86 signtool.
 
 - task: PublishBuildArtifacts@1
   inputs:
