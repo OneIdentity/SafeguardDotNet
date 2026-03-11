@@ -151,12 +151,13 @@ steps:
     arguments: 'pack $(Build.SourcesDirectory)\SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec -Properties Configuration=$(buildConfiguration) -Symbols -SymbolPackageFormat snupkg -OutputDirectory $(Build.ArtifactStagingDirectory) -Verbosity detailed -NonInteractive'
   displayName: Building SafeguardDotNet.GuiLogin NuGet packages
 
-# Sign NuGet packages using dotnet nuget sign with eSignerCKA certificate.
+# Sign NuGet packages using NuGet.exe sign with eSignerCKA certificate.
+# Using NuGet.exe instead of dotnet nuget sign because dotnet is 64-bit and
+# cannot access eSignerCKA's 32-bit PKCS#11 private key.
 # Per SSL.com guidance, NuGet signing requires the legacy timestamp endpoint.
-# dotnet nuget sign requires SHA-256 fingerprint (not SHA-1 thumbprint).
 - powershell: |
     $ErrorActionPreference = "Stop"
-    # Get the SHA-256 fingerprint from the certificate (dotnet nuget sign requires SHA-256+)
+    # Get the SHA-256 fingerprint from the certificate (NuGet sign requires SHA-256+)
     $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq "$(CertThumbprint)" }
     if (-not $cert) {
         throw "Certificate with thumbprint $(CertThumbprint) not found in CurrentUser\My"
@@ -165,6 +166,9 @@ steps:
     $sha256Fingerprint = ($sha256Bytes | ForEach-Object { $_.ToString("x2") }) -join ""
     Write-Host "SHA-256 fingerprint: $sha256Fingerprint"
 
+    $nugetExe = (Get-Command nuget.exe).Source
+    Write-Host "Using NuGet.exe: $nugetExe"
+
     $nupkgs = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Filter "*.nupkg"
     if ($nupkgs.Count -eq 0) {
         throw "No .nupkg files found in $(Build.ArtifactStagingDirectory)"
@@ -172,14 +176,18 @@ steps:
     Write-Host "Found $($nupkgs.Count) NuGet package(s) to sign"
     foreach ($nupkg in $nupkgs) {
         Write-Host "`nSigning: $($nupkg.Name)"
-        dotnet nuget sign $nupkg.FullName `
-            --certificate-fingerprint $sha256Fingerprint `
-            --certificate-store-location CurrentUser `
-            --certificate-store-name My `
-            --timestamper http://ts.ssl.com/legacy `
-            --verbosity detailed
+        & $nugetExe sign $nupkg.FullName `
+            -CertificateFingerprint $sha256Fingerprint `
+            -CertificateStoreName My `
+            -CertificateStoreLocation CurrentUser `
+            -Timestamper http://ts.ssl.com/legacy `
+            -HashAlgorithm SHA256 `
+            -TimestampHashAlgorithm SHA256 `
+            -Verbosity detailed `
+            -NonInteractive `
+            -Overwrite
         if ($LASTEXITCODE -ne 0) {
-            throw "dotnet nuget sign failed for $($nupkg.Name) with exit code $LASTEXITCODE"
+            throw "NuGet sign failed for $($nupkg.Name) with exit code $LASTEXITCODE"
         }
         Write-Host "Successfully signed: $($nupkg.Name)"
     }
@@ -194,7 +202,7 @@ steps:
     $verified = 0
     foreach ($nupkg in $nupkgs) {
         Write-Host "`nVerifying: $($nupkg.Name)"
-        dotnet nuget verify $nupkg.FullName --verbosity detailed
+        nuget verify -Signature $nupkg.FullName -Verbosity detailed -NonInteractive
         if ($LASTEXITCODE -ne 0) {
             Write-Host "##vso[task.logissue type=error]FAILED: $($nupkg.Name) - nuget verify returned exit code $LASTEXITCODE"
             $failed += $nupkg.Name
