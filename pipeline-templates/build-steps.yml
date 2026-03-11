@@ -13,13 +13,11 @@ steps:
   displayName: 'Display environment variables'
 
 # Install .NET SDK 10.0 for building projects with .NET 10.0 dependencies
-# Pin to 10.0.1xx band which is compatible with VS 2022 / MSBuild 17.x.
-# The 10.0.2xx band requires MSBuild 18+ which is not yet on windows-latest agents.
 - task: UseDotNet@2
   displayName: 'Install .NET SDK 10.0.x'
   inputs:
     packageType: 'sdk'
-    version: '10.0.1xx'
+    version: '10.0.x'
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 # Ensure .NET Framework 4.8.1 Developer Pack is installed for GuiLogin project
@@ -49,11 +47,18 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-# Restore all NuGet packages using NuGet task so it works for all projects
-- task: NuGetCommand@2
-  displayName: 'Restore NuGet packages for all projects'
+# Restore NuGet packages: use dotnet restore for .NET Core projects (requires SDK's MSBuild 18+)
+# and NuGet.exe restore for .NET Framework projects (uses VS 2022's MSBuild 17.x)
+- task: DotNetCoreCLI@2
+  displayName: 'Restore NuGet packages for .NET Core projects'
   inputs:
-    restoreSolution: '$(solution)'
+    command: 'restore'
+    projects: '$(dotnetProjects)'
+
+- task: NuGetCommand@2
+  displayName: 'Restore NuGet packages for .NET Framework projects'
+  inputs:
+    restoreSolution: '$(msbuildProjects)'
 
 # Resolve the x86 Windows SDK signtool path dynamically.
 # eSignerCKA's PKCS#11 DLL is 32-bit only, so only the x86 signtool can access the private key.
