@@ -55,10 +55,17 @@ steps:
     command: 'restore'
     projects: '$(dotnetProjects)'
 
-- task: NuGetCommand@2
+- powershell: |
+    $ErrorActionPreference = "Stop"
+    $sdkPath = (Get-Command dotnet).Source | Split-Path
+    $sdkVersion = dotnet --version
+    $msbuildPath = Join-Path $sdkPath "sdk" $sdkVersion
+    Write-Host "Using .NET SDK MSBuild from: $msbuildPath"
+    $sln = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "SafeguardDotNet.Framework.sln" | Select-Object -First 1
+    if (-not $sln) { throw "SafeguardDotNet.Framework.sln not found" }
+    nuget restore $sln.FullName -MSBuildPath "$msbuildPath" -Verbosity Detailed -NonInteractive
+    if ($LASTEXITCODE -ne 0) { throw "NuGet restore failed with exit code $LASTEXITCODE" }
   displayName: 'Restore NuGet packages for .NET Framework projects'
-  inputs:
-    restoreSolution: '$(msbuildProjects)'
 
 # Resolve the x86 Windows SDK signtool path dynamically.
 # eSignerCKA's PKCS#11 DLL is 32-bit only, so only the x86 signtool can access the private key.
