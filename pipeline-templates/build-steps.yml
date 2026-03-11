@@ -47,25 +47,11 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet tools'
 
-# Restore NuGet packages: use dotnet restore for .NET Core projects (requires SDK's MSBuild 18+)
-# and NuGet.exe restore for .NET Framework projects (uses VS 2022's MSBuild 17.x)
-- task: DotNetCoreCLI@2
-  displayName: 'Restore NuGet packages for .NET Core projects'
+# Restore all NuGet packages using NuGet task so it works for all projects
+- task: NuGetCommand@2
+  displayName: 'Restore NuGet packages for all projects'
   inputs:
-    command: 'restore'
-    projects: '$(dotnetProjects)'
-
-- powershell: |
-    $ErrorActionPreference = "Stop"
-    $sdkPath = (Get-Command dotnet).Source | Split-Path
-    $sdkVersion = dotnet --version
-    $msbuildPath = Join-Path (Join-Path $sdkPath "sdk") $sdkVersion
-    Write-Host "Using .NET SDK MSBuild from: $msbuildPath"
-    $sln = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "SafeguardDotNet.Framework.sln" | Select-Object -First 1
-    if (-not $sln) { throw "SafeguardDotNet.Framework.sln not found" }
-    nuget restore $sln.FullName -MSBuildPath "$msbuildPath" -Verbosity Detailed -NonInteractive
-    if ($LASTEXITCODE -ne 0) { throw "NuGet restore failed with exit code $LASTEXITCODE" }
-  displayName: 'Restore NuGet packages for .NET Framework projects'
+    restoreSolution: '$(solution)'
 
 # Resolve the x86 Windows SDK signtool path dynamically.
 # eSignerCKA's PKCS#11 DLL is 32-bit only, so only the x86 signtool can access the private key.
