@@ -153,8 +153,18 @@ steps:
 
 # Sign NuGet packages using dotnet nuget sign with eSignerCKA certificate.
 # Per SSL.com guidance, NuGet signing requires the legacy timestamp endpoint.
+# dotnet nuget sign requires SHA-256 fingerprint (not SHA-1 thumbprint).
 - powershell: |
     $ErrorActionPreference = "Stop"
+    # Get the SHA-256 fingerprint from the certificate (dotnet nuget sign requires SHA-256+)
+    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq "$(CertThumbprint)" }
+    if (-not $cert) {
+        throw "Certificate with thumbprint $(CertThumbprint) not found in CurrentUser\My"
+    }
+    $sha256Bytes = $cert.GetCertHash("SHA256")
+    $sha256Fingerprint = ($sha256Bytes | ForEach-Object { $_.ToString("x2") }) -join ""
+    Write-Host "SHA-256 fingerprint: $sha256Fingerprint"
+
     $nupkgs = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Filter "*.nupkg"
     if ($nupkgs.Count -eq 0) {
         throw "No .nupkg files found in $(Build.ArtifactStagingDirectory)"
@@ -163,7 +173,7 @@ steps:
     foreach ($nupkg in $nupkgs) {
         Write-Host "`nSigning: $($nupkg.Name)"
         dotnet nuget sign $nupkg.FullName `
-            --certificate-fingerprint "$(CertThumbprint)" `
+            --certificate-fingerprint $sha256Fingerprint `
             --certificate-store-location CurrentUser `
             --certificate-store-name My `
             --timestamper http://ts.ssl.com/legacy `
