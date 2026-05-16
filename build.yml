@@ -143,4 +143,7 @@ jobs:
       isPreRelease: $(isPrerelease)
       changeLogCompareToRelease: 'lastFullRelease'
       changeLogType: 'commitBased'
+      assets: |
+        $(Build.ArtifactStagingDirectory)/*.nupkg
+        $(Build.ArtifactStagingDirectory)/*.snupkg
     displayName: 'Creating GitHub Release'
