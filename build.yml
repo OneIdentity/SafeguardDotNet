@@ -4,22 +4,31 @@ variables:
 trigger:
   branches:
     include:
+    - main
     - master
     - release-*
+  tags:
+    include:
+    - 'v*'
   paths:
     exclude:
-    - README.md
-    - AGENTS.md
+    - '**/*.md'
+    - LICENSE
+    - docs/
+    - .github/CODEOWNERS
 
 pr:
   branches:
     include:
+    - main
     - master
     - release-*
   paths:
     exclude:
-    - README.md
-    - AGENTS.md
+    - '**/*.md'
+    - LICENSE
+    - docs/
+    - .github/CODEOWNERS
 
 jobs:
 # Job 1: PR Validation - runs only on pull requests
@@ -121,3 +130,20 @@ jobs:
       command: 'custom'
       arguments: 'push $(Build.ArtifactStagingDirectory)\*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
     displayName: 'Publishing NuGet packages to NuGet.org'
+
+  - task: GitHubRelease@1
+    inputs:
+      gitHubConnection: 'PangaeaBuild-GitHub'
+      repositoryName: 'OneIdentity/SafeguardDotNet'
+      action: 'create'
+      target: '$(Build.SourceVersion)'
+      tagSource: 'userSpecifiedTag'
+      tag: '$(ReleaseTag)'
+      title: '$(ReleaseTag)'
+      isPreRelease: $(isPrerelease)
+      changeLogCompareToRelease: 'lastFullRelease'
+      changeLogType: 'commitBased'
+      assets: |
+        $(Build.ArtifactStagingDirectory)/*.nupkg
+        $(Build.ArtifactStagingDirectory)/*.snupkg
+    displayName: 'Creating GitHub Release'
