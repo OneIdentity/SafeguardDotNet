@@ -1,146 +1,81 @@
 # AGENTS.md — SafeguardDotNet
 
-.NET SDK for the One Identity Safeguard Web API. Published as NuGet packages on
-[NuGet.org](https://www.nuget.org/packages/OneIdentity.SafeguardDotNet).
-
-Targets `netstandard2.0`. Root namespace: `OneIdentity.SafeguardDotNet`. Dependencies:
-Newtonsoft.Json, Serilog, Microsoft.AspNetCore.SignalR.Client.
+.NET SDK for the One Identity Safeguard Web API. Targets `netstandard2.0`.
+Root namespace: `OneIdentity.SafeguardDotNet`.
 
 ## Project structure
 
-```
-SafeguardDotNet/
-|-- SafeguardDotNet/                           # Core SDK library (netstandard2.0)
-|   |-- Safeguard.cs                           # Entry point: Connect(), A2A, Event
-|   |-- ISafeguardConnection.cs                # Primary connection interface
-|   |-- SafeguardConnection.cs                 # Base connection implementation
-|   |-- PersistentSafeguardConnection.cs       # Auto-refreshing token decorator
-|   |-- SafeguardDotNetException.cs            # All SDK errors thrown as this type
-|   |-- ExtensionMethods.cs                    # SecureString <-> string conversions
-|   |-- Authentication/                        # IAuthenticationMechanism strategy pattern
-|   |-- Event/                                 # SignalR event listeners
-|   |-- A2A/                                   # Application-to-Application (certificate-only)
-|   `-- Sps/                                   # Safeguard for Privileged Sessions
-|-- SafeguardDotNet.PkceNoninteractiveLogin/   # PKCE login without a browser (MFA support)
-|-- SafeguardDotNet.BrowserLogin/              # PKCE login via system browser
-|-- SafeguardDotNet.GuiLogin/                  # WinForms embedded browser (.NET Framework)
-|-- SafeguardDotNet.LoginCommon/               # Shared login utilities
-|-- Test/                                      # CLI test tools + PowerShell test framework
-|-- Samples/                                   # Example projects
-|-- Directory.Build.props                      # Shared MSBuild props (analyzers, code style)
-|-- build.yml                                  # Azure Pipelines CI/CD definition
-`-- data/                                      # Data files (certificates, etc.)
-```
+- `SafeguardDotNet\` — core SDK: `Safeguard.cs`, connections, auth, events, A2A, SPS
+- `SafeguardDotNet.PkceNoninteractiveLogin\`, `BrowserLogin\`, `GuiLogin\`, `LoginCommon\` — login flows
+- `Test\` — CLI tools plus the PowerShell integration test framework
+- `Samples\` — example integrations
+- `build.yml`, `pipeline-templates\`, `Directory.Build.props` — build, versioning, analyzers
 
 ## Setup and build
 
-| Solution | Purpose | Build tool |
+| Solution | Purpose | Command |
 |---|---|---|
-| `SafeguardDotNet.Core.sln` | SDK + login modules + test tools + samples | `dotnet build` |
-| `SafeguardDotNet.Framework.sln` | GuiLogin + GuiTester (.NET Framework 4.8.1) | `msbuild` |
-| `SafeguardDotNet.sln` | NuGet restore only — not for building |
+| `SafeguardDotNet.Core.sln` | SDK, login modules, test tools, samples | `dotnet build SafeguardDotNet.Core.sln /p:SignFiles=false` |
+| `SafeguardDotNet.Framework.sln` | GuiLogin + GuiTester (.NET Framework 4.8.1) | `msbuild SafeguardDotNet.Framework.sln /p:SignFiles=false` |
+| `SafeguardDotNet\SafeguardDotNet.csproj` | SDK only | `dotnet build SafeguardDotNet\SafeguardDotNet.csproj /p:SignFiles=false` |
 
-```powershell
-# Day-to-day local build (most common)
-dotnet build SafeguardDotNet.Core.sln /p:SignFiles=false
-
-# Build just the SDK
-dotnet build SafeguardDotNet\SafeguardDotNet.csproj /p:SignFiles=false
-```
-
-**Always pass `/p:SignFiles=false` for local builds.** CI uses Azure Key Vault for signing.
-
-The build must complete with **0 errors, 0 warnings**. Strict analysis is enforced via
-`Directory.Build.props` (StyleCop.Analyzers, SonarAnalyzer.CSharp, `EnforceCodeStyleInBuild`).
+Always build with **0 errors and 0 warnings**. Keep `/p:SignFiles=false` for local work;
+CI handles signing.
 
 ## Linting
 
-Linting is integrated into the build via Roslyn analyzers — no separate lint command.
+Linting is part of the build through `Directory.Build.props`; there is no separate command.
+Pay attention to the analyzer set from StyleCop and Sonar, especially:
 
-Key rules enforced:
+- no `#region`
+- one parameter per line when wrapping
+- `s_` for private static fields and `_` for private instance fields
+- no empty `catch` blocks and no single-line statement blocks
 
-| Rule | What it means |
-|------|---------------|
-| SA1124 | No `#region` directives |
-| SA1117 | Split parameters must each be on their own line |
-| SA1306/IDE1006 | Private static fields: `s_` prefix, camelCase |
-| SA1501 | No single-line statement blocks (always use braces) |
-| S2737 | No empty catch clauses |
-| IDE0063 | Prefer simplified `using` declarations |
-| IDE0078 | Prefer pattern matching |
-| IDE0054 | Prefer compound assignment |
-| CA5350 | HMACSHA1 flagged — use `#pragma warning disable` if needed |
+## Testing
+
+Tests are live-appliance based. Use the CLI tools in `Test\` or
+`Test\TestFramework\Invoke-SafeguardTests.ps1`, and read
+`.agents/skills/testing-guide/SKILL.md` before running suites or changing coverage.
 
 ## Code conventions
 
-### Naming
-
-- Private static fields: `s_` prefix (e.g., `s_defaultTimeout`)
-- Private instance fields: `_` prefix (e.g., `_disposed`)
-- Public properties / constants: PascalCase
-
-### SecureString for credentials
-
-All passwords and tokens use `SecureString`. Convert via `ExtensionMethods.cs`:
-`"secret".ToSecureString()` / `secure.ToInsecureString()`. Types holding `SecureString`
-implement `IDisposable`.
-
-### Dispose pattern
-
-Connection classes track `_disposed`. All public instance methods must check and throw
-`ObjectDisposedException` if disposed.
-
-### Error handling
-
-All SDK errors throw `SafeguardDotNetException` with `HttpStatusCode`, `ErrorCode`,
-`ErrorMessage`, and `Response`. Include status code and response body when throwing.
-
-### SSL/TLS
-
-TLS 1.2 enforced on all `HttpClientHandler` instances. `ignoreSsl` bypasses cert validation
-(dev only). `validationCallback` for custom validation. Apply consistently to `HttpClient`
-and SignalR connections. **Never recommend `ignoreSsl` for production.**
-
-### XML documentation
-
-`GenerateDocumentationFile` is enabled. All public types need XML doc comments. The StyleCop
-`xmlHeader` rule is disabled — do not add XML file headers.
-
-### Versioning
-
-Version markers `9999.9999.9999` / `9999.9999.9999.9999` in `.csproj`/`.nuspec` are replaced
-at CI build time by `versionnumber.ps1`. **Do not change these markers manually.**
-
-### NuGet packages
-
-Four packages published per release: `OneIdentity.SafeguardDotNet`,
-`OneIdentity.SafeguardDotNet.BrowserLogin`, `OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin`,
-`OneIdentity.SafeguardDotNet.GuiLogin`. Each includes a `.snupkg` symbols package.
+- Use `SecureString` for passwords, tokens, and secrets; convert with `ExtensionMethods`
+- Dispose objects that hold `SecureString`, certificates, listeners, or connections
+- Public instance methods on disposable connection types must guard `_disposed`
+- Throw `SafeguardDotNetException` for SDK/API failures and preserve status/response details
+- Keep TLS 1.2 behavior and SSL validation handling consistent across `HttpClient` and SignalR
+- `GenerateDocumentationFile` is enabled; public APIs need XML docs, but no XML file headers
 
 ## CI/CD
 
-Azure Pipelines (`build.yml` + `pipeline-templates/`). Two jobs: **PRValidation** (no
-signing) and **BuildAndPublish** (signing + NuGet publish on master/release). Never assume
-Key Vault secrets exist locally.
+See `.agents/skills/build-and-release/SKILL.md` for pipeline stages, signing,
+packaging, publishing, releases, and required service connections.
 
 ## Security
 
-- Never commit secrets, tokens, or credentials
-- `SecureString` data must not be logged or serialized
-- Test credentials only in runner parameters, never hardcoded
-- `ignoreSsl` / `-x` is dev-only — always warn about production use
+- Never commit credentials, tokens, or certificate material
+- Never log or serialize secret `SecureString` values
+- Test credentials belong in runner parameters, not source files
+- `ignoreSsl` / `-x` is for dev/test only
 
-## Keeping this file current
+## Versioning
 
-After completing tasks, suggest updates for new pitfalls, test suites, patterns, stale
-information, or corrections. Skills (below) should be updated alongside this file.
+- `Safeguard.DefaultApiVersion` is `4`; use `apiVersion: 3` only for legacy support
+- Keep the `9999.9999.9999` and `9999.9999.9999.9999` placeholders in project metadata
+- `pipeline-templates\versionnumber.ps1` stamps tag builds (`v<major>.<minor>.<patch>`) and prerelease builds from `semanticVersion`
 
 ## On-demand skills
 
-The following skills contain deeper reference material loaded only when relevant.
-Read the `SKILL.md` when your current task matches the trigger.
-
 | Skill | When to read | File |
-|-------|-------------|------|
-| Testing Guide | Running tests, writing tests, test failures, live appliance setup | `.agents/skills/testing-guide/SKILL.md` |
-| Architecture Deep Dive | SDK internals, auth mechanisms, PKCE/rSTS, events, A2A, SPS, Swagger | `.agents/skills/architecture-deep-dive/SKILL.md` |
+|---|---|---|
+| Architecture | SDK internals, auth, PKCE/rSTS, events, management, SPS | `.agents/skills/architecture/SKILL.md` |
+| API Patterns | Standard REST calls, service selection, CRUD, headers, Swagger | `.agents/skills/api-patterns/SKILL.md` |
+| A2A Workflow | Certificate-based A2A setup, retrieval, brokering, listeners | `.agents/skills/a2a-workflow/SKILL.md` |
+| Build and Release | Azure Pipelines flow, version stamping, signing, publishing | `.agents/skills/build-and-release/SKILL.md` |
+| Testing Guide | Live appliance setup, suites, failures, test authoring | `.agents/skills/testing-guide/SKILL.md` |
+
+## Keeping this file current
+
+Keep this file short, and move deep workflow/reference material into skills. Update the
+routing table whenever skills are added, removed, or renamed.

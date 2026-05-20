@@ -1,5 +1,5 @@
 ---
-name: architecture-deep-dive
+name: architecture
 description: >-
   Use when working on SDK internals, authentication mechanisms, connection
   classes, PKCE login flow, rSTS protocol details, event listeners, A2A
@@ -8,7 +8,7 @@ description: >-
   step flow, and SignalR event architecture.
 ---
 
-# Architecture Deep Dive
+# Architecture
 
 ## Exploring the Safeguard API
 
