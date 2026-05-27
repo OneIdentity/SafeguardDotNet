@@ -34,3 +34,34 @@ most secure automated Safeguard API authentication mechanism.
 
   This project was initially developed using Visual Studio 2017.  It targets .NET
   Framework 4.6.2.  It can be modified to suit your needs.
+
+## TLS Certificate Validation
+
+Both sample `app.config` files ship with `SafeguardIgnoreSsl=true`. This setting
+exists so the samples run out-of-the-box against **development appliances that
+use self-signed TLS certificates**. It tells the SDK to skip Safeguard appliance
+certificate validation when negotiating the TLS handshake.
+
+**Disabling TLS validation removes the SDK's protection against man-in-the-middle
+attacks.** Treat the default in these samples as a starting point for local
+development only.
+
+When you adapt a sample for a real deployment:
+
+- **Production deployments must set `SafeguardIgnoreSsl=false`** in `app.config`
+  (or omit the key and rely on the SDK default). The appliance certificate chain
+  must then validate against the host's trusted root store.
+- If the appliance uses an internal / private CA, **install that CA certificate
+  in the host machine's trust store** (`Cert:\LocalMachine\Root` on Windows or
+  the OS trust bundle on Linux/macOS) rather than disabling validation.
+- For certificate pinning or other custom trust policies, supply a
+  `RemoteCertificateValidationCallback` via the `Safeguard.Connect(...)`
+  overloads that accept a validation callback, instead of setting
+  `SafeguardIgnoreSsl=true`. Implement the pinning logic (e.g. compare against
+  a known SPKI hash) inside that callback.
+- Code review your sample fork: searching for `IgnoreSsl` /
+  `SafeguardIgnoreSsl` / `-IgnoreSsl` should yield only configuration
+  intentionally scoped to non-production environments.
+
+The `SafeguardIgnoreSsl` flag is a developer convenience, not a deployment
+default. Leaving it set to `true` in production is a security defect.

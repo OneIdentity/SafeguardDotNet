@@ -48,6 +48,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipeline-templates", "pipel
 		pipeline-templates\job-variables.yml = pipeline-templates\job-variables.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeguardDotNetUnitTest", "Test\SafeguardDotNetUnitTest\SafeguardDotNetUnitTest.csproj", "{1B11B367-2F76-49EE-A820-2A0A8B1721B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +104,10 @@ Global
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B11B367-2F76-49EE-A820-2A0A8B1721B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B11B367-2F76-49EE-A820-2A0A8B1721B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B11B367-2F76-49EE-A820-2A0A8B1721B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B11B367-2F76-49EE-A820-2A0A8B1721B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -117,6 +123,7 @@ Global
 		{C6D34567-3456-4321-9876-345678901CDE} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 		{0149D659-78E3-476B-81F1-A80BDFA6F8A9} = {867EB36D-7893-444D-900D-29733E8E2636}
 		{1EB6D64D-7AFB-41DC-B11B-58934D053684} = {9249E337-656D-4970-B45C-7A077C56FA44}
+		{1B11B367-2F76-49EE-A820-2A0A8B1721B1} = {DD89D86B-68DA-4EB0-8EBC-60DE3DC2B084}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5A3B2C1D-4E6F-7A8B-9C0D-1E2F3A4B5C6D}

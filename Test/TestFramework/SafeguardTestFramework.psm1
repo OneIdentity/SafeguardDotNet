@@ -1953,6 +1953,79 @@ function Clear-SgDnStaleTestEnvironment {
 }
 
 # ============================================================================
+# A2A Service Test Helpers
+# ============================================================================
+
+function Get-SgDnA2aServiceEnabled {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Context,
+
+        [Parameter()]
+        [string]$Username,
+
+        [Parameter()]
+        [string]$Password
+    )
+
+    $status = Invoke-SgDnSafeguardApi -Context $Context -Service Appliance -Method Get `
+        -RelativeUrl "A2AService/Status" -Username $Username -Password $Password
+    return (($status.IsRunning -eq $true) -or ($status.IsEnabled -eq $true) -or ($status.Enabled -eq $true))
+}
+
+function Enable-SgDnA2aServiceForSuite {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Context,
+
+        [Parameter()]
+        [string]$Username,
+
+        [Parameter()]
+        [string]$Password
+    )
+
+    $wasEnabled = Get-SgDnA2aServiceEnabled -Context $Context -Username $Username -Password $Password
+    $Context.SuiteData["A2aWasEnabled"] = $wasEnabled
+    $Context.SuiteData["A2aSuiteSetEnabled"] = $false
+
+    if (-not $wasEnabled) {
+        Invoke-SgDnSafeguardApi -Context $Context -Service Appliance -Method Post `
+            -RelativeUrl "A2AService/Enable" -Username $Username -Password $Password -ParseJson $false
+        $Context.SuiteData["A2aSuiteSetEnabled"] = $true
+        Start-Sleep -Seconds 2
+    }
+}
+
+function Restore-SgDnA2aServiceForSuite {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Context,
+
+        [Parameter()]
+        [string]$Username,
+
+        [Parameter()]
+        [string]$Password
+    )
+
+    if ($Context.SuiteData["A2aSuiteSetEnabled"]) {
+        try {
+            Invoke-SgDnSafeguardApi -Context $Context -Service Appliance -Method Post `
+                -RelativeUrl "A2AService/Disable" -Username $Username -Password $Password -ParseJson $false
+            Start-Sleep -Seconds 1
+        }
+        finally {
+            $enabled = Get-SgDnA2aServiceEnabled -Context $Context -Username $Username -Password $Password
+            Test-SgDnAssert "A2A service restored to disabled state" { -not $enabled }
+        }
+    }
+}
+
+# ============================================================================
 # Module Exports
 # ============================================================================
 
@@ -1990,6 +2063,9 @@ Export-ModuleMember -Function @(
     'Export-SgDnTestReport'
 
     # Helpers
+    'Get-SgDnA2aServiceEnabled'
+    'Enable-SgDnA2aServiceForSuite'
+    'Restore-SgDnA2aServiceForSuite'
     'Remove-SgDnSafeguardTestObject'
     'Remove-SgDnStaleTestObject'
     'Remove-SgDnStaleTestCert'

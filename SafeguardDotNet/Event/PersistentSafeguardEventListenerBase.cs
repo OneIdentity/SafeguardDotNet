@@ -18,6 +18,7 @@ internal abstract class PersistentSafeguardEventListenerBase : ISafeguardEventLi
 
     private Task _reconnectTask;
     private CancellationTokenSource _reconnectCancel;
+    private readonly ReconnectBackoff _reconnectBackoff = new ReconnectBackoff();
 
     protected PersistentSafeguardEventListenerBase()
     {
@@ -62,13 +63,29 @@ internal abstract class PersistentSafeguardEventListenerBase : ISafeguardEventLi
                     _eventListener.SetEventListenerStateCallback(_eventListenerStateCallback);
                     _eventListener.Start();
                     _eventListener.SetDisconnectHandler(PersistentReconnectAndStart);
+
+                    // Reset backoff so the next disconnect starts a fresh exponential ramp.
+                    _reconnectBackoff.OnSuccess();
                     break;
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning("Internal event listener connection error (see debug for more information), sleeping for 5 seconds...");
+                    // Exponential backoff + jitter so a sustained appliance
+                    // outage cannot exhaust local resources or hammer the
+                    // appliance during recovery.
+                    var delay = _reconnectBackoff.GetNextDelay();
+                    Log.Warning(
+                        "Internal event listener connection error (see debug for more information), sleeping for {DelaySeconds:F1} seconds...",
+                        delay.TotalSeconds);
                     Log.Debug(ex, "Internal event listener connection error.");
-                    Thread.Sleep(5000);
+                    try
+                    {
+                        _reconnectCancel.Token.WaitHandle.WaitOne(delay);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        break;
+                    }
                 }
             }
         },

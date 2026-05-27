@@ -77,6 +77,46 @@ SafeguardDotNet uses RestSharp and Json.NET to call the Safeguard API. It
 includes calls to Serilog, and if your calling application provides a sink you
 will get log information automatically.
 
+## Logging & diagnostics
+
+SafeguardDotNet emits diagnostic logs through Serilog, and surfaces appliance
+errors as `SafeguardDotNetException`. The exception carries an `HttpStatusCode`
+and a `Response` body string that contains **whatever the Safeguard appliance
+returned for the failing call** — this is intentional so that operators can
+diagnose appliance-side failures without re-running the request.
+
+Because Safeguard is a credential-management product, the SDK does **not**
+inspect, filter, or redact response bodies — they may legitimately contain
+fields named `Password`, `ApiKey`, `PrivateKey`, `SshHostKey`, `Token`,
+`AccountPassword`, and similar, and the SDK has no safe way to distinguish
+"product output the caller requested" from "metadata that happens to share a
+name". In rare authentication-failure shapes the response body can also echo
+submitted credentials (for example, the Resource Owner Password Credentials
+grant may return the submitted username, and some appliance versions echo other
+form fields in error envelopes).
+
+**If you forward `SafeguardDotNetException.Message`,
+`SafeguardDotNetException.Response`, or the rendered exception (`ex.ToString()`)
+to a log sink that is less trusted than the appliance — for example a shared
+SIEM, a cloud log aggregator, a support bundle, or a customer-visible error
+page — redact at the log layer.** Suggested patterns:
+
+- Log only `ex.HttpStatusCode` and `ex.ErrorCode` for production telemetry;
+  keep `ex.Response` in a privileged channel (local file, restricted sink) for
+  on-call diagnosis.
+- If you must forward the full response, run it through your organization's
+  log scrubber first (Serilog `Destructure.ByTransforming<>`, an
+  `IEnumerable<ILogEventEnricher>`, or a sink-side filter) with rules tuned to
+  *your* schema, not a generic substring blacklist.
+- Avoid `Log.Error(ex, "...")` patterns that capture the full exception object
+  when the sink is not under your control; prefer
+  `Log.Error("Safeguard request failed: {Status} {Code}", ex.HttpStatusCode, ex.ErrorCode)`.
+
+The SDK will not be changed to redact response bodies because substring
+matching on field names would corrupt legitimate Safeguard fields such as
+`PasswordRulesPolicyId`, `ApiKeyName`, `NewPasswordValidUntil`, etc., and
+would not actually help in the cases where redaction is needed.
+
 ## Resource Owner Password Grant Deprecation
 
 The OAuth2 Resource Owner Password Credential (ROPC) grant type — where

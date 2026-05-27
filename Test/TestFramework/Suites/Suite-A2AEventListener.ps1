@@ -162,12 +162,9 @@
             -Body @{ AccountId = $account.Id }
         $Context.SuiteData["ApiKey"] = $retrievable.ApiKey
 
-        # 8. Enable A2A service
-        Write-Host "    Enabling A2A service..." -ForegroundColor DarkGray
-        Invoke-SgDnSafeguardApi -Context $Context -Service Appliance -Method Post `
-            -RelativeUrl "A2AService/Enable" `
-            -Username $adminUser -Password $adminPassword `
-            -ParseJson $false
+        # 8. Enable A2A service if the shared appliance currently has it disabled.
+        Write-Host "    Ensuring A2A service is enabled..." -ForegroundColor DarkGray
+        Enable-SgDnA2aServiceForSuite -Context $Context -Username $adminUser -Password $adminPassword
     }
 
     Execute = {
@@ -343,6 +340,7 @@
         $prefix = $Context.TestPrefix
         $adminUser = $Context.SuiteData["AdminUser"]
         $adminPassword = $Context.SuiteData["AdminPassword"]
+        Restore-SgDnA2aServiceForSuite -Context $Context -Username $adminUser -Password $adminPassword
         Remove-SgDnStaleTestObject -Context $Context -Collection "A2ARegistrations" -Name "${prefix}_A2aEvtReg" -NameField "AppName" -Username $adminUser -Password $adminPassword
         Remove-SgDnStaleTestObject -Context $Context -Collection "AssetAccounts" -Name "${prefix}_A2aEvtAccount" -Username $adminUser -Password $adminPassword
         Remove-SgDnStaleTestObject -Context $Context -Collection "Assets" -Name "${prefix}_A2aEvtAsset" -Username $adminUser -Password $adminPassword
