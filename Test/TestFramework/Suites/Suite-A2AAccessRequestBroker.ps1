@@ -232,12 +232,9 @@
             }
         $Context.SuiteData["BrokerApiKey"] = $broker.ApiKey
 
-        # 11. Enable A2A service
-        Write-Host "    Enabling A2A service..." -ForegroundColor DarkGray
-        Invoke-SgDnSafeguardApi -Context $Context -Service Appliance -Method Post `
-            -RelativeUrl "A2AService/Enable" `
-            -Username $adminUser -Password $adminPassword `
-            -ParseJson $false
+        # 11. Enable A2A service if the shared appliance currently has it disabled.
+        Write-Host "    Ensuring A2A service is enabled..." -ForegroundColor DarkGray
+        Enable-SgDnA2aServiceForSuite -Context $Context -Username $adminUser -Password $adminPassword
     }
 
     Execute = {
@@ -327,6 +324,8 @@
 
     Cleanup = {
         param($Context)
-        # Registered cleanup handles everything in LIFO order.
+        Restore-SgDnA2aServiceForSuite -Context $Context `
+            -Username $Context.SuiteData['AdminUser'] -Password $Context.SuiteData['AdminPassword']
+        # Registered cleanup handles everything else in LIFO order.
     }
 }
