@@ -70,10 +70,9 @@ internal abstract class PersistentSafeguardEventListenerBase : ISafeguardEventLi
                 }
                 catch (Exception ex)
                 {
-                    // Per W6 security review: cap reconnect frequency via
-                    // exponential backoff + jitter so a sustained appliance
+                    // Exponential backoff + jitter so a sustained appliance
                     // outage cannot exhaust local resources or hammer the
-                    // appliance. See ReconnectBackoff.cs for the algorithm.
+                    // appliance during recovery.
                     var delay = _reconnectBackoff.GetNextDelay();
                     Log.Warning(
                         "Internal event listener connection error (see debug for more information), sleeping for {DelaySeconds:F1} seconds...",

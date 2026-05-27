@@ -9,12 +9,10 @@ using System;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This is the cross-SDK reference implementation for the Safeguard SDK family
-/// (SafeguardDotNet, SafeguardJava, safeguard.js). The Safeguard security review
-/// (work unit W6) requires that every persistent event listener cap its reconnect
-/// frequency so that sustained appliance downtime or a network partition cannot
-/// turn the SDK's reconnect loop into a resource-exhaustion vector against either
-/// the calling process or the appliance.
+/// Every persistent event listener should cap its reconnect frequency so that
+/// sustained appliance downtime or a network partition cannot turn the reconnect
+/// loop into a resource-exhaustion vector against either the calling process or
+/// the appliance.
 /// </para>
 /// <para>
 /// Algorithm:
@@ -31,12 +29,6 @@ using System;
 /// deterministic function for the default <see cref="Random"/>-based source.
 /// Values returned outside <c>[0.0, 1.0]</c> are clamped to that range so a
 /// misbehaving RNG cannot produce negative or unbounded delays.
-/// </para>
-/// <para>
-/// <b>Parity note for other SDKs:</b> the algorithm and constants
-/// (start = 1s, factor = 2, max = 60s, jitter band = ±25%) are normative.
-/// The injection seam (constructor-injected jitter source) and reset semantics
-/// (counter zeroed on success, not on stop) are part of the contract.
 /// </para>
 /// </remarks>
 internal sealed class ReconnectBackoff

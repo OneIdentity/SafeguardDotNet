@@ -112,11 +112,10 @@ page — redact at the log layer.** Suggested patterns:
   when the sink is not under your control; prefer
   `Log.Error("Safeguard request failed: {Status} {Code}", ex.HttpStatusCode, ex.ErrorCode)`.
 
-The SDK will not be changed to redact response bodies — see the project
-security review notes for the rationale (substring matching on field names
-would corrupt legitimate Safeguard fields such as `PasswordRulesPolicyId`,
-`ApiKeyName`, `NewPasswordValidUntil`, etc., and would not actually help in
-the cases where redaction is needed).
+The SDK will not be changed to redact response bodies because substring
+matching on field names would corrupt legitimate Safeguard fields such as
+`PasswordRulesPolicyId`, `ApiKeyName`, `NewPasswordValidUntil`, etc., and
+would not actually help in the cases where redaction is needed.
 
 ## Resource Owner Password Grant Deprecation
 
