@@ -60,6 +60,7 @@ try
 catch (OperationCanceledException)
 {
     await Console.Error.WriteLineAsync("Operation cancelled.");
+    Environment.ExitCode = 1;
 }
 catch (SafeguardDotNetException ex)
 {
@@ -68,4 +69,6 @@ catch (SafeguardDotNetException ex)
     {
         await Console.Error.WriteLineAsync($"Response: {ex.Response}");
     }
+
+    Environment.ExitCode = 1;
 }
