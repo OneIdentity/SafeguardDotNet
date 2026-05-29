@@ -134,6 +134,7 @@ enabled this grant type, calls using this method will fail.
 | Package | NuGet | Use Case |
 |-|-|-|
 | [SafeguardDotNet.BrowserLogin](SafeguardDotNet.BrowserLogin) | `OneIdentity.SafeguardDotNet.BrowserLogin` | Interactive apps — opens the default browser for login (cross-platform) |
+| [SafeguardDotNet.DeviceCodeLogin](SafeguardDotNet.DeviceCodeLogin) | `OneIdentity.SafeguardDotNet.DeviceCodeLogin` | Headless/remote devices — displays a URL and code for the user to authenticate on another device |
 | [SafeguardDotNet.PkceNoninteractiveLogin](SafeguardDotNet.PkceNoninteractiveLogin) | `OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin` | Automated/programmatic scenarios — no browser required |
 | [SafeguardDotNet.GuiLogin](SafeguardDotNet.GuiLogin) | `OneIdentity.SafeguardDotNet.GuiLogin` | Windows Forms desktop apps — embedded WebView2 dialog |
 
@@ -160,6 +161,32 @@ using OneIdentity.SafeguardDotNet.BrowserLogin;
 
 // Opens the default browser to the Safeguard login page
 var connection = DefaultBrowserLogin.Connect("safeguard.sample.corp");
+Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
+```
+
+### Device Code Login (Recommended for Headless/Remote Devices)
+
+When there is no browser on the local machine (SSH sessions, containers, IoT
+devices), use the Device Code flow. The user authenticates on a separate device:
+
+```PowerShell
+PS> dotnet add package OneIdentity.SafeguardDotNet.DeviceCodeLogin
+```
+
+```C#
+using OneIdentity.SafeguardDotNet;
+using OneIdentity.SafeguardDotNet.DeviceCodeLogin;
+
+var connection = DeviceCodeLogin.Connect("safeguard.sample.corp",
+    new DeviceCodeLoginParameters
+    {
+        DisplayCallback = info =>
+        {
+            Console.WriteLine($"Visit: {info.VerificationUri}");
+            Console.WriteLine($"Enter code: {info.UserCode}");
+        },
+    },
+    ignoreSsl: true);
 Console.WriteLine(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
 ```
 

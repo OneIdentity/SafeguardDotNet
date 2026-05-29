@@ -144,6 +144,13 @@ steps:
     arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.PkceNoninteractiveLogin\SafeguardDotNet.PkceNoninteractiveLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
   displayName: Building SafeguardDotNet.PkceNoninteractiveLogin NuGet packages
 
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)\SafeguardDotNet.DeviceCodeLogin\SafeguardDotNet.DeviceCodeLogin.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+  displayName: Building SafeguardDotNet.DeviceCodeLogin NuGet packages
+
 # Package GuiLogin separately using Nuget since it targets .NET Framework and has a nuspec
 - task: NuGetCommand@2
   inputs:

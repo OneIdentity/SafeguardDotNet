@@ -72,6 +72,11 @@ $local:ProjectFile = (Join-Path $local:RepoRoot "SafeguardDotNet.PkceNoninteract
 (Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
 (Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
 
+Write-Host "Replacing markers in SafeguardDotNet.DeviceCodeLogin"
+$local:ProjectFile = (Join-Path $local:RepoRoot "SafeguardDotNet.DeviceCodeLogin\SafeguardDotNet.DeviceCodeLogin.csproj")
+(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion).TrimEnd() | Set-Content -Encoding UTF8 $local:ProjectFile
+
 Write-Host "Replacing markers in SafeguardDotNet.GuiLogin"
 $local:GuiAssemblyInfoFile = (Join-Path $local:RepoRoot "SafeguardDotNet.GuiLogin\Properties\AssemblyInfo.cs")
 $local:GuiNuspec = (Join-Path $local:RepoRoot "SafeguardDotNet.GuiLogin\SafeguardDotNet.GuiLogin.nuspec")
