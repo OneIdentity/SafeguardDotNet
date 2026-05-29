@@ -84,7 +84,17 @@ public static class DeviceCodeLogin
         var requestBody = JsonConvert.SerializeObject(new { client_id = clientId, scope });
         var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
-        var response = await http.PostAsync(deviceAuthUrl, content, cancellationToken).ConfigureAwait(false);
+        HttpResponseMessage response;
+        try
+        {
+            response = await http.PostAsync(deviceAuthUrl, content, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new SafeguardDotNetException(
+                $"Device authorization request failed: unable to connect to {appliance} — {ex.Message}", ex);
+        }
+
         var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
