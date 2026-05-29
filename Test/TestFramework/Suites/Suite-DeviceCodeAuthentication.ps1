@@ -1,6 +1,6 @@
 @{
     Name        = "Device Code Authentication"
-    Description = "Tests OAuth 2.0 Device Authorization Grant (RFC 8628) login flow. The happy path test requires a human to authenticate in a browser."
+    Description = "Tests OAuth 2.0 Device Authorization Grant (RFC 8628) error handling. The happy path requires human interaction — test manually with: dotnet run --project Test/SafeguardDotNetDeviceCodeLoginTester -- <appliance> true"
     Tags        = @("auth", "devicecode")
 
     Setup = { }
@@ -40,24 +40,6 @@
                 $msg -like "*Device authorization request failed*" -or `
                 $msg -like "*400*"
             }
-        }
-
-        # ── Happy path: interactive (human must open URL and authenticate) ──
-        # Set environment variable SGDN_TEST_INTERACTIVE=1 to run this test.
-        # This test runs the tool WITHOUT output redirection so the user can see
-        # the verification URL and authenticate in a browser.
-
-        if ($env:SGDN_TEST_INTERACTIVE -eq "1") {
-            Test-SgDnAssert "Device code full flow succeeds with human authentication" {
-                Write-Host "`n    Launching device code flow — authenticate in your browser...`n" -ForegroundColor Cyan
-                $proc = Start-Process -FilePath "dotnet" `
-                    -ArgumentList "run --project `"$deviceCodeToolDir`" -- $appliance true" `
-                    -NoNewWindow -PassThru -Wait
-                $proc.ExitCode -eq 0
-            }
-        }
-        else {
-            Test-SgDnSkip "Device code interactive login" "Set env SGDN_TEST_INTERACTIVE=1 to run"
         }
     }
 
