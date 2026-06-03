@@ -26,10 +26,15 @@ public class DeviceCodeLoginParameters
 
     /// <summary>
     /// OAuth2 client identifier for the device authorization request.
-    /// Default: "SafeguardDotNet". Only change if the appliance has
-    /// RelyingPartyApplications configured with a specific client_id.
+    /// Defaults to empty, which RSTS normalizes to its built-in
+    /// ApplicationClientId. Only set this when the appliance has a
+    /// RelyingPartyApplication registered with a matching client_id; any
+    /// other non-empty value will fail token redemption when the user
+    /// completes the flow via the verification_uri_complete URL because
+    /// RSTS bakes ApplicationClientId into the auth code in that path
+    /// while comparing it to the cached client_id during polling.
     /// </summary>
-    public string ClientId { get; set; } = "SafeguardDotNet";
+    public string ClientId { get; set; } = string.Empty;
 
     /// <summary>
     /// Polling interval in seconds between token requests. Default: 5 (RFC 8628 default).

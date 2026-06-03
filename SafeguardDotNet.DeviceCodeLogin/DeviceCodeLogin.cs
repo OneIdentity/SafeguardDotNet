@@ -72,9 +72,17 @@ public static class DeviceCodeLogin
             throw new ArgumentException("DisplayCallback is required.", nameof(parameters));
         }
 
-        var clientId = parameters.ClientId ?? "SafeguardDotNet";
+        var clientId = parameters.ClientId ?? string.Empty;
         var scope = parameters.Scope ?? "rsts:sts:primaryproviderid:local";
 
+        // RSTS normalizes empty client_id to its built-in ApplicationClientId in
+        // both the device-code cache (OAuthTokenManager.GetDeviceCode) and the
+        // browser-completion path (LoginController.ProcessDeviceLogin). When the
+        // user finishes via verification_uri_complete, RSTS never propagates a
+        // non-empty cached client_id to the auth code; the JWT clientIdClaim is
+        // baked as ApplicationClientId. Sending an empty client_id here makes
+        // the polling-side comparison value also normalize to ApplicationClientId,
+        // so both browser flows succeed end-to-end.
         using var http = Safeguard.AgentBasedLoginUtils.CreateStatelessHttpClient(ignoreSsl);
 
         // Step 1: Request device code (CRITICAL: no trailing slash on URL)
