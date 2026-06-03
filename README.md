@@ -409,7 +409,7 @@ var userJson = connection.InvokeMethod(Service.Core, Method.Post, "Users",
     }));
 var userObj = JsonConvert.DeserializeAnonymousType(userJson, new { Id = 0 });
 connection.InvokeMethod(Service.Core, Method.Put, $"Users/{userObj.Id}/Password",
-    JsonConvert.SerializeObject("MyNewUser123");
+    JsonConvert.SerializeObject("MyNewUser123"));
 ```
 
 ## Using SafeguardDotNet from a New Visual Studio Code Project

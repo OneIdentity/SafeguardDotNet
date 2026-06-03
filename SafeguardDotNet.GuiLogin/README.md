@@ -58,7 +58,7 @@ Console.WriteLine($"Logged in as: {userData}");
 
 ## How It Works
 
-1. **Show Dialog** - Application calls `Safeguard.ConnectGui()` which displays WinForms dialog
+1. **Show Dialog** - Application calls `LoginWindow.Connect()` which displays a WinForms dialog
 2. **Embedded Browser** - Dialog contains WebView2 control showing Safeguard login page
 3. **User Authenticates** - User logs in through their chosen identity provider
 4. **Capture Token** - Dialog captures OAuth token from redirect

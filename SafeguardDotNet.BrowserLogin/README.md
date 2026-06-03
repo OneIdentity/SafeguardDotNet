@@ -41,23 +41,24 @@ using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.BrowserLogin;
 
 // Authenticate user via browser
-var connection = Safeguard.ConnectBrowser("safeguard.company.com");
+var connection = DefaultBrowserLogin.Connect("safeguard.company.com");
 
 // Use the authenticated connection
 string userData = connection.InvokeMethod(Service.Core, Method.Get, "Me");
 Console.WriteLine($"Logged in as: {userData}");
 ```
 
-### With Specific Authentication Provider
+### Pre-fill the username
 
 ```csharp
-var connection = DefaultBrowserLogin.Connect("myspp.petrsnd.test", ignoreSsl: false);
+var connection = DefaultBrowserLogin.Connect(
+    "safeguard.company.com", username: "Admin", ignoreSsl: false);
 ```
 
 ### Advanced Options
 
 ```csharp
-// Configure an alternate listing port (default: 8400 [same as Microsoft])
+// Configure an alternate listener port (default: 8400)
 var connection = DefaultBrowserLogin.Connect("safeguard.company.com", port: 8080);
 ```
 

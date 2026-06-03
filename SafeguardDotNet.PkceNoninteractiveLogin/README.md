@@ -20,41 +20,65 @@ This library provides OAuth2/PKCE authentication to Safeguard by allowing applic
 
 ## Usage Example
 
+The library drives the OAuth2/PKCE authorization-code flow internally by
+posting directly to the rSTS login endpoints — no browser, no TCP listener,
+and no caller-supplied authorization code are required. The caller supplies
+the appliance address and credentials; everything else (code verifier/
+challenge generation, authorization, code redemption, token exchange) is
+handled by `Connect` / `ConnectAsync`.
+
 ```csharp
+using System.Security;
+using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.PkceNoninteractiveLogin;
 
-// Step 1: Generate PKCE parameters
-var codeVerifier = PkceNoninteractiveLogin.GenerateCodeVerifier();
-var codeChallenge = PkceNoninteractiveLogin.GenerateCodeChallenge(codeVerifier);
+SecureString password = GetPasswordSecurely();
 
-// Step 2: Build authorization URL
-var authUrl = PkceNoninteractiveLogin.BuildAuthorizationUrl(
-    "safeguard.example.com",
-    codeChallenge,
-    username: "admin");
+using var connection = PkceNoninteractiveLogin.Connect(
+    appliance: "safeguard.example.com",
+    provider:  "local",
+    username:  "Admin",
+    password:  password,
+    ignoreSsl: false);
 
-// Step 3: Your custom code to authenticate and obtain authorization code
-// (e.g., using Selenium, Playwright, or other automation tools)
-var authorizationCode = YourCustomAuthenticationMethod(authUrl);
+var me = connection.InvokeMethod(Service.Core, Method.Get, "Me");
+```
 
-// Step 4: Connect to Safeguard
-var connection = PkceNoninteractiveLogin.Connect(
-    "safeguard.example.com",
-    authorizationCode,
-    codeVerifier);
+### Multi-factor authentication
 
-// Step 5: Use the connection
-var userData = connection.InvokeMethod(Service.Core, Method.Get, "Me");
+If the identity provider requires a second factor (TOTP, RADIUS, etc.), pass
+the one-time code as `secondaryPassword`:
+
+```csharp
+SecureString password = GetPasswordSecurely();
+SecureString totp = GetOneTimeCodeSecurely();
+
+using var connection = PkceNoninteractiveLogin.Connect(
+    "safeguard.example.com", "local", "Admin", password, totp);
+```
+
+### Async with cancellation
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+SecureString password = GetPasswordSecurely();
+
+using var connection = await PkceNoninteractiveLogin.ConnectAsync(
+    "safeguard.example.com", "local", "Admin", password,
+    secondaryPassword: null,
+    apiVersion: Safeguard.DefaultApiVersion,
+    ignoreSsl: false,
+    cancellationToken: cts.Token);
 ```
 
 ## Comparison with BrowserLogin
 
 | Feature | BrowserLogin | PkceNoninteractiveLogin |
 |---------|-------------|-------------------------|
-| Browser Launch | Automatic | Manual (caller controlled) |
-| TCP Listener | Built-in | Not included |
-| Authorization Code | Captured automatically | Must be obtained by caller |
-| Use Case | Interactive desktop apps | Automated testing, custom flows |
+| Browser Launch | Automatic | None — flow is driven over HTTP |
+| TCP Listener | Built-in | Not needed |
+| Credentials | Entered in browser by user | Supplied by caller (username/password, optional MFA code) |
+| Use Case | Interactive desktop apps | Automated testing, CI/CD, headless integrations |
 
 ## Dependencies
 

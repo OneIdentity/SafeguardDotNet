@@ -75,7 +75,7 @@ using var connection = await DeviceCodeLogin.ConnectAsync(
 | Credentials in Code | No | Yes (username/password) | No |
 | SSO/MFA Support | Yes | Limited | Yes |
 | Headless Compatible | No | Yes | Yes |
-| Async API | No | No | Yes |
+| Async API | Yes | Yes | Yes |
 | Use Case | Desktop apps | Automation with known creds | Headless with user auth |
 
 ## Configuration
