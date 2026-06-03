@@ -12,6 +12,7 @@ trigger:
     - 'v*'
   paths:
     exclude:
+    - '*.md'
     - '**/*.md'
     - LICENSE
     - docs/
@@ -25,6 +26,7 @@ pr:
     - release-*
   paths:
     exclude:
+    - '*.md'
     - '**/*.md'
     - LICENSE
     - docs/
