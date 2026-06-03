@@ -28,6 +28,9 @@
       Allows custom application to use the Safeguard Web API by authenticating to
       Safeguard using OAuth 2.0 Device Authorization Grant (RFC 8628). This enables
       authentication from headless environments without a local browser.
+
+      What's new in 8.3.1:
+      - Fix token redemption failing with "invalid_request" when the user completed authentication via the verification_uri_complete URL.
     </PackageReleaseNotes>
   </PropertyGroup>
 

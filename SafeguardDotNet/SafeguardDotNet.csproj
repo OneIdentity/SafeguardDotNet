@@ -30,8 +30,8 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Real-time event notifications
 - Persistent event listeners that reconnect even after an appliance goes offline
 
-Updates:
-- Bug fixes and dependency updates.</PackageReleaseNotes>
+What's new in 8.3.1:
+- DeviceCodeLogin: fix token redemption failing with "invalid_request" when the user completed authentication via the verification_uri_complete URL.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
