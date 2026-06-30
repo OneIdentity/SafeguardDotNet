@@ -5,11 +5,11 @@ namespace OneIdentity.SafeguardDotNet.DeviceCodeLogin;
 using System;
 using System.Net.Http;
 using System.Security;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using OneIdentity.SafeguardDotNet.DeviceCodeLogin.Internal;
 using OneIdentity.SafeguardDotNet.DeviceCodeLogin.Serialization;
 
 using Serilog;
@@ -20,6 +20,10 @@ using Serilog;
 /// </summary>
 public static class DeviceCodeLogin
 {
+    private const string DefaultScope = "rsts:sts:primaryproviderid:local";
+
+    private const string DeviceCodeGrantDisabledMarker = "device code grant type is not allowed";
+
     /// <summary>
     /// Connect to Safeguard API using the Device Authorization Grant.
     /// Blocks until the user completes authentication or the code expires.
@@ -62,6 +66,78 @@ public static class DeviceCodeLogin
         bool ignoreSsl = false,
         CancellationToken cancellationToken = default)
     {
+        using var transport = new DeviceCodeHttpTransport(ignoreSsl);
+        return await ConnectInternalAsync(
+            appliance,
+            parameters,
+            apiVersion,
+            ignoreSsl,
+            transport,
+            new SystemDeviceCodeClock(),
+            new RstsTokenExchanger(),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs the full device-code connect flow against injected collaborators.
+    /// Used by the public <see cref="ConnectAsync"/> entry point and by unit tests.
+    /// </summary>
+    /// <param name="appliance">Network address of the Safeguard appliance.</param>
+    /// <param name="parameters">Device code flow parameters including the display callback.</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="ignoreSsl">Ignore server certificate validation (dev only).</param>
+    /// <param name="transport">HTTP transport used to talk to rSTS.</param>
+    /// <param name="clock">Clock/delay abstraction driving the poll loop.</param>
+    /// <param name="exchanger">rSTS-to-Safeguard token exchanger.</param>
+    /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    internal static async Task<ISafeguardConnection> ConnectInternalAsync(
+        string appliance,
+        DeviceCodeLoginParameters parameters,
+        int apiVersion,
+        bool ignoreSsl,
+        IDeviceCodeHttpTransport transport,
+        IDeviceCodeClock clock,
+        IRstsTokenExchanger exchanger,
+        CancellationToken cancellationToken)
+    {
+        if (exchanger == null)
+        {
+            throw new ArgumentNullException(nameof(exchanger));
+        }
+
+        var rstsAccessToken = await RequestRstsDeviceTokenAsync(
+            appliance, parameters, transport, clock, cancellationToken).ConfigureAwait(false);
+
+        // Step 4: Exchange RSTS token for Safeguard UserToken
+        Log.Debug("Exchanging RSTS access token for Safeguard user token");
+
+        using (rstsAccessToken)
+        {
+            return await exchanger.ExchangeAsync(
+                appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Runs the device authorization request and token poll loop and returns the
+    /// rSTS access token. The caller owns and must dispose the returned
+    /// <see cref="SecureString"/>. This method performs no rSTS-to-Safeguard
+    /// exchange, leaving that to <see cref="ConnectInternalAsync"/>.
+    /// </summary>
+    /// <param name="appliance">Network address of the Safeguard appliance.</param>
+    /// <param name="parameters">Device code flow parameters including the display callback.</param>
+    /// <param name="transport">HTTP transport used to talk to rSTS.</param>
+    /// <param name="clock">Clock/delay abstraction driving the poll loop.</param>
+    /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
+    /// <returns>The rSTS access token as a <see cref="SecureString"/>.</returns>
+    internal static async Task<SecureString> RequestRstsDeviceTokenAsync(
+        string appliance,
+        DeviceCodeLoginParameters parameters,
+        IDeviceCodeHttpTransport transport,
+        IDeviceCodeClock clock,
+        CancellationToken cancellationToken)
+    {
         if (string.IsNullOrEmpty(appliance))
         {
             throw new ArgumentException("Appliance network address is required.", nameof(appliance));
@@ -72,8 +148,20 @@ public static class DeviceCodeLogin
             throw new ArgumentException("DisplayCallback is required.", nameof(parameters));
         }
 
+        if (transport == null)
+        {
+            throw new ArgumentNullException(nameof(transport));
+        }
+
+        if (clock == null)
+        {
+            throw new ArgumentNullException(nameof(clock));
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
         var clientId = parameters.ClientId ?? string.Empty;
-        var scope = parameters.Scope ?? "rsts:sts:primaryproviderid:local";
+        var scope = parameters.Scope ?? DefaultScope;
 
         // RSTS normalizes empty client_id to its built-in ApplicationClientId in
         // both the device-code cache (OAuthTokenManager.GetDeviceCode) and the
@@ -83,7 +171,6 @@ public static class DeviceCodeLogin
         // baked as ApplicationClientId. Sending an empty client_id here makes
         // the polling-side comparison value also normalize to ApplicationClientId,
         // so both browser flows succeed end-to-end.
-        using var http = Safeguard.AgentBasedLoginUtils.CreateStatelessHttpClient(ignoreSsl);
 
         // Step 1: Request device code (CRITICAL: no trailing slash on URL)
         Log.Debug("Requesting device authorization from {Appliance}", appliance);
@@ -92,12 +179,11 @@ public static class DeviceCodeLogin
         var requestBody = JsonSerializer.Serialize(
             new DeviceAuthRequest { ClientId = clientId, Scope = scope },
             DeviceCodeJsonContext.Default.DeviceAuthRequest);
-        var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response;
+        DeviceCodeHttpResult deviceResult;
         try
         {
-            response = await http.PostAsync(deviceAuthUrl, content, cancellationToken).ConfigureAwait(false);
+            deviceResult = await transport.PostJsonAsync(deviceAuthUrl, requestBody, cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
@@ -105,46 +191,59 @@ public static class DeviceCodeLogin
                 $"Device authorization request failed: unable to connect to {appliance} — {ex.Message}", ex);
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-        if (!response.IsSuccessStatusCode)
+        if (!deviceResult.IsSuccessStatusCode)
         {
+            // Disabled-grant detection is reactive and happens before any JSON parse:
+            // a disabled DeviceCode grant returns an HTML body, not JSON.
+            if (!string.IsNullOrEmpty(deviceResult.Body)
+                && deviceResult.Body.IndexOf(DeviceCodeGrantDisabledMarker, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new SafeguardDotNetException(
+                    "Device authorization request failed: the Device Code grant type is not allowed on this appliance. "
+                    + "Enable \"DeviceCode\" under Settings/Allowed OAuth2 Grant Types and try again.",
+                    deviceResult.StatusCode,
+                    deviceResult.Body);
+            }
+
             throw new SafeguardDotNetException(
-                $"Device authorization request failed: {response.StatusCode} {responseBody}",
-                response.StatusCode,
-                responseBody);
+                $"Device authorization request failed: {deviceResult.StatusCode} {deviceResult.Body}",
+                deviceResult.StatusCode,
+                deviceResult.Body);
         }
 
-        using var deviceResponse = JsonDocument.Parse(responseBody);
-        var deviceRoot = deviceResponse.RootElement;
-        var deviceCode = deviceRoot.TryGetProperty("device_code", out var dcEl) ? dcEl.GetString() : null;
-        var userCode = deviceRoot.TryGetProperty("user_code", out var ucEl) ? ucEl.GetString() : null;
-        var verificationUri = deviceRoot.TryGetProperty("verification_uri", out var vuEl) ? vuEl.GetString() : null;
-        var verificationUriComplete = deviceRoot.TryGetProperty("verification_uri_complete", out var vucEl) ? vucEl.GetString() : null;
-        var expiresIn = deviceRoot.TryGetProperty("expires_in", out var eiEl) && eiEl.TryGetInt32(out var eiVal) ? eiVal : 300;
-
-        // Step 2: Display to user via callback
-        parameters.DisplayCallback(new DeviceCodeInfo
+        string deviceCode;
+        int expiresIn;
+        using (var deviceResponse = JsonDocument.Parse(deviceResult.Body))
         {
-            VerificationUri = verificationUri,
-            UserCode = userCode,
-            VerificationUriComplete = verificationUriComplete,
-            ExpiresIn = expiresIn,
-        });
+            var deviceRoot = deviceResponse.RootElement;
+            deviceCode = deviceRoot.TryGetProperty("device_code", out var dcEl) ? dcEl.GetString() : null;
+            var userCode = deviceRoot.TryGetProperty("user_code", out var ucEl) ? ucEl.GetString() : null;
+            var verificationUri = deviceRoot.TryGetProperty("verification_uri", out var vuEl) ? vuEl.GetString() : null;
+            var verificationUriComplete = deviceRoot.TryGetProperty("verification_uri_complete", out var vucEl) ? vucEl.GetString() : null;
+            expiresIn = deviceRoot.TryGetProperty("expires_in", out var eiEl) && eiEl.TryGetInt32(out var eiVal) ? eiVal : 300;
+
+            // Step 2: Display to user via callback (the library never owns console I/O)
+            parameters.DisplayCallback(new DeviceCodeInfo
+            {
+                VerificationUri = verificationUri,
+                UserCode = userCode,
+                VerificationUriComplete = verificationUriComplete,
+                ExpiresIn = expiresIn,
+            });
+        }
 
         // Step 3: Poll token endpoint
         Log.Debug("Polling token endpoint for device code redemption");
 
         var tokenUrl = $"https://{appliance}/RSTS/oauth2/token";
         var intervalSeconds = parameters.PollingIntervalSeconds > 0 ? parameters.PollingIntervalSeconds : 5;
-        var deadline = DateTime.UtcNow.AddSeconds(expiresIn);
-        SecureString rstsAccessToken = null;
+        var deadline = clock.UtcNow.AddSeconds(expiresIn);
 
-        while (DateTime.UtcNow < deadline)
+        while (clock.UtcNow < deadline)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            await Task.Delay(TimeSpan.FromSeconds(intervalSeconds), cancellationToken).ConfigureAwait(false);
+            await clock.DelayAsync(TimeSpan.FromSeconds(intervalSeconds), cancellationToken).ConfigureAwait(false);
 
             var pollBody = JsonSerializer.Serialize(
                 new DeviceTokenRequest
@@ -154,59 +253,67 @@ public static class DeviceCodeLogin
                     ClientId = clientId,
                 },
                 DeviceCodeJsonContext.Default.DeviceTokenRequest);
-            var pollContent = new StringContent(pollBody, Encoding.UTF8, "application/json");
-            var pollResponse = await http.PostAsync(tokenUrl, pollContent, cancellationToken).ConfigureAwait(false);
-            var pollResponseBody = await pollResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-            using var pollJson = JsonDocument.Parse(pollResponseBody);
 
-            var pollRoot = pollJson.RootElement;
+            var pollResult = await transport.PostJsonAsync(tokenUrl, pollBody, cancellationToken).ConfigureAwait(false);
 
-            if (pollResponse.IsSuccessStatusCode)
+            JsonDocument pollJson;
+            try
             {
-                var accessTokenValue = pollRoot.TryGetProperty("access_token", out var atEl) ? atEl.GetString() : null;
-                rstsAccessToken = accessTokenValue?.ToSecureString();
-                break;
+                pollJson = JsonDocument.Parse(pollResult.Body);
+            }
+            catch (JsonException)
+            {
+                throw new SafeguardDotNetException(
+                    $"Device code token request returned an unexpected non-JSON response: {pollResult.StatusCode}",
+                    pollResult.StatusCode,
+                    pollResult.Body);
             }
 
-            var error = pollRoot.TryGetProperty("error", out var errEl) ? errEl.GetString() : null;
-            switch (error)
+            using (pollJson)
             {
-                case "authorization_pending":
-                    continue;
-                case "slow_down":
-                    intervalSeconds += 5;
-                    continue;
-                case "access_denied":
-                    throw new SafeguardDotNetException(
-                        "Device code authentication was denied.",
-                        pollResponse.StatusCode,
-                        pollResponseBody);
-                case "expired_token":
-                    throw new SafeguardDotNetException(
-                        "Device code has expired. Please try again.",
-                        pollResponse.StatusCode,
-                        pollResponseBody);
-                default:
-                    throw new SafeguardDotNetException(
-                        $"Unexpected error during device code polling: {error}",
-                        pollResponse.StatusCode,
-                        pollResponseBody);
+                var pollRoot = pollJson.RootElement;
+
+                if (pollResult.IsSuccessStatusCode)
+                {
+                    var accessTokenValue = pollRoot.TryGetProperty("access_token", out var atEl) ? atEl.GetString() : null;
+                    if (string.IsNullOrEmpty(accessTokenValue))
+                    {
+                        throw new SafeguardDotNetException(
+                            "Device code token response did not contain an access_token.",
+                            pollResult.StatusCode,
+                            pollResult.Body);
+                    }
+
+                    return accessTokenValue.ToSecureString();
+                }
+
+                var error = pollRoot.TryGetProperty("error", out var errEl) ? errEl.GetString() : null;
+                switch (error)
+                {
+                    case "authorization_pending":
+                        break;
+                    case "slow_down":
+                        intervalSeconds += 5;
+                        break;
+                    case "access_denied":
+                        throw new SafeguardDotNetException(
+                            "Device code authentication was denied by the user.",
+                            pollResult.StatusCode,
+                            pollResult.Body);
+                    case "expired_token":
+                        throw new SafeguardDotNetException(
+                            "Device code has expired before it was authorized. Please try again.",
+                            pollResult.StatusCode,
+                            pollResult.Body);
+                    default:
+                        throw new SafeguardDotNetException(
+                            $"Unexpected error during device code polling: {error}",
+                            pollResult.StatusCode,
+                            pollResult.Body);
+                }
             }
         }
 
-        if (rstsAccessToken == null)
-        {
-            throw new SafeguardDotNetException("Device code expired before user authenticated.");
-        }
-
-        // Step 4: Exchange RSTS token for Safeguard UserToken
-        Log.Debug("Exchanging RSTS access token for Safeguard user token");
-
-        using (rstsAccessToken)
-        {
-            return await Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnectionAsync(
-                appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken)
-                .ConfigureAwait(false);
-        }
+        throw new SafeguardDotNetException("Device code expired before user authenticated.");
     }
 }

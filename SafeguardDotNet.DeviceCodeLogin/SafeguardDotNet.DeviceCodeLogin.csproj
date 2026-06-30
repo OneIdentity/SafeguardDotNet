@@ -44,6 +44,10 @@
     <ProjectReference Include="..\SafeguardDotNet\SafeguardDotNet.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="SafeguardDotNetUnitTest" />
+  </ItemGroup>
+
   <Target Name="SignAssemblies" AfterTargets="PostBuildEvent">
     <Exec Condition="'$(SignFiles)'=='true'" Command="&quot;$(SignToolPath)&quot; sign /debug /v /fd SHA256 /tr http://ts.ssl.com /td sha256 /sha1 $(CertThumbprint) &quot;$(TargetDir)*.dll&quot;" />
   </Target>
