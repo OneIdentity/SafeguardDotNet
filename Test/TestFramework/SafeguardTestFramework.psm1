@@ -305,16 +305,20 @@ function Invoke-SgDnSafeguardTool {
     $exited = $process.WaitForExit($TimeoutSeconds * 1000)
     if (-not $exited) {
         try {
-            $process.Kill()
+            # The tool runs as a grandchild of `dotnet run` and keeps the redirected
+            # stdout/stderr pipe open; kill the whole tree so the read tasks reach EOF.
+            $process.Kill($true)
         }
         catch {
-            Write-Verbose "Failed to kill timed-out process: $($_.Exception.Message)"
+            try { $process.Kill() }
+            catch { Write-Verbose "Failed to kill timed-out process: $($_.Exception.Message)" }
         }
         # Killing closes the output streams, so the read tasks complete with
-        # everything the tool printed before the timeout. Surface that captured
-        # output so callers can assert on evidence emitted pre-timeout.
+        # everything the tool printed before the timeout. Bound the read so an
+        # inherited still-open handle can't block indefinitely, and surface whatever
+        # captured output exists so callers can assert on evidence emitted pre-timeout.
         $process.WaitForExit()
-        $partialStdout = $stdoutTask.GetAwaiter().GetResult().Trim()
+        $partialStdout = if ($stdoutTask.Wait(5000)) { $stdoutTask.GetAwaiter().GetResult().Trim() } else { "" }
         throw "Process timed out after ${TimeoutSeconds}s: dotnet run --project `"$ProjectDir`" -- $Arguments`nCaptured output: $partialStdout"
     }
 
