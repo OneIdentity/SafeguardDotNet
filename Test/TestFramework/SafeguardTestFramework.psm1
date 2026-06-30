@@ -111,6 +111,7 @@ function New-SgDnTestContext {
         EventToolDir    = (Join-Path $testRoot "SafeguardDotNetEventTool")
         SessionsToolDir = (Join-Path $testRoot "SafeguardSessionsDotNetTool")
         PkceToolDir     = (Join-Path $testRoot "SafeguardDotNetPkceNoninteractiveLoginTester")
+        DeviceCodeToolDir = (Join-Path $testRoot "SafeguardDotNetDeviceCodeLoginTester")
         CertDir         = (Join-Path $testRoot "TestData" "CERTS")
 
         # Per-suite transient data (reset each suite)
@@ -314,7 +315,12 @@ function Invoke-SgDnSafeguardTool {
         $exited = $process.WaitForExit($TimeoutSeconds * 1000)
         if (-not $exited) {
             try { $process.Kill() } catch {}
-            throw "Process timed out after ${TimeoutSeconds}s: dotnet run --project `"$ProjectDir`" -- $Arguments"
+            # Give the async output events a moment to flush whatever the tool
+            # printed before it was killed, then surface it so callers can assert
+            # on evidence (e.g. a verification URL) that was emitted pre-timeout.
+            Start-Sleep -Milliseconds 250
+            $partialStdout = $stdoutBuilder.ToString().Trim()
+            throw "Process timed out after ${TimeoutSeconds}s: dotnet run --project `"$ProjectDir`" -- $Arguments`nCaptured output: $partialStdout"
         }
 
         # Allow async output events to flush
@@ -963,6 +969,7 @@ function Build-SgDnTestProjects {
         $Context.AccessRequestBrokerToolDir
         $Context.EventToolDir
         $Context.PkceToolDir
+        $Context.DeviceCodeToolDir
     )
 
     $toBuild = if ($Projects) { $Projects } else { $defaultProjects }

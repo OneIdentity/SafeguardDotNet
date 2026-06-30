@@ -4,6 +4,9 @@ namespace SafeguardDotNetDeviceCodeLoginTester;
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using CommandLine;
@@ -47,6 +50,14 @@ internal class Program
             Default = false,
             HelpText = "Use ConnectAsync with Ctrl+C cancellation support")]
         public bool Async { get; set; }
+
+        [Option(
+            'n',
+            "NonInteractive",
+            Required = false,
+            Default = false,
+            HelpText = "Skip the post-success key press and emit structured device-code data for automation")]
+        public bool NonInteractive { get; set; }
     }
 
     private static void Execute(Options opts)
@@ -76,14 +87,18 @@ internal class Program
             {
                 connection = DeviceCodeLogin.ConnectAsync(
                     opts.Appliance,
-                    new DeviceCodeLoginParameters { DisplayCallback = DisplayCallback },
+                    BuildParameters(opts),
                     ignoreSsl: opts.Insecure).GetAwaiter().GetResult();
             }
 
             Log.Information("Successfully connected!");
             Log.Information(connection.InvokeMethod(Service.Core, Method.Get, "Me"));
-            Log.Information("Press any key to quit...");
-            Console.ReadKey();
+            if (!opts.NonInteractive)
+            {
+                Log.Information("Press any key to quit...");
+                Console.ReadKey();
+            }
+
             connection.LogOut();
         }
 #pragma warning disable CA1031 // Intentional top-level catch-all for error logging
@@ -101,9 +116,40 @@ internal class Program
         Log.Information("Async mode: press Ctrl+C to cancel");
         return await DeviceCodeLogin.ConnectAsync(
             opts.Appliance,
-            new DeviceCodeLoginParameters { DisplayCallback = DisplayCallback },
+            BuildParameters(opts),
             ignoreSsl: opts.Insecure,
             cancellationToken: cts.Token);
+    }
+
+    private static DeviceCodeLoginParameters BuildParameters(Options opts)
+    {
+        return new DeviceCodeLoginParameters
+        {
+            DisplayCallback = info =>
+            {
+                DisplayCallback(info);
+                if (opts.NonInteractive)
+                {
+                    EmitStructuredDeviceCode(info);
+                }
+            },
+        };
+    }
+
+    private static void EmitStructuredDeviceCode(DeviceCodeInfo info)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("verification_uri", info.VerificationUri);
+            writer.WriteString("verification_uri_complete", info.VerificationUriComplete);
+            writer.WriteString("user_code", info.UserCode);
+            writer.WriteNumber("expires_in", info.ExpiresIn);
+            writer.WriteEndObject();
+        }
+
+        Console.WriteLine($"DEVICE_CODE_DATA {Encoding.UTF8.GetString(stream.ToArray())}");
     }
 
     private static void DisplayCallback(DeviceCodeInfo info)
