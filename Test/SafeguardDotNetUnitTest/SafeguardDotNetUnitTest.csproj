@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SafeguardDotNet\SafeguardDotNet.csproj" />
+    <ProjectReference Include="..\..\SafeguardDotNet.DeviceCodeLogin\SafeguardDotNet.DeviceCodeLogin.csproj" />
   </ItemGroup>
 
   <ItemGroup>
