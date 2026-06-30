@@ -5,7 +5,9 @@ namespace SafeguardDotNetUnitTest;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Security;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -193,7 +195,7 @@ public class DeviceCodeLoginTests
     {
         var htmlBody = $"<html><body><h1>{phrase}</h1></body></html>";
         var transport = new FakeHttpTransport();
-        transport.EnqueueDeviceResponse(new DeviceCodeHttpResult(HttpStatusCode.BadRequest, false, htmlBody));
+        transport.EnqueueDeviceResponse(Json(HttpStatusCode.BadRequest, htmlBody));
 
         var ex = await Assert.ThrowsAsync<SafeguardDotNetException>(
             () => DeviceCodeLogin.RequestRstsDeviceTokenAsync(
@@ -217,7 +219,7 @@ public class DeviceCodeLoginTests
     public async Task NonSuccessWithoutDisabledMarker_ThrowsGenericDeviceAuthError()
     {
         var transport = new FakeHttpTransport();
-        transport.EnqueueDeviceResponse(new DeviceCodeHttpResult(HttpStatusCode.InternalServerError, false, "boom"));
+        transport.EnqueueDeviceResponse(Json(HttpStatusCode.InternalServerError, "boom"));
 
         var ex = await Assert.ThrowsAsync<SafeguardDotNetException>(
             () => DeviceCodeLogin.RequestRstsDeviceTokenAsync(
@@ -332,7 +334,7 @@ public class DeviceCodeLoginTests
         var body = "{\"error\":\"access_denied\"}";
         var transport = new FakeHttpTransport();
         transport.EnqueueDeviceResponse(DeviceSuccess());
-        transport.EnqueueTokenResponse(new DeviceCodeHttpResult(HttpStatusCode.BadRequest, false, body));
+        transport.EnqueueTokenResponse(Json(HttpStatusCode.BadRequest, body));
 
         var ex = await Assert.ThrowsAsync<SafeguardDotNetException>(
             () => DeviceCodeLogin.RequestRstsDeviceTokenAsync(
@@ -353,7 +355,7 @@ public class DeviceCodeLoginTests
         var body = "{\"error\":\"expired_token\"}";
         var transport = new FakeHttpTransport();
         transport.EnqueueDeviceResponse(DeviceSuccess());
-        transport.EnqueueTokenResponse(new DeviceCodeHttpResult(HttpStatusCode.BadRequest, false, body));
+        transport.EnqueueTokenResponse(Json(HttpStatusCode.BadRequest, body));
 
         var ex = await Assert.ThrowsAsync<SafeguardDotNetException>(
             () => DeviceCodeLogin.RequestRstsDeviceTokenAsync(
@@ -374,7 +376,7 @@ public class DeviceCodeLoginTests
         var body = "{\"error\":\"invalid_grant\"}";
         var transport = new FakeHttpTransport();
         transport.EnqueueDeviceResponse(DeviceSuccess());
-        transport.EnqueueTokenResponse(new DeviceCodeHttpResult(HttpStatusCode.BadRequest, false, body));
+        transport.EnqueueTokenResponse(Json(HttpStatusCode.BadRequest, body));
 
         var ex = await Assert.ThrowsAsync<SafeguardDotNetException>(
             () => DeviceCodeLogin.RequestRstsDeviceTokenAsync(
@@ -395,7 +397,7 @@ public class DeviceCodeLoginTests
         var htmlBody = "<html><body>500 Internal Server Error</body></html>";
         var transport = new FakeHttpTransport();
         transport.EnqueueDeviceResponse(DeviceSuccess());
-        transport.EnqueueTokenResponse(new DeviceCodeHttpResult(HttpStatusCode.InternalServerError, false, htmlBody));
+        transport.EnqueueTokenResponse(Json(HttpStatusCode.InternalServerError, htmlBody));
 
         var ex = await Assert.ThrowsAsync<SafeguardDotNetException>(
             () => DeviceCodeLogin.RequestRstsDeviceTokenAsync(
@@ -539,7 +541,7 @@ public class DeviceCodeLoginTests
             ignoreSsl: true,
             transport,
             new FakeClock(ClockStart),
-            exchanger,
+            exchanger.ExchangeAsync,
             CancellationToken.None);
 
         Assert.Equal(1, exchanger.CallCount);
@@ -586,7 +588,7 @@ public class DeviceCodeLoginTests
         return parameters;
     }
 
-    private static DeviceCodeHttpResult DeviceSuccess(
+    private static HttpResponseMessage DeviceSuccess(
         string deviceCode = "device-code",
         string userCode = "ABCD-1234",
         string verificationUri = "https://appliance.test/RSTS/Device",
@@ -602,27 +604,35 @@ public class DeviceCodeLoginTests
             ["expires_in"] = expiresIn,
         });
 
-        return new DeviceCodeHttpResult(HttpStatusCode.OK, true, json);
+        return Json(HttpStatusCode.OK, json);
     }
 
-    private static DeviceCodeHttpResult TokenSuccess(string accessToken)
+    private static HttpResponseMessage TokenSuccess(string accessToken)
     {
         var json = JsonSerializer.Serialize(new Dictionary<string, string>
         {
             ["access_token"] = accessToken,
         });
 
-        return new DeviceCodeHttpResult(HttpStatusCode.OK, true, json);
+        return Json(HttpStatusCode.OK, json);
     }
 
-    private static DeviceCodeHttpResult TokenError(string error)
+    private static HttpResponseMessage TokenError(string error)
     {
         var json = JsonSerializer.Serialize(new Dictionary<string, string>
         {
             ["error"] = error,
         });
 
-        return new DeviceCodeHttpResult(HttpStatusCode.BadRequest, false, json);
+        return Json(HttpStatusCode.BadRequest, json);
+    }
+
+    private static HttpResponseMessage Json(HttpStatusCode status, string body)
+    {
+        return new HttpResponseMessage(status)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json"),
+        };
     }
 
     private static JsonElement ParseBody(string body)
@@ -644,40 +654,66 @@ public class DeviceCodeLoginTests
         public string Body { get; }
     }
 
-    private sealed class FakeHttpTransport : IDeviceCodeHttpTransport
+    private sealed class FakeHttpTransport : HttpClient
     {
-        private readonly Queue<DeviceCodeHttpResult> _deviceResponses = new();
-        private readonly Queue<DeviceCodeHttpResult> _tokenResponses = new();
+        private readonly StubHandler _handler;
 
-        public List<RecordedRequest> Requests { get; } = new();
-
-        public Action? OnTokenRequestServed { get; set; }
-
-        public void EnqueueDeviceResponse(DeviceCodeHttpResult result)
+        public FakeHttpTransport()
+            : this(new StubHandler())
         {
-            _deviceResponses.Enqueue(result);
         }
 
-        public void EnqueueTokenResponse(DeviceCodeHttpResult result)
+        private FakeHttpTransport(StubHandler handler)
+            : base(handler)
         {
-            _tokenResponses.Enqueue(result);
+            _handler = handler;
         }
 
-        public Task<DeviceCodeHttpResult> PostJsonAsync(
-            string url,
-            string jsonBody,
-            CancellationToken cancellationToken)
-        {
-            Requests.Add(new RecordedRequest(url, jsonBody));
+        public List<RecordedRequest> Requests => _handler.Requests;
 
-            if (url.EndsWith("/DeviceLogin", StringComparison.Ordinal))
+        public Action? OnTokenRequestServed
+        {
+            get => _handler.OnTokenRequestServed;
+            set => _handler.OnTokenRequestServed = value;
+        }
+
+        public void EnqueueDeviceResponse(HttpResponseMessage result) => _handler.EnqueueDeviceResponse(result);
+
+        public void EnqueueTokenResponse(HttpResponseMessage result) => _handler.EnqueueTokenResponse(result);
+
+        private sealed class StubHandler : HttpMessageHandler
+        {
+            private readonly Queue<HttpResponseMessage> _deviceResponses = new();
+            private readonly Queue<HttpResponseMessage> _tokenResponses = new();
+
+            public List<RecordedRequest> Requests { get; } = new();
+
+            public Action? OnTokenRequestServed { get; set; }
+
+            public void EnqueueDeviceResponse(HttpResponseMessage result) => _deviceResponses.Enqueue(result);
+
+            public void EnqueueTokenResponse(HttpResponseMessage result) => _tokenResponses.Enqueue(result);
+
+            protected override async Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken)
             {
-                return Task.FromResult(_deviceResponses.Dequeue());
-            }
+                var url = request.RequestUri!.ToString();
+                var body = request.Content == null
+                    ? string.Empty
+                    : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
-            var response = _tokenResponses.Dequeue();
-            OnTokenRequestServed?.Invoke();
-            return Task.FromResult(response);
+                Requests.Add(new RecordedRequest(url, body));
+
+                if (url.EndsWith("/DeviceLogin", StringComparison.Ordinal))
+                {
+                    return _deviceResponses.Dequeue();
+                }
+
+                var response = _tokenResponses.Dequeue();
+                OnTokenRequestServed?.Invoke();
+                return response;
+            }
         }
     }
 
@@ -711,7 +747,7 @@ public class DeviceCodeLoginTests
         }
     }
 
-    private sealed class FakeExchanger : IRstsTokenExchanger
+    private sealed class FakeExchanger
     {
         public int CallCount { get; private set; }
 

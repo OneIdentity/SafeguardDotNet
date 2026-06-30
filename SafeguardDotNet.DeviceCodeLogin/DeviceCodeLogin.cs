@@ -3,8 +3,10 @@
 namespace OneIdentity.SafeguardDotNet.DeviceCodeLogin;
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Security;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +15,23 @@ using OneIdentity.SafeguardDotNet.DeviceCodeLogin.Internal;
 using OneIdentity.SafeguardDotNet.DeviceCodeLogin.Serialization;
 
 using Serilog;
+
+/// <summary>
+/// Exchanges an rSTS access token for a Safeguard API connection. Production uses
+/// the SDK's agent-based login utilities; unit tests substitute a fake.
+/// </summary>
+/// <param name="appliance">Network address of the Safeguard appliance.</param>
+/// <param name="rstsAccessToken">The rSTS access token to exchange. Caller retains ownership.</param>
+/// <param name="apiVersion">Target API version to use.</param>
+/// <param name="ignoreSsl">Ignore server certificate validation (dev only).</param>
+/// <param name="cancellationToken">Cancellation token to abort the exchange.</param>
+/// <returns>A reusable Safeguard API connection.</returns>
+internal delegate Task<ISafeguardConnection> RstsTokenExchange(
+    string appliance,
+    SecureString rstsAccessToken,
+    int apiVersion,
+    bool ignoreSsl,
+    CancellationToken cancellationToken);
 
 /// <summary>
 /// Provides device code-based authentication to Safeguard using OAuth 2.0
@@ -66,15 +85,15 @@ public static class DeviceCodeLogin
         bool ignoreSsl = false,
         CancellationToken cancellationToken = default)
     {
-        using var transport = new DeviceCodeHttpTransport(ignoreSsl);
+        using var httpClient = Safeguard.AgentBasedLoginUtils.CreateStatelessHttpClient(ignoreSsl);
         return await ConnectInternalAsync(
             appliance,
             parameters,
             apiVersion,
             ignoreSsl,
-            transport,
+            httpClient,
             new SystemDeviceCodeClock(),
-            new RstsTokenExchanger(),
+            Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnectionAsync,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -86,9 +105,9 @@ public static class DeviceCodeLogin
     /// <param name="parameters">Device code flow parameters including the display callback.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation (dev only).</param>
-    /// <param name="transport">HTTP transport used to talk to rSTS.</param>
+    /// <param name="httpClient">HTTP client used to talk to rSTS.</param>
     /// <param name="clock">Clock/delay abstraction driving the poll loop.</param>
-    /// <param name="exchanger">rSTS-to-Safeguard token exchanger.</param>
+    /// <param name="exchange">rSTS-to-Safeguard token exchange delegate.</param>
     /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     internal static async Task<ISafeguardConnection> ConnectInternalAsync(
@@ -96,25 +115,25 @@ public static class DeviceCodeLogin
         DeviceCodeLoginParameters parameters,
         int apiVersion,
         bool ignoreSsl,
-        IDeviceCodeHttpTransport transport,
+        HttpClient httpClient,
         IDeviceCodeClock clock,
-        IRstsTokenExchanger exchanger,
+        RstsTokenExchange exchange,
         CancellationToken cancellationToken)
     {
-        if (exchanger == null)
+        if (exchange == null)
         {
-            throw new ArgumentNullException(nameof(exchanger));
+            throw new ArgumentNullException(nameof(exchange));
         }
 
         var rstsAccessToken = await RequestRstsDeviceTokenAsync(
-            appliance, parameters, transport, clock, cancellationToken).ConfigureAwait(false);
+            appliance, parameters, httpClient, clock, cancellationToken).ConfigureAwait(false);
 
         // Step 4: Exchange RSTS token for Safeguard UserToken
         Log.Debug("Exchanging RSTS access token for Safeguard user token");
 
         using (rstsAccessToken)
         {
-            return await exchanger.ExchangeAsync(
+            return await exchange(
                 appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -127,14 +146,14 @@ public static class DeviceCodeLogin
     /// </summary>
     /// <param name="appliance">Network address of the Safeguard appliance.</param>
     /// <param name="parameters">Device code flow parameters including the display callback.</param>
-    /// <param name="transport">HTTP transport used to talk to rSTS.</param>
+    /// <param name="httpClient">HTTP client used to talk to rSTS.</param>
     /// <param name="clock">Clock/delay abstraction driving the poll loop.</param>
     /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
     /// <returns>The rSTS access token as a <see cref="SecureString"/>.</returns>
     internal static async Task<SecureString> RequestRstsDeviceTokenAsync(
         string appliance,
         DeviceCodeLoginParameters parameters,
-        IDeviceCodeHttpTransport transport,
+        HttpClient httpClient,
         IDeviceCodeClock clock,
         CancellationToken cancellationToken)
     {
@@ -148,9 +167,9 @@ public static class DeviceCodeLogin
             throw new ArgumentException("DisplayCallback is required.", nameof(parameters));
         }
 
-        if (transport == null)
+        if (httpClient == null)
         {
-            throw new ArgumentNullException(nameof(transport));
+            throw new ArgumentNullException(nameof(httpClient));
         }
 
         if (clock == null)
@@ -180,10 +199,10 @@ public static class DeviceCodeLogin
             new DeviceAuthRequest { ClientId = clientId, Scope = scope },
             DeviceCodeJsonContext.Default.DeviceAuthRequest);
 
-        DeviceCodeHttpResult deviceResult;
+        (HttpStatusCode StatusCode, bool IsSuccess, string Body) deviceResult;
         try
         {
-            deviceResult = await transport.PostJsonAsync(deviceAuthUrl, requestBody, cancellationToken).ConfigureAwait(false);
+            deviceResult = await PostJsonAsync(httpClient, deviceAuthUrl, requestBody, cancellationToken).ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
         {
@@ -191,7 +210,7 @@ public static class DeviceCodeLogin
                 $"Device authorization request failed: unable to connect to {appliance} — {ex.Message}", ex);
         }
 
-        if (!deviceResult.IsSuccessStatusCode)
+        if (!deviceResult.IsSuccess)
         {
             // Disabled-grant detection is reactive and happens before any JSON parse:
             // a disabled DeviceCode grant returns an HTML body, not JSON.
@@ -254,7 +273,7 @@ public static class DeviceCodeLogin
                 },
                 DeviceCodeJsonContext.Default.DeviceTokenRequest);
 
-            var pollResult = await transport.PostJsonAsync(tokenUrl, pollBody, cancellationToken).ConfigureAwait(false);
+            var pollResult = await PostJsonAsync(httpClient, tokenUrl, pollBody, cancellationToken).ConfigureAwait(false);
 
             JsonDocument pollJson;
             try
@@ -273,7 +292,7 @@ public static class DeviceCodeLogin
             {
                 var pollRoot = pollJson.RootElement;
 
-                if (pollResult.IsSuccessStatusCode)
+                if (pollResult.IsSuccess)
                 {
                     var accessTokenValue = pollRoot.TryGetProperty("access_token", out var atEl) ? atEl.GetString() : null;
                     if (string.IsNullOrEmpty(accessTokenValue))
@@ -315,5 +334,20 @@ public static class DeviceCodeLogin
         }
 
         throw new SafeguardDotNetException("Device code expired before user authenticated.");
+    }
+
+    /// <summary>
+    /// Posts a JSON body to an rSTS endpoint and returns the status and raw body.
+    /// </summary>
+    private static async Task<(HttpStatusCode StatusCode, bool IsSuccess, string Body)> PostJsonAsync(
+        HttpClient httpClient,
+        string url,
+        string jsonBody,
+        CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        using var response = await httpClient.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        return (response.StatusCode, response.IsSuccessStatusCode, body);
     }
 }

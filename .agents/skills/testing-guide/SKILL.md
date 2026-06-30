@@ -25,11 +25,11 @@ This SDK is validated at two levels:
 
   These tests are fast, require no appliance, and run on every build. Prefer adding unit
   coverage here whenever logic can be exercised without an appliance (timers, retry/backoff,
-  request/response shaping, error mapping, cancellation). The device-code flow exposes
-  **internal-only seams** (`IDeviceCodeHttpTransport`, `IDeviceCodeClock`,
-  `IRstsTokenExchanger`) surfaced to the test project via `InternalsVisibleTo`; follow that
-  pattern — keep the public API unchanged and inject fakes that queue rSTS responses and
-  advance virtual time rather than sleeping.
+  request/response shaping, error mapping, cancellation). The device-code flow injects an
+  `HttpClient` (stub `HttpMessageHandler`), an `IDeviceCodeClock` seam, and an
+  `RstsTokenExchange` delegate into `internal` overloads surfaced via `InternalsVisibleTo`;
+  follow that pattern — keep the public API unchanged and inject fakes that queue rSTS
+  responses and advance virtual time rather than sleeping.
 
 - **Live-appliance integration tests** in `Test/` (CLI tools + the PowerShell framework)
   remain the only way to validate anything that actually talks to a Safeguard appliance:
