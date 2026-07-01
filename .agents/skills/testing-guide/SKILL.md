@@ -10,12 +10,34 @@ description: >-
 
 # Testing Guide
 
-## No mock/unit tests — live appliance only
+## Two test layers: deterministic unit tests + live-appliance integration
 
-This SDK interacts with a live Safeguard appliance API. **There are no mock/unit tests.**
-The `Test/` directory contains CLI tools that require a live appliance and a PowerShell
-integration test framework. Running tests against a live appliance is the only way to
-validate changes.
+This SDK is validated at two levels:
+
+- **Deterministic unit tests** live in `Test/SafeguardDotNetUnitTest/` (xUnit, `net10.0`).
+  They cover pure, appliance-independent logic with injected collaborators and no network
+  I/O. Current coverage: `ReconnectBackoffTests.cs` (SignalR reconnect backoff) and
+  `DeviceCodeLoginTests.cs` (the OAuth 2.0 device-code flow). Run them with:
+
+  ```powershell
+  dotnet test Test\SafeguardDotNetUnitTest\SafeguardDotNetUnitTest.csproj
+  ```
+
+  These tests are fast, require no appliance, and run on every build. Prefer adding unit
+  coverage here whenever logic can be exercised without an appliance (timers, retry/backoff,
+  request/response shaping, error mapping, cancellation). The device-code flow injects an
+  `HttpClient` (stub `HttpMessageHandler`), an `IDeviceCodeClock` seam, and an
+  `RstsTokenExchange` delegate into `internal` overloads surfaced via `InternalsVisibleTo`;
+  follow that pattern — keep the public API unchanged and inject fakes that queue rSTS
+  responses and advance virtual time rather than sleeping.
+
+- **Live-appliance integration tests** in `Test/` (CLI tools + the PowerShell framework)
+  remain the only way to validate anything that actually talks to a Safeguard appliance:
+  authentication, API calls, connection logic, events, A2A, and SPS. Most regression
+  coverage lives here.
+
+The rest of this guide covers the live-appliance workflow.
+
 
 ## Asking the user for appliance access
 
@@ -233,6 +255,7 @@ The `$Context` object provides:
 | `$Context.AdminPassword` | Admin password (from CLI) |
 | `$Context.TotpSeed` | Base32 TOTP seed (from CLI `-TotpSeed`, or `$null`) |
 | `$Context.PkceToolDir` | Path to `Test/SafeguardDotNetPkceNoninteractiveLoginTester` |
+| `$Context.DeviceCodeToolDir` | Path to `Test/SafeguardDotNetDeviceCodeLoginTester` |
 | `$Context.SuiteData` | Hashtable for per-suite state (shared between Setup/Execute/Cleanup) |
 | `$Context.TestPrefix` | Name prefix for test objects (default: "SgDnTest") |
 
@@ -333,7 +356,7 @@ the flow starts correctly without requiring a human to complete authentication.
 |---|---|---|
 | SpsIntegration | SPS appliance (`-SpsAppliance`, `-SpsPassword`) | Only suite needing separate infrastructure |
 | BrowserAuthentication | Nothing extra | Tests error paths + verifies listener starts (timeout expected) |
-| DeviceCodeAuthentication | Nothing extra | Tests grant toggle + verifies device code issued (timeout expected) |
+| DeviceCodeAuthentication | Nothing extra | Tests grant toggle + requires verification-URL evidence; tester runs non-interactive (`-n`) emitting `DEVICE_CODE_DATA`; live approval is opt-in via `SGDN_DEVICECODE_SCRIPTED_APPROVAL=1` |
 | A2A* suites | Nothing extra | Creates own certs, users, registrations via setup |
 | CertificateAuth | Nothing extra | Uses embedded test certificates |
 | Streaming | Nothing extra | Tests streaming download paths |

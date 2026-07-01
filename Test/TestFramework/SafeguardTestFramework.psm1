@@ -111,6 +111,7 @@ function New-SgDnTestContext {
         EventToolDir    = (Join-Path $testRoot "SafeguardDotNetEventTool")
         SessionsToolDir = (Join-Path $testRoot "SafeguardSessionsDotNetTool")
         PkceToolDir     = (Join-Path $testRoot "SafeguardDotNetPkceNoninteractiveLoginTester")
+        DeviceCodeToolDir = (Join-Path $testRoot "SafeguardDotNetDeviceCodeLoginTester")
         CertDir         = (Join-Path $testRoot "TestData" "CERTS")
 
         # Per-suite transient data (reset each suite)
@@ -285,50 +286,44 @@ function Invoke-SgDnSafeguardTool {
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
 
-    # Capture output asynchronously to avoid deadlocks
-    $stdoutBuilder = [System.Text.StringBuilder]::new()
-    $stderrBuilder = [System.Text.StringBuilder]::new()
+    # Read stdout/stderr to completion on background threads. This deliberately
+    # avoids Register-ObjectEvent: those -Action handlers only run when the
+    # PowerShell event pump is serviced, which is starved while this thread blocks
+    # in WaitForExit. The ReadToEndAsync tasks run independently of the pump and
+    # complete when the streams reach EOF — including when the process is killed on
+    # timeout — so output emitted before the kill (e.g. a device-code verification
+    # URL) is captured deterministically instead of racing the event queue.
+    $process.Start() | Out-Null
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
 
-    $stdoutEvent = Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action {
-        if ($null -ne $EventArgs.Data) {
-            $Event.MessageData.AppendLine($EventArgs.Data) | Out-Null
+    if ($startInfo.RedirectStandardInput) {
+        $process.StandardInput.WriteLine($StdinLine)
+        $process.StandardInput.Close()
+    }
+
+    $exited = $process.WaitForExit($TimeoutSeconds * 1000)
+    if (-not $exited) {
+        try {
+            # The tool runs as a grandchild of `dotnet run` and keeps the redirected
+            # stdout/stderr pipe open; kill the whole tree so the read tasks reach EOF.
+            $process.Kill($true)
         }
-    } -MessageData $stdoutBuilder
-
-    $stderrEvent = Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action {
-        if ($null -ne $EventArgs.Data) {
-            $Event.MessageData.AppendLine($EventArgs.Data) | Out-Null
+        catch {
+            try { $process.Kill() }
+            catch { Write-Verbose "Failed to kill timed-out process: $($_.Exception.Message)" }
         }
-    } -MessageData $stderrBuilder
-
-    try {
-        $process.Start() | Out-Null
-        $process.BeginOutputReadLine()
-        $process.BeginErrorReadLine()
-
-        if ($startInfo.RedirectStandardInput) {
-            $process.StandardInput.WriteLine($StdinLine)
-            $process.StandardInput.Close()
-        }
-
-        $exited = $process.WaitForExit($TimeoutSeconds * 1000)
-        if (-not $exited) {
-            try { $process.Kill() } catch {}
-            throw "Process timed out after ${TimeoutSeconds}s: dotnet run --project `"$ProjectDir`" -- $Arguments"
-        }
-
-        # Allow async output events to flush
+        # Killing closes the output streams, so the read tasks complete with
+        # everything the tool printed before the timeout. Bound the read so an
+        # inherited still-open handle can't block indefinitely, and surface whatever
+        # captured output exists so callers can assert on evidence emitted pre-timeout.
         $process.WaitForExit()
-    }
-    finally {
-        Unregister-Event -SourceIdentifier $stdoutEvent.Name -ErrorAction SilentlyContinue
-        Unregister-Event -SourceIdentifier $stderrEvent.Name -ErrorAction SilentlyContinue
-        Remove-Job -Name $stdoutEvent.Name -Force -ErrorAction SilentlyContinue
-        Remove-Job -Name $stderrEvent.Name -Force -ErrorAction SilentlyContinue
+        $partialStdout = if ($stdoutTask.Wait(5000)) { $stdoutTask.GetAwaiter().GetResult().Trim() } else { "" }
+        throw "Process timed out after ${TimeoutSeconds}s: dotnet run --project `"$ProjectDir`" -- $Arguments`nCaptured output: $partialStdout"
     }
 
-    $stdout = $stdoutBuilder.ToString().Trim()
-    $stderr = $stderrBuilder.ToString().Trim()
+    $stdout = $stdoutTask.GetAwaiter().GetResult().Trim()
+    $stderr = $stderrTask.GetAwaiter().GetResult().Trim()
     $exitCode = $process.ExitCode
     $process.Dispose()
 
@@ -963,6 +958,7 @@ function Build-SgDnTestProjects {
         $Context.AccessRequestBrokerToolDir
         $Context.EventToolDir
         $Context.PkceToolDir
+        $Context.DeviceCodeToolDir
     )
 
     $toBuild = if ($Projects) { $Projects } else { $defaultProjects }
