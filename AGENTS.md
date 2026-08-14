@@ -44,7 +44,9 @@ Tests are live-appliance based. Use the CLI tools in `Test\` or
 - Dispose objects that hold `SecureString`, certificates, listeners, or connections
 - Public instance methods on disposable connection types must guard `_disposed`
 - Throw `SafeguardDotNetException` for SDK/API failures and preserve status/response details
-- Keep TLS 1.2 behavior and SSL validation handling consistent across `HttpClient` and SignalR
+- Default connections negotiate TLS via `SslProtocols.None` (TLS 1.3 where available); keep the
+  optional `minTlsVersion`/`maxTlsVersion` enforcement and SSL validation consistent across
+  `HttpClient` and SignalR. Map bounds through `TlsVersionMapper`; never re-pin `SslProtocols.Tls12`
 - `GenerateDocumentationFile` is enabled; public APIs need XML docs, but no XML file headers
 
 ## CI/CD

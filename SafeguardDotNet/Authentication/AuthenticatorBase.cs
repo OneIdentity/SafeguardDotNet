@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,13 +26,23 @@ internal abstract class AuthenticatorBase : IAuthenticationMechanism
 
     protected readonly CertificateContext clientCertificate;
 
-    protected AuthenticatorBase(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback, CertificateContext clientCertificate = null)
+    protected AuthenticatorBase(
+        string networkAddress,
+        int apiVersion,
+        bool ignoreSsl,
+        RemoteCertificateValidationCallback validationCallback,
+        CertificateContext clientCertificate = null,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         NetworkAddress = networkAddress;
         ApiVersion = apiVersion;
         IgnoreSsl = ignoreSsl;
         ValidationCallback = validationCallback;
         this.clientCertificate = clientCertificate;
+        MinTlsVersion = minTlsVersion;
+        MaxTlsVersion = maxTlsVersion;
+        SslProtocols = TlsVersionMapper.ToSslProtocols(minTlsVersion, maxTlsVersion);
 
         safeguardCoreUrl = $"https://{NetworkAddress}/service/core/v{ApiVersion}";
 
@@ -47,6 +58,12 @@ internal abstract class AuthenticatorBase : IAuthenticationMechanism
     public bool IgnoreSsl { get; }
 
     public RemoteCertificateValidationCallback ValidationCallback { get; }
+
+    public SslProtocols SslProtocols { get; }
+
+    protected SafeguardTlsVersion? MinTlsVersion { get; }
+
+    protected SafeguardTlsVersion? MaxTlsVersion { get; }
 
     public virtual bool IsAnonymous => false;
 
@@ -178,7 +195,7 @@ internal abstract class AuthenticatorBase : IAuthenticationMechanism
     {
         var handler = new HttpClientHandler
         {
-            SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            SslProtocols = SslProtocols,
         };
 
         if (clientCertificate?.Certificate != null)

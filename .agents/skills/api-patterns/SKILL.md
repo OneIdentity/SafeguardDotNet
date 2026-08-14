@@ -126,6 +126,12 @@ What happens after connect:
   really support anonymous access.
 - SSL behavior lives on the authentication mechanism and is reused by the HTTP
   client and event listeners.
+- TLS is negotiated by default (`SslProtocols.None`, so TLS 1.3 is used where the OS and
+  appliance support it). Every factory takes optional `minTlsVersion`/`maxTlsVersion`
+  (`SafeguardTlsVersion?`) to pin a range; leave them `null` to negotiate. The resolved
+  `SslProtocols` is stored on the mechanism and reused by the HTTP client, event listeners,
+  and A2A SignalR connections. Never re-pin `SslProtocols.Tls12` directly — go through
+  `TlsVersionMapper`.
 - `LogOut()` posts to `Core/Token/Logout` and then clears the cached token.
 
 For long-running automation, wrap the connection:

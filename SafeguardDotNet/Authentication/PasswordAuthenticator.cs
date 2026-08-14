@@ -26,8 +26,10 @@ internal class PasswordAuthenticator : AuthenticatorBase
         SecureString password,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, null, minTlsVersion, maxTlsVersion)
     {
         _provider = provider;
         if (string.IsNullOrEmpty(_provider))
@@ -75,7 +77,7 @@ internal class PasswordAuthenticator : AuthenticatorBase
     public override object Clone()
     {
         var auth =
-            new PasswordAuthenticator(NetworkAddress, _provider, _username, _password, ApiVersion, IgnoreSsl, ValidationCallback)
+            new PasswordAuthenticator(NetworkAddress, _provider, _username, _password, ApiVersion, IgnoreSsl, ValidationCallback, MinTlsVersion, MaxTlsVersion)
             {
                 accessToken = accessToken?.Copy(),
             };

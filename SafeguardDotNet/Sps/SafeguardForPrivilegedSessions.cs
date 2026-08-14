@@ -16,9 +16,17 @@ public static class SafeguardForPrivilegedSessions
     /// <param name="username">User name to use for authentication.</param>
     /// <param name="password">User password to use for authentication.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard for Privileged Sessions API connection.</returns>
-    public static ISafeguardSessionsConnection Connect(string networkAddress, string username, SecureString password, bool ignoreSsl = false)
+    public static ISafeguardSessionsConnection Connect(
+        string networkAddress,
+        string username,
+        SecureString password,
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        return new SafeguardSessionsConnection(new SpsAuthenticator(networkAddress, username, password, ignoreSsl));
+        return new SafeguardSessionsConnection(new SpsAuthenticator(networkAddress, username, password, ignoreSsl, minTlsVersion, maxTlsVersion));
     }
 }

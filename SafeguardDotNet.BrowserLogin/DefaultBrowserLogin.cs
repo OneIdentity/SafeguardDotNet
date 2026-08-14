@@ -30,15 +30,19 @@ public static class DefaultBrowserLogin
     /// <param name="port">Local TCP port to listen for OAuth callback (default: 8400)</param>
     /// <param name="apiVersion">Target API version to use (default: 4)</param>
     /// <param name="ignoreSsl">Ignore validation of Safeguard appliance SSL certificate (default: false)</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection</returns>
     public static ISafeguardConnection Connect(
         string appliance,
         string username = "",
         int port = 8400,
         int apiVersion = Safeguard.DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        return ConnectAsync(appliance, username, port, apiVersion, ignoreSsl, CancellationToken.None)
+        return ConnectAsync(appliance, username, port, apiVersion, ignoreSsl, CancellationToken.None, minTlsVersion, maxTlsVersion)
             .GetAwaiter().GetResult();
     }
 
@@ -60,6 +64,8 @@ public static class DefaultBrowserLogin
     /// <param name="apiVersion">Target API version to use (default: 4)</param>
     /// <param name="ignoreSsl">Ignore validation of Safeguard appliance SSL certificate (default: false)</param>
     /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection</returns>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails or API error.</exception>
     /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
@@ -69,7 +75,9 @@ public static class DefaultBrowserLogin
         int port = 8400,
         int apiVersion = Safeguard.DefaultApiVersion,
         bool ignoreSsl = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         Log.Debug("Calling RSTS for primary authentication");
 
@@ -88,13 +96,15 @@ public static class DefaultBrowserLogin
             oauthCodeVerifier,
             Safeguard.AgentBasedLoginUtils.RedirectUriTcpListener,
             ignoreSsl,
-            cancellationToken)
+            cancellationToken,
+            minTlsVersion,
+            maxTlsVersion)
             .ConfigureAwait(false);
 
         Log.Debug("Exchanging RSTS access token");
 
         return await Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnectionAsync(
-            appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken)
+            appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken, minTlsVersion, maxTlsVersion)
             .ConfigureAwait(false);
     }
 }

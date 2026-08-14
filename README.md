@@ -43,6 +43,34 @@ var connection = Safeguard.Connect("safeguard.sample.corp", "local", "Admin", pa
 var a2aContext = Safeguard.A2A.GetContext("safeguard.sample.corp", thumbprint, 3);
 ```
 
+## TLS Versions
+
+Starting with version 9.1, SafeguardDotNet no longer hard-pins TLS 1.2. By default the
+connection lets the operating system negotiate the best mutually supported protocol, which
+means TLS 1.3 is used automatically when both the client OS and the appliance support it
+(Safeguard for Privileged Passwords 9.0 and later). Connections continue to use HTTP/1.1.
+
+If you need to constrain the negotiated protocol, every `Connect`, `A2A.GetContext`, and
+login-module entry point accepts optional `minTlsVersion` / `maxTlsVersion` parameters. Leave
+them `null` (the default) to negotiate, or pin a bound to enforce a policy:
+
+```C#
+// Negotiate the best protocol (default; enables TLS 1.3 where available)
+var connection = Safeguard.Connect("safeguard.sample.corp", "local", "Admin", password);
+
+// Require TLS 1.3 or newer
+var strict = Safeguard.Connect("safeguard.sample.corp", "local", "Admin", password,
+    minTlsVersion: SafeguardTlsVersion.Tls13);
+
+// Pin to exactly TLS 1.2 (e.g. to talk to an older appliance)
+var legacy = Safeguard.Connect("safeguard.sample.corp", "local", "Admin", password,
+    minTlsVersion: SafeguardTlsVersion.Tls12, maxTlsVersion: SafeguardTlsVersion.Tls12);
+```
+
+The same `minTlsVersion` / `maxTlsVersion` parameters flow through event listeners and the
+A2A SignalR connections, so the enforced protocol is applied consistently. Supplying a
+`minTlsVersion` that is newer than `maxTlsVersion` throws an `ArgumentException`.
+
 ## Introduction
 
 All functionality in Safeguard is available via the Safeguard API. There is

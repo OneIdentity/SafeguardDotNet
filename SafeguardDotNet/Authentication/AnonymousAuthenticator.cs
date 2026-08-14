@@ -8,8 +8,14 @@ using System.Security;
 
 internal class AnonymousAuthenticator : AuthenticatorBase
 {
-    public AnonymousAuthenticator(string networkAddress, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+    public AnonymousAuthenticator(
+        string networkAddress,
+        int apiVersion,
+        bool ignoreSsl,
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, null, minTlsVersion, maxTlsVersion)
     {
         var notificationUrl = $"https://{NetworkAddress}/service/notification/v{ApiVersion}/Status";
 

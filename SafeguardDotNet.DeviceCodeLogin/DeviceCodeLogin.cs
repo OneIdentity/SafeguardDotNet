@@ -51,6 +51,8 @@ public static class DeviceCodeLogin
     /// <param name="parameters">Device code flow parameters including the display callback.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation (dev only).</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     /// <exception cref="ArgumentException">Thrown when DisplayCallback is null or appliance is empty.</exception>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails, code expires, or API error.</exception>
@@ -58,9 +60,11 @@ public static class DeviceCodeLogin
         string appliance,
         DeviceCodeLoginParameters parameters,
         int apiVersion = Safeguard.DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        return ConnectAsync(appliance, parameters, apiVersion, ignoreSsl, CancellationToken.None)
+        return ConnectAsync(appliance, parameters, apiVersion, ignoreSsl, CancellationToken.None, minTlsVersion, maxTlsVersion)
             .GetAwaiter().GetResult();
     }
 
@@ -74,6 +78,8 @@ public static class DeviceCodeLogin
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation (dev only).</param>
     /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     /// <exception cref="ArgumentException">Thrown when DisplayCallback is null or appliance is empty.</exception>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails, code expires, or API error.</exception>
@@ -83,9 +89,11 @@ public static class DeviceCodeLogin
         DeviceCodeLoginParameters parameters,
         int apiVersion = Safeguard.DefaultApiVersion,
         bool ignoreSsl = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        using var httpClient = Safeguard.AgentBasedLoginUtils.CreateStatelessHttpClient(ignoreSsl);
+        using var httpClient = Safeguard.AgentBasedLoginUtils.CreateStatelessHttpClient(ignoreSsl, minTlsVersion, maxTlsVersion);
         return await ConnectInternalAsync(
             appliance,
             parameters,
@@ -93,7 +101,8 @@ public static class DeviceCodeLogin
             ignoreSsl,
             httpClient,
             new SystemDeviceCodeClock(),
-            Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnectionAsync,
+            (a, token, version, ignore, ct) => Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnectionAsync(
+                a, token, version, ignore, ct, minTlsVersion, maxTlsVersion),
             cancellationToken).ConfigureAwait(false);
     }
 

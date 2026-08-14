@@ -45,7 +45,7 @@ internal class SafeguardSessionsConnection : ISafeguardSessionsConnection
     {
         var handler = new HttpClientHandler
         {
-            SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            SslProtocols = _authenticator.SslProtocols,
         };
 
         if (_authenticator.IgnoreSsl)

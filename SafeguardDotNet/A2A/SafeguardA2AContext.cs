@@ -27,6 +27,9 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
     private readonly int _apiVersion;
     private readonly bool _ignoreSsl;
     private readonly RemoteCertificateValidationCallback _validationCallback;
+    private readonly SafeguardTlsVersion? _minTlsVersion;
+    private readonly SafeguardTlsVersion? _maxTlsVersion;
+    private readonly System.Security.Authentication.SslProtocols _sslProtocols;
 
     private readonly CertificateContext _clientCertificate;
     private readonly HttpClient _http;
@@ -36,12 +39,17 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
         CertificateContext clientCertificate,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         _networkAddress = networkAddress;
         _apiVersion = apiVersion;
         _ignoreSsl = ignoreSsl;
         _validationCallback = _ignoreSsl ? null : validationCallback;
+        _minTlsVersion = minTlsVersion;
+        _maxTlsVersion = maxTlsVersion;
+        _sslProtocols = TlsVersionMapper.ToSslProtocols(minTlsVersion, maxTlsVersion);
         _clientCertificate = clientCertificate.Clone();
 
         _http = CreateHttpClient();
@@ -51,7 +59,7 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
     {
         var handler = new HttpClientHandler
         {
-            SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            SslProtocols = _sslProtocols,
         };
 
         if (_clientCertificate?.Certificate != null)
@@ -74,8 +82,15 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
         return new HttpClient(handler);
     }
 
-    public SafeguardA2AContext(string networkAddress, string certificateThumbprint, int apiVersion, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
-        : this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl, validationCallback)
+    public SafeguardA2AContext(
+        string networkAddress,
+        string certificateThumbprint,
+        int apiVersion,
+        bool ignoreSsl,
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : this(networkAddress, new CertificateContext(certificateThumbprint), apiVersion, ignoreSsl, validationCallback, minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -85,8 +100,10 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
         SecureString certificatePassword,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl, validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : this(networkAddress, new CertificateContext(certificatePath, certificatePassword), apiVersion, ignoreSsl, validationCallback, minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -96,8 +113,10 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
         SecureString certificatePassword,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl, validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : this(networkAddress, new CertificateContext(certificateData, certificatePassword), apiVersion, ignoreSsl, validationCallback, minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -298,7 +317,8 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
             _clientCertificate,
             apiKey,
             _ignoreSsl,
-            _validationCallback);
+            _validationCallback,
+            _sslProtocols);
         eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
         eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
         eventListener.RegisterEventHandler("AccountApiKeySecretUpdated", handler);
@@ -323,7 +343,8 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
             _clientCertificate,
             apiKeys,
             _ignoreSsl,
-            _validationCallback);
+            _validationCallback,
+            _sslProtocols);
         eventListener.RegisterEventHandler("AssetAccountPasswordUpdated", handler);
         eventListener.RegisterEventHandler("AssetAccountSshKeyUpdated", handler);
         eventListener.RegisterEventHandler("AccountApiKeySecretUpdated", handler);
@@ -422,7 +443,7 @@ internal class SafeguardA2AContext : ISafeguardA2AContext, ICloneable
 
     public object Clone()
     {
-        return new SafeguardA2AContext(_networkAddress, _clientCertificate, _apiVersion, _ignoreSsl, _validationCallback);
+        return new SafeguardA2AContext(_networkAddress, _clientCertificate, _apiVersion, _ignoreSsl, _validationCallback, _minTlsVersion, _maxTlsVersion);
     }
 
     private string GetUrl(string service, string pathAndQuery)

@@ -19,8 +19,15 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
         /// <param name="appliance">Network address of Safeguard appliance</param>
         /// <param name="apiVersion">Target API version to use (default: 4)</param>
         /// <param name="ignoreSsl">Ignore validation of Safeguard appliance SSL certificate (default: false)</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard API connection</returns>
-        public static ISafeguardConnection Connect(string appliance, int apiVersion = Safeguard.DefaultApiVersion, bool ignoreSsl = false)
+        public static ISafeguardConnection Connect(
+            string appliance,
+            int apiVersion = Safeguard.DefaultApiVersion,
+            bool ignoreSsl = false,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
             Log.Debug("Calling RSTS for primary authentication");
 
@@ -41,12 +48,14 @@ namespace OneIdentity.SafeguardDotNet.GuiLogin
                     rstsWindow.CodeVerifier,
                     Safeguard.AgentBasedLoginUtils.RedirectUri,
                     ignoreSsl,
-                    CancellationToken.None).GetAwaiter().GetResult())
+                    CancellationToken.None,
+                    minTlsVersion,
+                    maxTlsVersion).GetAwaiter().GetResult())
                 {
                     Log.Debug("Exchanging RSTS access token");
 
                     return Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnection(
-                        appliance, rstsAccessToken, apiVersion, ignoreSsl);
+                        appliance, rstsAccessToken, apiVersion, ignoreSsl, minTlsVersion, maxTlsVersion);
                 }
             }
             else

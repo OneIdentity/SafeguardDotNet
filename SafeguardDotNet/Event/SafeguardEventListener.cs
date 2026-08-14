@@ -28,6 +28,7 @@ internal class SafeguardEventListener : ISafeguardEventListener
     private readonly string _eventUrl;
     private readonly bool _ignoreSsl;
     private readonly RemoteCertificateValidationCallback _validationCallback;
+    private readonly System.Security.Authentication.SslProtocols _sslProtocols;
     private readonly SecureString _accessToken;
     private readonly SecureString _apiKey;
     private readonly IList<SecureString> _apiKeys;
@@ -40,16 +41,26 @@ internal class SafeguardEventListener : ISafeguardEventListener
     private bool _isStarted;
     private HubConnection _signalrConnection;
 
-    private SafeguardEventListener(string eventUrl, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
+    private SafeguardEventListener(
+        string eventUrl,
+        bool ignoreSsl,
+        RemoteCertificateValidationCallback validationCallback,
+        System.Security.Authentication.SslProtocols sslProtocols)
     {
         _eventUrl = eventUrl;
         _ignoreSsl = ignoreSsl;
         _validationCallback = validationCallback;
+        _sslProtocols = sslProtocols;
         _eventHandlerRegistry = new EventHandlerRegistry();
     }
 
-    public SafeguardEventListener(string eventUrl, SecureString accessToken, bool ignoreSsl, RemoteCertificateValidationCallback validationCallback)
-        : this(eventUrl, ignoreSsl, validationCallback)
+    public SafeguardEventListener(
+        string eventUrl,
+        SecureString accessToken,
+        bool ignoreSsl,
+        RemoteCertificateValidationCallback validationCallback,
+        System.Security.Authentication.SslProtocols sslProtocols)
+        : this(eventUrl, ignoreSsl, validationCallback, sslProtocols)
     {
         if (accessToken == null)
         {
@@ -64,8 +75,9 @@ internal class SafeguardEventListener : ISafeguardEventListener
         CertificateContext clientCertificate,
         SecureString apiKey,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : this(eventUrl, ignoreSsl, validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        System.Security.Authentication.SslProtocols sslProtocols)
+        : this(eventUrl, ignoreSsl, validationCallback, sslProtocols)
     {
         _clientCertificate = clientCertificate.Clone();
         if (apiKey == null)
@@ -81,8 +93,9 @@ internal class SafeguardEventListener : ISafeguardEventListener
         CertificateContext clientCertificate,
         IEnumerable<SecureString> apiKeys,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : this(eventUrl, ignoreSsl, validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        System.Security.Authentication.SslProtocols sslProtocols)
+        : this(eventUrl, ignoreSsl, validationCallback, sslProtocols)
     {
         _clientCertificate = clientCertificate.Clone();
         if (apiKeys == null)
@@ -225,6 +238,7 @@ internal class SafeguardEventListener : ISafeguardEventListener
 
                     if (message is HttpClientHandler clientHandler)
                     {
+                        clientHandler.SslProtocols = _sslProtocols;
                         if (_ignoreSsl)
                         {
 #pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set
