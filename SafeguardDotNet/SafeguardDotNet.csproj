@@ -30,6 +30,10 @@ Provides an easy way to connect to Safeguard and call the Safeguard API.
 - Real-time event notifications
 - Persistent event listeners that reconnect even after an appliance goes offline
 
+v9.1.0:
+- Added TLS 1.3 support: connections negotiate the best mutually supported protocol (TLS 1.3 against SPP 9.0 and later) instead of hard-pinning TLS 1.2
+- Added optional minTlsVersion/maxTlsVersion enforcement across Connect, A2A.GetContext, the login modules, event listeners, and A2A SignalR connections
+
 v9.0.0 Breaking Changes:
 - Replaced Newtonsoft.Json with System.Text.Json for all serialization
 - Removed Newtonsoft.Json and Microsoft.AspNet.WebApi.Client dependencies
