@@ -230,4 +230,18 @@ internal class ToolOptions
         Default = 0,
         HelpText = "Wait this many seconds after connecting before executing the operation")]
     public int DelaySeconds { get; set; }
+
+    [Option(
+        "MinTlsVersion",
+        Required = false,
+        Default = null,
+        HelpText = "Minimum TLS version to negotiate: 1.2 or 1.3 (default lets the OS negotiate)")]
+    public string MinTlsVersion { get; set; }
+
+    [Option(
+        "MaxTlsVersion",
+        Required = false,
+        Default = null,
+        HelpText = "Maximum TLS version to negotiate: 1.2 or 1.3 (default lets the OS negotiate)")]
+    public string MaxTlsVersion { get; set; }
 }

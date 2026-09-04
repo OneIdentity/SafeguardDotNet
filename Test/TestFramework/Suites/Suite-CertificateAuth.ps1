@@ -98,6 +98,10 @@
                 Remove-Item "Cert:\CurrentUser\My\$tp" -ErrorAction SilentlyContinue
             }
         }
+
+        # Probe TLS 1.3 capability so the cert-over-1.3 test below can require a real
+        # TLS 1.3 handshake on 9.0 and skip on 8.x (which tops out at TLS 1.2).
+        $Context.SuiteData["Tls13Capable"] = Test-SgDnApplianceTls13 -ApplianceHost $Context.Appliance
     }
 
     Execute = {
@@ -159,6 +163,22 @@
         }
         else {
             Test-SgDnSkip "Auth as cert user from Computer Certificate Store" "Requires elevation"
+        }
+
+        # .NET's SslStream performs post-handshake client-certificate auth, so cert
+        # auth works over real TLS 1.3 on the Standard binding with no Cert SNI
+        # workaround. Prove that live on TLS 1.3-capable appliances; skip on 8.x.
+        if ($Context.SuiteData["Tls13Capable"]) {
+            Test-SgDnAssert "Auth as cert user over TLS 1.3 (Standard binding)" {
+                $result = Invoke-SgDnSafeguardApi -Context $Context `
+                    -Service Core -Method Get -RelativeUrl "Me" `
+                    -CertificateFile $Context.UserPfx -CertificatePassword "a" `
+                    -MinTlsVersion 1.3
+                $result.Name -eq $Context.SuiteData["CertUserName"]
+            }
+        }
+        else {
+            Test-SgDnSkip "Auth as cert user over TLS 1.3 (Standard binding)" "Appliance max is TLS 1.2"
         }
     }
 
