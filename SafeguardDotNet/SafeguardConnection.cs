@@ -32,7 +32,7 @@ internal class SafeguardConnection : ISafeguardConnection, ICloneable
     {
         var handler = new HttpClientHandler
         {
-            SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            SslProtocols = authenticationMechanism.SslProtocols,
         };
 
         if (authenticationMechanism.IgnoreSsl)
@@ -307,7 +307,8 @@ internal class SafeguardConnection : ISafeguardConnection, ICloneable
             $"https://{authenticationMechanism.NetworkAddress}/service/event/signalr",
             authenticationMechanism.GetAccessToken(),
             authenticationMechanism.IgnoreSsl,
-            authenticationMechanism.ValidationCallback);
+            authenticationMechanism.ValidationCallback,
+            authenticationMechanism.SslProtocols);
         Log.Debug("Event listener successfully created for Safeguard connection.");
         return eventListener;
     }

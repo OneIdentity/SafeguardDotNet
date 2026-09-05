@@ -41,6 +41,8 @@ public static class PkceNoninteractiveLogin
     /// <param name="password">User password to use for authentication.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails or the API returns an error.</exception>
     public static ISafeguardConnection Connect(
@@ -49,9 +51,11 @@ public static class PkceNoninteractiveLogin
         string username,
         SecureString password,
         int apiVersion = Safeguard.DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        return ConnectAsync(appliance, provider, username, password, null, apiVersion, ignoreSsl, CancellationToken.None)
+        return ConnectAsync(appliance, provider, username, password, null, apiVersion, ignoreSsl, CancellationToken.None, minTlsVersion, maxTlsVersion)
             .GetAwaiter().GetResult();
     }
 
@@ -70,6 +74,8 @@ public static class PkceNoninteractiveLogin
     /// Pass null if MFA is not required.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails, MFA is required but no
     /// secondary password was provided, or the API returns an error.</exception>
@@ -80,9 +86,11 @@ public static class PkceNoninteractiveLogin
         SecureString password,
         SecureString secondaryPassword,
         int apiVersion = Safeguard.DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        return ConnectAsync(appliance, provider, username, password, secondaryPassword, apiVersion, ignoreSsl, CancellationToken.None)
+        return ConnectAsync(appliance, provider, username, password, secondaryPassword, apiVersion, ignoreSsl, CancellationToken.None, minTlsVersion, maxTlsVersion)
             .GetAwaiter().GetResult();
     }
 
@@ -96,6 +104,8 @@ public static class PkceNoninteractiveLogin
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
     /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails or the API returns an error.</exception>
     /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
@@ -106,9 +116,11 @@ public static class PkceNoninteractiveLogin
         SecureString password,
         int apiVersion = Safeguard.DefaultApiVersion,
         bool ignoreSsl = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
-        return ConnectAsync(appliance, provider, username, password, null, apiVersion, ignoreSsl, cancellationToken);
+        return ConnectAsync(appliance, provider, username, password, null, apiVersion, ignoreSsl, cancellationToken, minTlsVersion, maxTlsVersion);
     }
 
     /// <summary>
@@ -124,6 +136,8 @@ public static class PkceNoninteractiveLogin
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
     /// <param name="cancellationToken">Cancellation token to abort the flow.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     /// <exception cref="SafeguardDotNetException">Thrown when authentication fails, MFA is required but no
     /// secondary password was provided, or the API returns an error.</exception>
@@ -136,14 +150,16 @@ public static class PkceNoninteractiveLogin
         SecureString secondaryPassword,
         int apiVersion = Safeguard.DefaultApiVersion,
         bool ignoreSsl = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         var csrfToken = Safeguard.AgentBasedLoginUtils.GenerateCsrfToken();
         var oauthCodeVerifier = Safeguard.AgentBasedLoginUtils.OAuthCodeVerifier();
         var oauthCodeChallenge = Safeguard.AgentBasedLoginUtils.OAuthCodeChallenge(oauthCodeVerifier);
         var redirectUri = Safeguard.AgentBasedLoginUtils.RedirectUri;
 
-        using var http = Safeguard.AgentBasedLoginUtils.CreateSessionHttpClient(appliance, csrfToken, ignoreSsl);
+        using var http = Safeguard.AgentBasedLoginUtils.CreateSessionHttpClient(appliance, csrfToken, ignoreSsl, minTlsVersion, maxTlsVersion);
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -198,13 +214,15 @@ public static class PkceNoninteractiveLogin
             oauthCodeVerifier,
             Safeguard.AgentBasedLoginUtils.RedirectUri,
             ignoreSsl,
-            cancellationToken)
+            cancellationToken,
+            minTlsVersion,
+            maxTlsVersion)
             .ConfigureAwait(false);
 
         Log.Debug("Exchanging RSTS access token");
 
         return await Safeguard.AgentBasedLoginUtils.ExchangeRstsTokenForConnectionAsync(
-            appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken)
+            appliance, rstsAccessToken, apiVersion, ignoreSsl, cancellationToken, minTlsVersion, maxTlsVersion)
             .ConfigureAwait(false);
     }
 

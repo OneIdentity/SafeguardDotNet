@@ -19,8 +19,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         string certificateThumbprint,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint))
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint), minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -30,8 +32,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         SecureString certificatePassword,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword))
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword), minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -41,8 +45,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         SecureString certificatePassword,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword))
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword), minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -51,8 +57,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         CertificateContext clientCertificate,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, clientCertificate.Clone())
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, clientCertificate.Clone(), minTlsVersion, maxTlsVersion)
     {
     }
 
@@ -62,8 +70,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         int apiVersion,
         bool ignoreSsl,
         RemoteCertificateValidationCallback validationCallback,
-        string provider)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint))
+        string provider,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateThumbprint), minTlsVersion, maxTlsVersion)
     {
         _provider = provider;
     }
@@ -75,8 +85,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         int apiVersion,
         bool ignoreSsl,
         RemoteCertificateValidationCallback validationCallback,
-        string provider)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword))
+        string provider,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificatePath, certificatePassword), minTlsVersion, maxTlsVersion)
     {
         _provider = provider;
     }
@@ -88,8 +100,10 @@ internal class CertificateAuthenticator : AuthenticatorBase
         int apiVersion,
         bool ignoreSsl,
         RemoteCertificateValidationCallback validationCallback,
-        string provider)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword))
+        string provider,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, new CertificateContext(certificateData, certificatePassword), minTlsVersion, maxTlsVersion)
     {
         _provider = provider;
     }
@@ -124,7 +138,7 @@ internal class CertificateAuthenticator : AuthenticatorBase
 
     public override object Clone()
     {
-        var auth = new CertificateAuthenticator(NetworkAddress, clientCertificate, ApiVersion, IgnoreSsl, ValidationCallback)
+        var auth = new CertificateAuthenticator(NetworkAddress, clientCertificate, ApiVersion, IgnoreSsl, ValidationCallback, MinTlsVersion, MaxTlsVersion)
         {
             accessToken = accessToken?.Copy(),
         };

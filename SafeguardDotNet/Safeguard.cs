@@ -36,11 +36,18 @@ public static class Safeguard
     /// <param name="networkAddress">Network address.</param>
     /// <param name="apiVersion">API version.</param>
     /// <param name="ignoreSsl">If set to <c>true</c> ignore ssl.</param>
-    public static ISafeguardConnection Connect(string networkAddress, int apiVersion = DefaultApiVersion, bool ignoreSsl = false)
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        int apiVersion = DefaultApiVersion,
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         // Don't try to refresh access token on the anonymous connect method because it cannot be refreshed
         // So, don't use GetConnection() function above
-        return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, ignoreSsl, null));
+        return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, ignoreSsl, null, minTlsVersion, maxTlsVersion));
     }
 
     /// <summary>
@@ -50,11 +57,18 @@ public static class Safeguard
     /// <param name="networkAddress">Network address.</param>
     /// <param name="validationCallback">Certificate validation callback delegate.</param>
     /// <param name="apiVersion">API version.</param>
-    public static ISafeguardConnection Connect(string networkAddress, RemoteCertificateValidationCallback validationCallback, int apiVersion = DefaultApiVersion)
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        RemoteCertificateValidationCallback validationCallback,
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         // Don't try to refresh access token on the anonymous connect method because it cannot be refreshed
         // So, don't use GetConnection() function above
-        return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, false, validationCallback));
+        return new SafeguardConnection(new AnonymousAuthenticator(networkAddress, apiVersion, false, validationCallback, minTlsVersion, maxTlsVersion));
     }
 
     /// <summary>
@@ -64,16 +78,20 @@ public static class Safeguard
     /// <param name="accessToken">Existing API access token.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
         SecureString accessToken,
         int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         // Don't try to refresh access token on the access token connect method because it cannot be refreshed
         // So, don't use GetConnection() function above
-        return new SafeguardConnection(new AccessTokenAuthenticator(networkAddress, accessToken, apiVersion, ignoreSsl, null));
+        return new SafeguardConnection(new AccessTokenAuthenticator(networkAddress, accessToken, apiVersion, ignoreSsl, null, minTlsVersion, maxTlsVersion));
     }
 
     /// <summary>
@@ -83,16 +101,20 @@ public static class Safeguard
     /// <param name="accessToken">Existing API access token.</param>
     /// <param name="validationCallback">Certificate validation callback delegate.</param>
     /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
         SecureString accessToken,
         RemoteCertificateValidationCallback validationCallback,
-        int apiVersion = DefaultApiVersion)
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         // Don't try to refresh access token on the access token connect method because it cannot be refreshed
         // So, don't use GetConnection() function above
-        return new SafeguardConnection(new AccessTokenAuthenticator(networkAddress, accessToken, apiVersion, false, validationCallback));
+        return new SafeguardConnection(new AccessTokenAuthenticator(networkAddress, accessToken, apiVersion, false, validationCallback, minTlsVersion, maxTlsVersion));
     }
 
     /// <summary>
@@ -104,6 +126,8 @@ public static class Safeguard
     /// <param name="password">User password to use for authentication.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
@@ -111,7 +135,9 @@ public static class Safeguard
         string username,
         SecureString password,
         int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new PasswordAuthenticator(
             networkAddress,
@@ -120,7 +146,9 @@ public static class Safeguard
             password,
             apiVersion,
             ignoreSsl,
-            null));
+            null,
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -132,6 +160,8 @@ public static class Safeguard
     /// <param name="password">User password to use for authentication.</param>
     /// <param name="validationCallback">Certificate validation callback delegate.</param>
     /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
@@ -139,7 +169,9 @@ public static class Safeguard
         string username,
         SecureString password,
         RemoteCertificateValidationCallback validationCallback,
-        int apiVersion = DefaultApiVersion)
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new PasswordAuthenticator(
             networkAddress,
@@ -148,7 +180,9 @@ public static class Safeguard
             password,
             apiVersion,
             false,
-            validationCallback));
+            validationCallback,
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -159,160 +193,16 @@ public static class Safeguard
     /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
         string certificateThumbprint,
         int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
-    {
-        return GetConnection(new CertificateAuthenticator(
-            networkAddress,
-            certificateThumbprint,
-            apiVersion,
-            ignoreSsl,
-            null));
-    }
-
-    /// <summary>
-    /// Connect to Safeguard API using a client certificate from the certificate store.  Use PowerShell to list
-    /// certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
-    /// </summary>
-    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-    /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
-    /// <param name="validationCallback">Certificate validation callback delegate.</param>
-    /// <param name="apiVersion">Target API version to use.</param>
-    /// <returns>Reusable Safeguard API connection.</returns>
-    public static ISafeguardConnection Connect(
-        string networkAddress,
-        string certificateThumbprint,
-        RemoteCertificateValidationCallback validationCallback,
-        int apiVersion = DefaultApiVersion)
-    {
-        return GetConnection(new CertificateAuthenticator(
-            networkAddress,
-            certificateThumbprint,
-            apiVersion,
-            false,
-            validationCallback));
-    }
-
-    /// <summary>
-    /// Connect to Safeguard API using a client certificate stored in a file.
-    /// </summary>
-    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-    /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
-    /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
-    /// <param name="apiVersion">Target API version to use.</param>
-    /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-    /// <returns>Reusable Safeguard API connection.</returns>
-    public static ISafeguardConnection Connect(
-        string networkAddress,
-        string certificatePath,
-        SecureString certificatePassword,
-        int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
-    {
-        return GetConnection(new CertificateAuthenticator(
-            networkAddress,
-            certificatePath,
-            certificatePassword,
-            apiVersion,
-            ignoreSsl,
-            null));
-    }
-
-    /// <summary>
-    /// Connect to Safeguard API using a client certificate stored in a file.
-    /// </summary>
-    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-    /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
-    /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
-    /// <param name="validationCallback">Certificate validation callback delegate.</param>
-    /// <param name="apiVersion">Target API version to use.</param>
-    /// <returns>Reusable Safeguard API connection.</returns>
-    public static ISafeguardConnection Connect(
-        string networkAddress,
-        string certificatePath,
-        SecureString certificatePassword,
-        RemoteCertificateValidationCallback validationCallback,
-        int apiVersion = DefaultApiVersion)
-    {
-        return GetConnection(new CertificateAuthenticator(
-            networkAddress,
-            certificatePath,
-            certificatePassword,
-            apiVersion,
-            false,
-            validationCallback));
-    }
-
-    /// <summary>
-    /// Connect to Safeguard API using a client certificate stored in a memory.
-    /// </summary>
-    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-    /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
-    /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
-    /// <param name="apiVersion">Target API version to use.</param>
-    /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-    /// <returns>Reusable Safeguard API connection.</returns>
-    public static ISafeguardConnection Connect(
-        string networkAddress,
-        IEnumerable<byte> certificateData,
-        SecureString certificatePassword,
-        int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
-    {
-        return GetConnection(new CertificateAuthenticator(
-            networkAddress,
-            certificateData,
-            certificatePassword,
-            apiVersion,
-            ignoreSsl,
-            null));
-    }
-
-    /// <summary>
-    /// Connect to Safeguard API using a client certificate stored in a memory.
-    /// </summary>
-    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-    /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
-    /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
-    /// <param name="validationCallback">Certificate validation callback delegate.</param>
-    /// <param name="apiVersion">Target API version to use.</param>
-    /// <returns>Reusable Safeguard API connection.</returns>
-    public static ISafeguardConnection Connect(
-        string networkAddress,
-        IEnumerable<byte> certificateData,
-        SecureString certificatePassword,
-        RemoteCertificateValidationCallback validationCallback,
-        int apiVersion = DefaultApiVersion)
-    {
-        return GetConnection(new CertificateAuthenticator(
-            networkAddress,
-            certificateData,
-            certificatePassword,
-            apiVersion,
-            false,
-            validationCallback));
-    }
-
-    /// <summary>
-    /// Connect to Safeguard API using a client certificate from the certificate store.  Use PowerShell to list
-    /// certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
-    /// </summary>
-    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
-    /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
-    /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
-    /// <param name="apiVersion">Target API version to use.</param>
-    /// <param name="ignoreSsl">Ignore server certificate validation.</param>
-    /// <returns>Reusable Safeguard API connection.</returns>
-    public static ISafeguardConnection Connect(
-        string networkAddress,
-        string certificateThumbprint,
-        string provider,
-        int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new CertificateAuthenticator(
             networkAddress,
@@ -320,7 +210,8 @@ public static class Safeguard
             apiVersion,
             ignoreSsl,
             null,
-            provider));
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -330,15 +221,17 @@ public static class Safeguard
     /// <param name="networkAddress">Network address of Safeguard appliance.</param>
     /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
     /// <param name="validationCallback">Certificate validation callback delegate.</param>
-    /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
     /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
         string certificateThumbprint,
         RemoteCertificateValidationCallback validationCallback,
-        string provider,
-        int apiVersion = DefaultApiVersion)
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new CertificateAuthenticator(
             networkAddress,
@@ -346,7 +239,8 @@ public static class Safeguard
             apiVersion,
             false,
             validationCallback,
-            provider));
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -355,17 +249,19 @@ public static class Safeguard
     /// <param name="networkAddress">Network address of Safeguard appliance.</param>
     /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
     /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
-    /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
         string certificatePath,
         SecureString certificatePassword,
-        string provider,
         int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new CertificateAuthenticator(
             networkAddress,
@@ -374,7 +270,199 @@ public static class Safeguard
             apiVersion,
             ignoreSsl,
             null,
-            provider));
+            minTlsVersion,
+            maxTlsVersion));
+    }
+
+    /// <summary>
+    /// Connect to Safeguard API using a client certificate stored in a file.
+    /// </summary>
+    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+    /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+    /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+    /// <param name="validationCallback">Certificate validation callback delegate.</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        string certificatePath,
+        SecureString certificatePassword,
+        RemoteCertificateValidationCallback validationCallback,
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+    {
+        return GetConnection(new CertificateAuthenticator(
+            networkAddress,
+            certificatePath,
+            certificatePassword,
+            apiVersion,
+            false,
+            validationCallback,
+            minTlsVersion,
+            maxTlsVersion));
+    }
+
+    /// <summary>
+    /// Connect to Safeguard API using a client certificate stored in a memory.
+    /// </summary>
+    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+    /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+    /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        IEnumerable<byte> certificateData,
+        SecureString certificatePassword,
+        int apiVersion = DefaultApiVersion,
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+    {
+        return GetConnection(new CertificateAuthenticator(
+            networkAddress,
+            certificateData,
+            certificatePassword,
+            apiVersion,
+            ignoreSsl,
+            null,
+            minTlsVersion,
+            maxTlsVersion));
+    }
+
+    /// <summary>
+    /// Connect to Safeguard API using a client certificate stored in a memory.
+    /// </summary>
+    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+    /// <param name="certificateData">Bytes containing a PFX (or PKCS12) formatted certificate and private key.</param>
+    /// <param name="certificatePassword">Password to decrypt the certificate data.</param>
+    /// <param name="validationCallback">Certificate validation callback delegate.</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        IEnumerable<byte> certificateData,
+        SecureString certificatePassword,
+        RemoteCertificateValidationCallback validationCallback,
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+    {
+        return GetConnection(new CertificateAuthenticator(
+            networkAddress,
+            certificateData,
+            certificatePassword,
+            apiVersion,
+            false,
+            validationCallback,
+            minTlsVersion,
+            maxTlsVersion));
+    }
+
+    /// <summary>
+    /// Connect to Safeguard API using a client certificate from the certificate store.  Use PowerShell to list
+    /// certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+    /// </summary>
+    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+    /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+    /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        string certificateThumbprint,
+        string provider,
+        int apiVersion = DefaultApiVersion,
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+    {
+        return GetConnection(new CertificateAuthenticator(
+            networkAddress,
+            certificateThumbprint,
+            apiVersion,
+            ignoreSsl,
+            null,
+            provider,
+            minTlsVersion,
+            maxTlsVersion));
+    }
+
+    /// <summary>
+    /// Connect to Safeguard API using a client certificate from the certificate store.  Use PowerShell to list
+    /// certificates with SHA-1 thumbprint.  PS> gci Cert:\CurrentUser\My
+    /// </summary>
+    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+    /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
+    /// <param name="validationCallback">Certificate validation callback delegate.</param>
+    /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        string certificateThumbprint,
+        RemoteCertificateValidationCallback validationCallback,
+        string provider,
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+    {
+        return GetConnection(new CertificateAuthenticator(
+            networkAddress,
+            certificateThumbprint,
+            apiVersion,
+            false,
+            validationCallback,
+            provider,
+            minTlsVersion,
+            maxTlsVersion));
+    }
+
+    /// <summary>
+    /// Connect to Safeguard API using a client certificate stored in a file.
+    /// </summary>
+    /// <param name="networkAddress">Network address of Safeguard appliance.</param>
+    /// <param name="certificatePath">Path to PFX (or PKCS12) certificate file also containing private key.</param>
+    /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
+    /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
+    /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <returns>Reusable Safeguard API connection.</returns>
+    public static ISafeguardConnection Connect(
+        string networkAddress,
+        string certificatePath,
+        SecureString certificatePassword,
+        string provider,
+        int apiVersion = DefaultApiVersion,
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+    {
+        return GetConnection(new CertificateAuthenticator(
+            networkAddress,
+            certificatePath,
+            certificatePassword,
+            apiVersion,
+            ignoreSsl,
+            null,
+            provider,
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -386,6 +474,8 @@ public static class Safeguard
     /// <param name="validationCallback">Certificate validation callback delegate.</param>
     /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
     /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
@@ -393,7 +483,9 @@ public static class Safeguard
         SecureString certificatePassword,
         RemoteCertificateValidationCallback validationCallback,
         string provider,
-        int apiVersion = DefaultApiVersion)
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new CertificateAuthenticator(
             networkAddress,
@@ -402,7 +494,9 @@ public static class Safeguard
             apiVersion,
             false,
             validationCallback,
-            provider));
+            provider,
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -414,6 +508,8 @@ public static class Safeguard
     /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
     /// <param name="apiVersion">Target API version to use.</param>
     /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
@@ -421,7 +517,9 @@ public static class Safeguard
         SecureString certificatePassword,
         string provider,
         int apiVersion = DefaultApiVersion,
-        bool ignoreSsl = false)
+        bool ignoreSsl = false,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new CertificateAuthenticator(
             networkAddress,
@@ -430,7 +528,9 @@ public static class Safeguard
             apiVersion,
             ignoreSsl,
             null,
-            provider));
+            provider,
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -442,6 +542,8 @@ public static class Safeguard
     /// <param name="validationCallback">Certificate validation callback delegate.</param>
     /// <param name="provider">Safeguard authentication provider name (e.g. local).</param>
     /// <param name="apiVersion">Target API version to use.</param>
+    /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+    /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
     /// <returns>Reusable Safeguard API connection.</returns>
     public static ISafeguardConnection Connect(
         string networkAddress,
@@ -449,7 +551,9 @@ public static class Safeguard
         SecureString certificatePassword,
         RemoteCertificateValidationCallback validationCallback,
         string provider,
-        int apiVersion = DefaultApiVersion)
+        int apiVersion = DefaultApiVersion,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
     {
         return GetConnection(new CertificateAuthenticator(
             networkAddress,
@@ -458,7 +562,9 @@ public static class Safeguard
             apiVersion,
             false,
             validationCallback,
-            provider));
+            provider,
+            minTlsVersion,
+            maxTlsVersion));
     }
 
     /// <summary>
@@ -828,14 +934,18 @@ public static class Safeguard
         /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard A2A context.</returns>
         public static ISafeguardA2AContext GetContext(
             string networkAddress,
             string certificateThumbprint,
             int apiVersion = DefaultApiVersion,
-            bool ignoreSsl = false)
+            bool ignoreSsl = false,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null);
+            return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, ignoreSsl, null, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -846,14 +956,18 @@ public static class Safeguard
         /// <param name="certificateThumbprint">SHA-1 hash identifying a client certificate in personal (My) store.</param>
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard A2A context.</returns>
         public static ISafeguardA2AContext GetContext(
             string networkAddress,
             string certificateThumbprint,
             RemoteCertificateValidationCallback validationCallback,
-            int apiVersion = DefaultApiVersion)
+            int apiVersion = DefaultApiVersion,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback);
+            return new SafeguardA2AContext(networkAddress, certificateThumbprint, apiVersion, false, validationCallback, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -864,15 +978,19 @@ public static class Safeguard
         /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard A2A context.</returns>
         public static ISafeguardA2AContext GetContext(
             string networkAddress,
             string certificatePath,
             SecureString certificatePassword,
             int apiVersion = DefaultApiVersion,
-            bool ignoreSsl = false)
+            bool ignoreSsl = false,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl, null);
+            return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, ignoreSsl, null, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -883,15 +1001,19 @@ public static class Safeguard
         /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard A2A context.</returns>
         public static ISafeguardA2AContext GetContext(
             string networkAddress,
             string certificatePath,
             SecureString certificatePassword,
             RemoteCertificateValidationCallback validationCallback,
-            int apiVersion = DefaultApiVersion)
+            int apiVersion = DefaultApiVersion,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, false, validationCallback);
+            return new SafeguardA2AContext(networkAddress, certificatePath, certificatePassword, apiVersion, false, validationCallback, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -902,15 +1024,19 @@ public static class Safeguard
         /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">Ignore server certificate validation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard A2A context.</returns>
         public static ISafeguardA2AContext GetContext(
             string networkAddress,
             IEnumerable<byte> certificateData,
             SecureString certificatePassword,
             int apiVersion = DefaultApiVersion,
-            bool ignoreSsl = false)
+            bool ignoreSsl = false,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, ignoreSsl, null);
+            return new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, ignoreSsl, null, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -921,15 +1047,19 @@ public static class Safeguard
         /// <param name="certificatePassword">Password to decrypt the certificate file.</param>
         /// <param name="validationCallback">Certificate validation callback delegate.</param>
         /// <param name="apiVersion">Target API version to use.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>Reusable Safeguard A2A context.</returns>
         public static ISafeguardA2AContext GetContext(
             string networkAddress,
             IEnumerable<byte> certificateData,
             SecureString certificatePassword,
             RemoteCertificateValidationCallback validationCallback,
-            int apiVersion = DefaultApiVersion)
+            int apiVersion = DefaultApiVersion,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, false, validationCallback);
+            return new SafeguardA2AContext(networkAddress, certificateData, certificatePassword, apiVersion, false, validationCallback, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -1364,12 +1494,17 @@ public static class Safeguard
         /// The caller is responsible for disposing the returned client.
         /// </summary>
         /// <param name="ignoreSsl">When true, bypasses server certificate validation.</param>
-        /// <returns>A new HttpClient configured with TLS 1.2.</returns>
-        public static HttpClient CreateStatelessHttpClient(bool ignoreSsl)
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <returns>A new HttpClient configured with the negotiated (or requested) TLS protocol range.</returns>
+        public static HttpClient CreateStatelessHttpClient(
+            bool ignoreSsl,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
             var handler = new HttpClientHandler()
             {
-                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                SslProtocols = TlsVersionMapper.ToSslProtocols(minTlsVersion, maxTlsVersion),
             };
 
             if (ignoreSsl)
@@ -1389,15 +1524,22 @@ public static class Safeguard
         /// <param name="appliance">Network address of the Safeguard appliance.</param>
         /// <param name="csrfToken">The CSRF token to include as a cookie.</param>
         /// <param name="ignoreSsl">When true, bypasses server certificate validation.</param>
-        /// <returns>A new HttpClient configured with TLS 1.2 and session cookies.</returns>
-        public static HttpClient CreateSessionHttpClient(string appliance, string csrfToken, bool ignoreSsl)
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <returns>A new HttpClient configured with the negotiated (or requested) TLS protocol range and session cookies.</returns>
+        public static HttpClient CreateSessionHttpClient(
+            string appliance,
+            string csrfToken,
+            bool ignoreSsl,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
             var cookieContainer = new CookieContainer();
             cookieContainer.SetCookies(new Uri($"https://{appliance}/RSTS"), $"CsrfToken={csrfToken}");
 
             var handler = new HttpClientHandler()
             {
-                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                SslProtocols = TlsVersionMapper.ToSslProtocols(minTlsVersion, maxTlsVersion),
                 UseCookies = true,
                 CookieContainer = cookieContainer,
             };
@@ -1421,6 +1563,8 @@ public static class Safeguard
         /// <param name="redirectUri">The redirect URI that was used in the authorization request.</param>
         /// <param name="ignoreSsl">When true, bypasses server certificate validation.</param>
         /// <param name="cancellationToken">Cancellation token to abort the operation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>An RSTS access token as a SecureString.</returns>
         public static async Task<SecureString> PostAuthorizationCodeFlowAsync(
             string appliance,
@@ -1428,7 +1572,9 @@ public static class Safeguard
             string codeVerifier,
             string redirectUri,
             bool ignoreSsl,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
             var safeguardRstsUrl = $"https://{appliance}/RSTS";
             var data = SafeguardJson.Serialize(new Dictionary<string, string>
@@ -1439,7 +1585,7 @@ public static class Safeguard
                 ["code_verifier"] = codeVerifier,
             });
 
-            using var http = CreateStatelessHttpClient(ignoreSsl);
+            using var http = CreateStatelessHttpClient(ignoreSsl, minTlsVersion, maxTlsVersion);
             var json = await ApiRequestAsync(http, HttpMethod.Post, $"{safeguardRstsUrl}/oauth2/token", data, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -1461,13 +1607,17 @@ public static class Safeguard
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">When true, bypasses server certificate validation.</param>
         /// <param name="cancellationToken">Cancellation token to abort the operation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>The raw JSON string containing the login response with the Safeguard user token.</returns>
         public static async Task<string> PostLoginResponseAsync(
             string appliance,
             SecureString rstsAccessToken,
             int apiVersion,
             bool ignoreSsl,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
             var safeguardCoreUrl = $"https://{appliance}/service/core/v{apiVersion}";
             var data = SafeguardJson.Serialize(new Dictionary<string, string>
@@ -1475,7 +1625,7 @@ public static class Safeguard
                 ["StsAccessToken"] = rstsAccessToken.ToInsecureString(),
             });
 
-            using var http = CreateStatelessHttpClient(ignoreSsl);
+            using var http = CreateStatelessHttpClient(ignoreSsl, minTlsVersion, maxTlsVersion);
             return await ApiRequestAsync(http, HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -1490,13 +1640,17 @@ public static class Safeguard
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">When true, bypasses server certificate validation.</param>
         /// <param name="cancellationToken">Cancellation token to abort the operation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>A reusable Safeguard API connection.</returns>
         public static async Task<ISafeguardConnection> ExchangeRstsTokenForConnectionAsync(
             string appliance,
             SecureString rstsAccessToken,
             int apiVersion,
             bool ignoreSsl,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
             var safeguardCoreUrl = $"https://{appliance}/service/core/v{apiVersion}";
             var data = SafeguardJson.Serialize(new Dictionary<string, string>
@@ -1504,7 +1658,7 @@ public static class Safeguard
                 ["StsAccessToken"] = rstsAccessToken.ToInsecureString(),
             });
 
-            using var http = CreateStatelessHttpClient(ignoreSsl);
+            using var http = CreateStatelessHttpClient(ignoreSsl, minTlsVersion, maxTlsVersion);
             var json = await ApiRequestAsync(http, HttpMethod.Post, $"{safeguardCoreUrl}/Token/LoginResponse", data, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -1521,7 +1675,7 @@ public static class Safeguard
             }
 
             using var accessToken = loginResponse.UserToken.ToSecureString();
-            return Connect(appliance, accessToken, apiVersion, ignoreSsl);
+            return Connect(appliance, accessToken, apiVersion, ignoreSsl, minTlsVersion, maxTlsVersion);
         }
 
         /// <summary>
@@ -1533,14 +1687,18 @@ public static class Safeguard
         /// <param name="rstsAccessToken">The RSTS access token to exchange. Caller retains ownership.</param>
         /// <param name="apiVersion">Target API version to use.</param>
         /// <param name="ignoreSsl">When true, bypasses server certificate validation.</param>
+        /// <param name="minTlsVersion">Lowest allowed TLS version, or null to let the operating system negotiate.</param>
+        /// <param name="maxTlsVersion">Highest allowed TLS version, or null to let the operating system negotiate.</param>
         /// <returns>A reusable Safeguard API connection.</returns>
         public static ISafeguardConnection ExchangeRstsTokenForConnection(
             string appliance,
             SecureString rstsAccessToken,
             int apiVersion,
-            bool ignoreSsl)
+            bool ignoreSsl,
+            SafeguardTlsVersion? minTlsVersion = null,
+            SafeguardTlsVersion? maxTlsVersion = null)
         {
-            return ExchangeRstsTokenForConnectionAsync(appliance, rstsAccessToken, apiVersion, ignoreSsl, CancellationToken.None)
+            return ExchangeRstsTokenForConnectionAsync(appliance, rstsAccessToken, apiVersion, ignoreSsl, CancellationToken.None, minTlsVersion, maxTlsVersion)
                 .GetAwaiter().GetResult();
         }
 

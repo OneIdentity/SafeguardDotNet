@@ -71,6 +71,12 @@ using var context = Safeguard.A2A.GetContext(
 Validation-callback overloads also exist when you want custom certificate validation
 instead of `ignoreSsl`.
 
+Every `GetContext(...)` overload also accepts optional `minTlsVersion`/`maxTlsVersion`
+(`SafeguardTlsVersion?`). Leave them `null` (default) to let the OS negotiate — TLS 1.3 is used
+where the appliance and OS support it. Pin a bound (e.g. `minTlsVersion: SafeguardTlsVersion.Tls13`)
+to enforce a policy; the resolved protocol flows through the A2A HTTP client and the A2A SignalR
+event listeners.
+
 ### Enumerating registrations and API keys
 
 `Samples\SampleA2aService\SampleService.cs` shows a practical discovery flow:

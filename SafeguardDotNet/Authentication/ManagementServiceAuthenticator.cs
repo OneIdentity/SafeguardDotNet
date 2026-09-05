@@ -5,6 +5,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication;
 using System;
 using System.Net.Security;
 using System.Security;
+using System.Security.Authentication;
 
 internal class ManagementServiceAuthenticator : IAuthenticationMechanism
 {
@@ -13,6 +14,7 @@ internal class ManagementServiceAuthenticator : IAuthenticationMechanism
         ApiVersion = parentAuthenticationMechanism.ApiVersion;
         IgnoreSsl = parentAuthenticationMechanism.IgnoreSsl;
         ValidationCallback = parentAuthenticationMechanism.ValidationCallback;
+        SslProtocols = parentAuthenticationMechanism.SslProtocols;
         NetworkAddress = networkAddress;
     }
 
@@ -25,6 +27,8 @@ internal class ManagementServiceAuthenticator : IAuthenticationMechanism
     public bool IgnoreSsl { get; }
 
     public RemoteCertificateValidationCallback ValidationCallback { get; }
+
+    public SslProtocols SslProtocols { get; }
 
     public bool IsAnonymous => true;
 

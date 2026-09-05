@@ -289,7 +289,10 @@ internal class StreamingRequest : IStreamingRequest
 
     private HttpClient CreateHttpClient(ProgressMessageHandler progressHandler)
     {
-        var httpClientHandler = new HttpClientHandler();
+        var httpClientHandler = new HttpClientHandler
+        {
+            SslProtocols = _authenticationMechanism.SslProtocols,
+        };
         progressHandler.InnerHandler = httpClientHandler;
         if (_authenticationMechanism.IgnoreSsl)
         {

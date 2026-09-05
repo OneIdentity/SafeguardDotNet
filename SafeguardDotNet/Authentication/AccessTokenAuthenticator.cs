@@ -13,8 +13,10 @@ internal class AccessTokenAuthenticator : AuthenticatorBase
         SecureString accessToken,
         int apiVersion,
         bool ignoreSsl,
-        RemoteCertificateValidationCallback validationCallback)
-        : base(networkAddress, apiVersion, ignoreSsl, validationCallback)
+        RemoteCertificateValidationCallback validationCallback,
+        SafeguardTlsVersion? minTlsVersion = null,
+        SafeguardTlsVersion? maxTlsVersion = null)
+        : base(networkAddress, apiVersion, ignoreSsl, validationCallback, null, minTlsVersion, maxTlsVersion)
     {
         if (accessToken == null)
         {

@@ -140,7 +140,10 @@ internal class SpsStreamingRequest : ISpsStreamingRequest
 
     private HttpClient CreateHttpClient(ProgressMessageHandler progressHandler)
     {
-        var httpClientHandler = new HttpClientHandler();
+        var httpClientHandler = new HttpClientHandler
+        {
+            SslProtocols = _authenticator.SslProtocols,
+        };
         if (_authenticator.IgnoreSsl)
         {
 #pragma warning disable S4830 // Server certificate validation is intentionally bypassed when IgnoreSsl is set

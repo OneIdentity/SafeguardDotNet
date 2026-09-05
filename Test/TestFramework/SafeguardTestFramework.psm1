@@ -448,6 +448,12 @@ function Invoke-SgDnSafeguardApi {
     .PARAMETER File
         Path to a file for streaming operations. POST=upload from file, GET=download to file.
 
+    .PARAMETER MinTlsVersion
+        Minimum TLS version to negotiate (1.2 or 1.3). Omit to let the OS negotiate.
+
+    .PARAMETER MaxTlsVersion
+        Maximum TLS version to negotiate (1.2 or 1.3). Omit to let the OS negotiate.
+
     .PARAMETER ParseJson
         Whether to parse the response as JSON. Default: $true.
     #>
@@ -510,6 +516,14 @@ function Invoke-SgDnSafeguardApi {
         [string]$File,
 
         [Parameter()]
+        [ValidateSet("1.2", "1.3")]
+        [string]$MinTlsVersion,
+
+        [Parameter()]
+        [ValidateSet("1.2", "1.3")]
+        [string]$MaxTlsVersion,
+
+        [Parameter()]
         [bool]$ParseJson = $true
     )
 
@@ -558,6 +572,9 @@ function Invoke-SgDnSafeguardApi {
     if ($Csv) { $toolArgs += " -C" }
     if ($Full) { $toolArgs += " -f" }
     if ($File) { $toolArgs += " -F `"$File`"" }
+
+    if ($MinTlsVersion) { $toolArgs += " --MinTlsVersion $MinTlsVersion" }
+    if ($MaxTlsVersion) { $toolArgs += " --MaxTlsVersion $MaxTlsVersion" }
 
     if ($Headers -and $Headers.Count -gt 0) {
         $headerPairs = ($Headers.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ","
@@ -1798,6 +1815,55 @@ function Test-SgDnIsElevated {
     }
 }
 
+function Test-SgDnApplianceTls13 {
+    <#
+    .SYNOPSIS
+        Returns $true if the appliance negotiates TLS 1.3, $false otherwise.
+
+    .DESCRIPTION
+        Performs a raw TLS 1.3-only handshake against the appliance so callers can
+        assert the SDK's behavior against the server's real capability. SPP 8.x tops
+        out at TLS 1.2; SPP 9.0+ negotiates TLS 1.3. Certificate validation is skipped
+        because only the negotiated protocol version matters here.
+
+    .PARAMETER ApplianceHost
+        Appliance hostname or IP address.
+
+    .PARAMETER Port
+        HTTPS port. Defaults to 443.
+
+    .EXAMPLE
+        if (Test-SgDnApplianceTls13 -ApplianceHost $ctx.Appliance) { ... }
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, Position = 0)]
+        [string]$ApplianceHost,
+
+        [Parameter()]
+        [int]$Port = 443
+    )
+
+    $tcp = [System.Net.Sockets.TcpClient]::new()
+    try {
+        $tcp.Connect($ApplianceHost, $Port)
+        $noValidation = [System.Net.Security.RemoteCertificateValidationCallback] { param($s, $c, $ch, $e) $true }
+        $ssl = [System.Net.Security.SslStream]::new($tcp.GetStream(), $false, $noValidation)
+        try {
+            $authOpts = [System.Net.Security.SslClientAuthenticationOptions]::new()
+            $authOpts.TargetHost = $ApplianceHost
+            $authOpts.EnabledSslProtocols = [System.Security.Authentication.SslProtocols]::Tls13
+            $ssl.AuthenticateAsClient($authOpts)
+            return ($ssl.SslProtocol -eq [System.Security.Authentication.SslProtocols]::Tls13)
+        }
+        finally { $ssl.Dispose() }
+    }
+    catch {
+        return $false
+    }
+    finally { $tcp.Dispose() }
+}
+
 function Clear-SgDnStaleTestEnvironment {
     <#
     .SYNOPSIS
@@ -2068,4 +2134,5 @@ Export-ModuleMember -Function @(
     'Clear-SgDnStaleTestEnvironment'
     'Test-SgDnSpsConfigured'
     'Test-SgDnIsElevated'
+    'Test-SgDnApplianceTls13'
 )

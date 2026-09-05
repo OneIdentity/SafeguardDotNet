@@ -90,6 +90,8 @@ internal static class Program
             }
 
             ISafeguardConnection connection;
+            var minTls = ParseTlsVersion(opts.MinTlsVersion, "--MinTlsVersion");
+            var maxTls = ParseTlsVersion(opts.MaxTlsVersion, "--MaxTlsVersion");
             if (!string.IsNullOrEmpty(opts.Username))
             {
                 using var password = HandlePassword(opts.ReadPassword);
@@ -99,7 +101,9 @@ internal static class Program
                     opts.Username,
                     password,
                     opts.ApiVersion,
-                    opts.Insecure);
+                    opts.Insecure,
+                    minTlsVersion: minTls,
+                    maxTlsVersion: maxTls);
             }
             else if (!string.IsNullOrEmpty(opts.CertificateFile))
             {
@@ -107,7 +111,14 @@ internal static class Program
                 if (opts.CertificateAsData)
                 {
                     var bytes = File.ReadAllBytes(opts.CertificateFile);
-                    connection = Safeguard.Connect(opts.Appliance, bytes, password, opts.ApiVersion, opts.Insecure);
+                    connection = Safeguard.Connect(
+                        opts.Appliance,
+                        bytes,
+                        password,
+                        opts.ApiVersion,
+                        opts.Insecure,
+                        minTlsVersion: minTls,
+                        maxTlsVersion: maxTls);
                 }
                 else
                 {
@@ -116,21 +127,40 @@ internal static class Program
                         opts.CertificateFile,
                         password,
                         opts.ApiVersion,
-                        opts.Insecure);
+                        opts.Insecure,
+                        minTlsVersion: minTls,
+                        maxTlsVersion: maxTls);
                 }
             }
             else if (!string.IsNullOrEmpty(opts.Thumbprint))
             {
-                connection = Safeguard.Connect(opts.Appliance, opts.Thumbprint, opts.ApiVersion, opts.Insecure);
+                connection = Safeguard.Connect(
+                    opts.Appliance,
+                    opts.Thumbprint,
+                    opts.ApiVersion,
+                    opts.Insecure,
+                    minTlsVersion: minTls,
+                    maxTlsVersion: maxTls);
             }
             else if (!string.IsNullOrEmpty(opts.AccessToken))
             {
                 using var token = opts.AccessToken.ToSecureString();
-                connection = Safeguard.Connect(opts.Appliance, token, opts.ApiVersion, opts.Insecure);
+                connection = Safeguard.Connect(
+                    opts.Appliance,
+                    token,
+                    opts.ApiVersion,
+                    opts.Insecure,
+                    minTlsVersion: minTls,
+                    maxTlsVersion: maxTls);
             }
             else if (opts.Anonymous)
             {
-                connection = Safeguard.Connect(opts.Appliance, opts.ApiVersion, opts.Insecure);
+                connection = Safeguard.Connect(
+                    opts.Appliance,
+                    opts.ApiVersion,
+                    opts.Insecure,
+                    minTlsVersion: minTls,
+                    maxTlsVersion: maxTls);
             }
             else
             {
@@ -254,6 +284,32 @@ internal static class Program
         {
             Log.Error(ex, "Fatal exception occurred");
             Environment.Exit(1);
+        }
+    }
+
+    private static SafeguardTlsVersion? ParseTlsVersion(string value, string optionName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        switch (value.Trim())
+        {
+            case "1.2":
+            case "12":
+            case "Tls12":
+            case "tls12":
+            case "TLS12":
+                return SafeguardTlsVersion.Tls12;
+            case "1.3":
+            case "13":
+            case "Tls13":
+            case "tls13":
+            case "TLS13":
+                return SafeguardTlsVersion.Tls13;
+            default:
+                throw new ArgumentException($"Invalid {optionName} value '{value}' (expected 1.2 or 1.3)");
         }
     }
 

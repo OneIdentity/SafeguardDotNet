@@ -4,6 +4,7 @@ namespace OneIdentity.SafeguardDotNet.Sps;
 
 using System.Net.Http.Headers;
 using System.Security;
+using System.Security.Authentication;
 
 internal interface ISpsAuthenticator
 {
@@ -14,6 +15,8 @@ internal interface ISpsAuthenticator
     SecureString Password { get; }
 
     bool IgnoreSsl { get; }
+
+    SslProtocols SslProtocols { get; }
 
     AuthenticationHeaderValue GetAuthenticationHeader();
 }

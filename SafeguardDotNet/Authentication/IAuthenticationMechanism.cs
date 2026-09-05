@@ -5,6 +5,7 @@ namespace OneIdentity.SafeguardDotNet.Authentication;
 using System;
 using System.Net.Security;
 using System.Security;
+using System.Security.Authentication;
 
 internal interface IAuthenticationMechanism : IDisposable, ICloneable
 {
@@ -17,6 +18,8 @@ internal interface IAuthenticationMechanism : IDisposable, ICloneable
     bool IgnoreSsl { get; }
 
     RemoteCertificateValidationCallback ValidationCallback { get; }
+
+    SslProtocols SslProtocols { get; }
 
     bool IsAnonymous { get; }
 
