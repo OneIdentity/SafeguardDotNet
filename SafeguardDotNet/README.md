@@ -137,6 +137,39 @@ Bug fixes shipped alongside the migration:
 - `CustomTimeSpanJsonConverter` correctly parses the appliance's `D:H:M`
   `TimeSpan` format.
 
+## TLS Versions
+
+Starting with version 9.1, SafeguardDotNet no longer hard-pins TLS 1.2. By default the
+connection lets the operating system negotiate the best mutually supported protocol, which
+means TLS 1.3 is used automatically when both the client OS and the appliance support it
+(Safeguard for Privileged Passwords 9.0 and later). Connections continue to use HTTP/1.1.
+
+If you need to constrain the negotiated protocol, every `Connect`, `A2A.GetContext`, and
+login-module entry point accepts optional `minTlsVersion` / `maxTlsVersion` parameters. Leave
+them `null` (the default) to negotiate, or pin a bound to enforce a policy:
+
+```csharp
+// Negotiate the best protocol (default; enables TLS 1.3 where available)
+var connection = Safeguard.Connect("safeguard.company.com", "local", "Admin", password);
+
+// Require TLS 1.3 or newer
+var strict = Safeguard.Connect("safeguard.company.com", "local", "Admin", password,
+    minTlsVersion: SafeguardTlsVersion.Tls13);
+
+// Pin to exactly TLS 1.2 (e.g. to talk to an older appliance)
+var legacy = Safeguard.Connect("safeguard.company.com", "local", "Admin", password,
+    minTlsVersion: SafeguardTlsVersion.Tls12, maxTlsVersion: SafeguardTlsVersion.Tls12);
+```
+
+The same `minTlsVersion` / `maxTlsVersion` parameters flow through event listeners and the
+A2A SignalR connections, so the enforced protocol is applied consistently. Supplying a
+`minTlsVersion` that is newer than `maxTlsVersion` throws an `ArgumentException`.
+
+Certificate and A2A authentication work over TLS 1.3 with no special configuration. Some
+Safeguard SDKs require connecting through a dedicated SNI hostname to perform client-certificate
+authentication over TLS 1.3, because their TLS stacks cannot do post-handshake authentication
+(PHA); SafeguardDotNet does not need that workaround, because .NET performs PHA correctly.
+
 ## Documentation
 
 - [GitHub Repository](https://github.com/OneIdentity/SafeguardDotNet)
